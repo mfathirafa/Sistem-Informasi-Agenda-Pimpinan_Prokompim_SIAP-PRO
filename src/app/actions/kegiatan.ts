@@ -1,0 +1,78 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/auth';
+
+export type KegiatanInput = {
+  namaKegiatan: string;
+  tanggal: string;
+  waktu?: string;
+  tempat: string;
+  pejabat: string;
+  leadingSector: string;
+  statusSambutan: 'SUDAH' | 'BELUM';
+  petugasProtokol?: string;
+  petugasLiputan?: string;
+  linkUpload?: string;
+  catatan?: string;
+};
+
+export type ActionResult = { ok: boolean; error?: string };
+
+function canEditRole(role: string | undefined) {
+  return role === 'ADMIN' || role === 'STAFF';
+}
+
+export async function createKegiatan(data: KegiatanInput): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!canEditRole(user?.role)) {
+    return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
+  }
+
+  try {
+    await prisma.kegiatan.create({
+      data: { ...data, tanggal: new Date(data.tanggal) },
+    });
+    revalidatePath('/worksheet');
+    revalidatePath('/dashboard');
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Gagal menyimpan kegiatan.' };
+  }
+}
+
+export async function updateKegiatan(id: string, data: KegiatanInput): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!canEditRole(user?.role)) {
+    return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
+  }
+
+  try {
+    await prisma.kegiatan.update({
+      where: { id },
+      data: { ...data, tanggal: new Date(data.tanggal) },
+    });
+    revalidatePath('/worksheet');
+    revalidatePath('/dashboard');
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Gagal memperbarui kegiatan.' };
+  }
+}
+
+export async function deleteKegiatan(id: string): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!canEditRole(user?.role)) {
+    return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
+  }
+
+  try {
+    await prisma.kegiatan.delete({ where: { id } });
+    revalidatePath('/worksheet');
+    revalidatePath('/dashboard');
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Gagal menghapus kegiatan.' };
+  }
+}

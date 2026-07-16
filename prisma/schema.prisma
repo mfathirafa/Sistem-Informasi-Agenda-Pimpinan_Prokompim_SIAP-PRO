@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  ATASAN
+}
+
+enum StatusSambutan {
+  SUDAH
+  BELUM
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  nama      String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Kegiatan {
+  id              String         @id @default(cuid())
+  namaKegiatan    String
+  tanggal         DateTime
+  waktu           String?
+  tempat          String
+  pejabat         String
+  leadingSector   String
+  statusSambutan  StatusSambutan @default(BELUM)
+  petugasProtokol String?
+  petugasLiputan  String?
+  linkUpload      String?
+  catatan         String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("kegiatan")
+}
