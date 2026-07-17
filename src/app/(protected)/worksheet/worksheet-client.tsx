@@ -4,6 +4,7 @@ import { useState, useMemo, useTransition } from 'react';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
 import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } from '@/app/actions/kegiatan';
 import type { SearchableOption } from '@/components/searchable-select';
+import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/status-kegiatan';
 import KegiatanModal from './kegiatan-modal';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
@@ -27,6 +28,7 @@ export type KegiatanRow = {
   leadingSectorId: string;
   leadingSectorNama: string;
   statusSambutan: 'SUDAH' | 'BELUM';
+  statusKegiatan: (typeof STATUS_KEGIATAN_OPTIONS)[number];
   petugasProtokolId: string | null;
   petugasProtokolNama: string | null;
   petugasLiputanId: string | null;
@@ -50,6 +52,7 @@ export default function WorksheetClient({
   const [search, setSearch] = useState('');
   const [filterBulan, setFilterBulan] = useState('Semua');
   const [filterStatus, setFilterStatus] = useState('Semua');
+  const [filterStatusKegiatan, setFilterStatusKegiatan] = useState('Semua');
   const [filterPejabat, setFilterPejabat] = useState('Semua');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KegiatanRow | null>(null);
@@ -73,6 +76,7 @@ export default function WorksheetClient({
       .filter((k) => {
         if (search && !`${k.namaKegiatan} ${k.tempat}`.toLowerCase().includes(search.toLowerCase())) return false;
         if (filterStatus !== 'Semua' && k.statusSambutan !== filterStatus) return false;
+        if (filterStatusKegiatan !== 'Semua' && k.statusKegiatan !== filterStatusKegiatan) return false;
         if (filterPejabat !== 'Semua' && k.pejabat !== filterPejabat) return false;
         if (filterBulan !== 'Semua') {
           const d = new Date(k.tanggal);
@@ -82,7 +86,7 @@ export default function WorksheetClient({
         return true;
       })
       .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
-  }, [items, search, filterStatus, filterPejabat, filterBulan]);
+  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan]);
 
   const openAdd = () => {
     setEditingItem(null);
@@ -163,6 +167,7 @@ export default function WorksheetClient({
       'Pejabat',
       'Leading Sector',
       'Status Sambutan',
+      'Status Kegiatan',
       'Petugas Protokol',
       'Petugas Liputan',
       'Link Upload',
@@ -175,6 +180,7 @@ export default function WorksheetClient({
       k.pejabat,
       k.leadingSectorNama,
       k.statusSambutan,
+      STATUS_KEGIATAN_LABEL[k.statusKegiatan],
       k.petugasProtokolNama || '',
       k.petugasLiputanNama || '',
       k.linkUpload || '',
@@ -234,6 +240,18 @@ export default function WorksheetClient({
             <option value="BELUM">Belum Sambutan</option>
           </select>
           <select
+            value={filterStatusKegiatan}
+            onChange={(e) => setFilterStatusKegiatan(e.target.value)}
+            className="px-3 py-2 rounded-lg border-app text-sm"
+          >
+            <option value="Semua">Semua Status Kegiatan</option>
+            {STATUS_KEGIATAN_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_KEGIATAN_LABEL[s]}
+              </option>
+            ))}
+          </select>
+          <select
             value={filterPejabat}
             onChange={(e) => setFilterPejabat(e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
@@ -273,6 +291,7 @@ export default function WorksheetClient({
                 <th className="px-4 py-3 font-medium">Pejabat</th>
                 <th className="px-4 py-3 font-medium">Leading Sector</th>
                 <th className="px-4 py-3 font-medium">Sambutan</th>
+                <th className="px-4 py-3 font-medium">Status Kegiatan</th>
                 <th className="px-4 py-3 font-medium">Petugas Protokol</th>
                 <th className="px-4 py-3 font-medium">Petugas Liputan</th>
                 <th className="px-4 py-3 font-medium">Dokumentasi</th>
@@ -282,7 +301,7 @@ export default function WorksheetClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 10 : 9} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 11 : 10} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -307,6 +326,11 @@ export default function WorksheetClient({
                         }`}
                       >
                         {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]}`}>
+                        {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted">{k.petugasProtokolNama || '-'}</td>

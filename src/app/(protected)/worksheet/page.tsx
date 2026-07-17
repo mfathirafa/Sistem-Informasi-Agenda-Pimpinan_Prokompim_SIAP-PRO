@@ -39,6 +39,7 @@ export default async function WorksheetPage() {
       leadingSectorId: k.leadingSectorId,
       leadingSectorNama: k.leadingSector.nama,
       statusSambutan: k.statusSambutan,
+      statusKegiatan: k.statusKegiatan,
       petugasProtokolId: k.petugasProtokolId,
       petugasProtokolNama: k.petugasProtokol?.nama || null,
       petugasLiputanId: k.petugasLiputanId,

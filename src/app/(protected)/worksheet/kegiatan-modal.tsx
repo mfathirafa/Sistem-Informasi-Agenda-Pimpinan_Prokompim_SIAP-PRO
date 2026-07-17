@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from './worksheet-client';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
+import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/status-kegiatan';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -41,6 +42,7 @@ export default function KegiatanModal({
           pejabat: item.pejabat,
           leadingSectorId: item.leadingSectorId,
           statusSambutan: item.statusSambutan,
+          statusKegiatan: item.statusKegiatan,
           petugasProtokolId: item.petugasProtokolId,
           petugasLiputanId: item.petugasLiputanId,
           linkUpload: item.linkUpload || '',
@@ -54,6 +56,7 @@ export default function KegiatanModal({
           pejabat: 'Bupati',
           leadingSectorId: leadingSectorOptions[0]?.id || '',
           statusSambutan: 'BELUM',
+          statusKegiatan: 'DRAFT',
           petugasProtokolId: null,
           petugasLiputanId: null,
           linkUpload: '',
@@ -103,6 +106,20 @@ export default function KegiatanModal({
               placeholder="cth. Rapat Koordinasi..."
             />
             {errors.namaKegiatan && <p className="text-xs text-red-600 mt-1">{errors.namaKegiatan}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Status Kegiatan</label>
+            <select
+              value={form.statusKegiatan}
+              onChange={(e) => update('statusKegiatan', e.target.value as (typeof STATUS_KEGIATAN_OPTIONS)[number])}
+              className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+            >
+              {STATUS_KEGIATAN_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_KEGIATAN_LABEL[s]}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

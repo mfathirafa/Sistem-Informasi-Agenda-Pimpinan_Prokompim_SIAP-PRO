@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { StatusKegiatanValue } from '@/lib/status-kegiatan';
 
 export type KegiatanInput = {
   namaKegiatan: string;
@@ -12,6 +13,7 @@ export type KegiatanInput = {
   pejabat: string;
   leadingSectorId: string;
   statusSambutan: 'SUDAH' | 'BELUM';
+  statusKegiatan: StatusKegiatanValue;
   petugasProtokolId?: string | null;
   petugasLiputanId?: string | null;
   linkUpload?: string;
