@@ -28,6 +28,22 @@ enum StatusKegiatan {
   SPJ_SELESAI
 }
 
+enum JenisDokumen {
+  SURAT_TUGAS
+  SURAT_UNDANGAN
+  NASKAH_SAMBUTAN
+  DOKUMENTASi_FOTO
+  DOKUMENTASi_VIDEO
+  BERKAS_SPJ
+  LAPORAN_AKHIR
+}
+
+enum StatusDokumen {
+  BELUM_UPLOAD
+  SUDAH_UPLOAD
+  PERLU_REVISI
+}
+
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
@@ -83,4 +99,18 @@ model Kegiatan {
   updatedAt         DateTime       @updatedAt
 
   @@map("kegiatan")
+}
+
+model Dokumen {
+  id          String        @id @default(cuid())
+  kegiatanId  String
+  kegiatan    Kegiatan      @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  jenis       JenisDokumen
+  status      StatusDokumen @default(BELUM_UPLOAD)
+  link        String?
+  catatan     String?
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([kegiatanId, jenis])
+  @@map("dokumen")
 }
