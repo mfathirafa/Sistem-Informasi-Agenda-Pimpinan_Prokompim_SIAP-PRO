@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from './worksheet-client';
+import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -20,11 +21,15 @@ export default function KegiatanModal({
   onClose,
   onSave,
   saving,
+  petugasOptions,
+  leadingSectorOptions,
 }: {
   item: KegiatanRow | null;
   onClose: () => void;
   onSave: (data: KegiatanInput) => void;
   saving: boolean;
+  petugasOptions: SearchableOption[];
+  leadingSectorOptions: SearchableOption[];
 }) {
   const [form, setForm] = useState<KegiatanInput>(() =>
     item
@@ -34,10 +39,10 @@ export default function KegiatanModal({
           waktu: item.waktu || '',
           tempat: item.tempat,
           pejabat: item.pejabat,
-          leadingSector: item.leadingSector,
+          leadingSectorId: item.leadingSectorId,
           statusSambutan: item.statusSambutan,
-          petugasProtokol: item.petugasProtokol || '',
-          petugasLiputan: item.petugasLiputan || '',
+          petugasProtokolId: item.petugasProtokolId,
+          petugasLiputanId: item.petugasLiputanId,
           linkUpload: item.linkUpload || '',
           catatan: item.catatan || '',
         }
@@ -47,25 +52,26 @@ export default function KegiatanModal({
           waktu: '',
           tempat: '',
           pejabat: 'Bupati',
-          leadingSector: '',
+          leadingSectorId: leadingSectorOptions[0]?.id || '',
           statusSambutan: 'BELUM',
-          petugasProtokol: '',
-          petugasLiputan: '',
+          petugasProtokolId: null,
+          petugasLiputanId: null,
           linkUpload: '',
           catatan: '',
         }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (field: keyof KegiatanInput, value: string) => setForm((f) => ({ ...f, [field]: value }));
+  const update = <K extends keyof KegiatanInput>(field: K, value: KegiatanInput[K]) =>
+    setForm((f) => ({ ...f, [field]: value }));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const req: (keyof KegiatanInput)[] = ['namaKegiatan', 'tanggal', 'tempat', 'leadingSector'];
     const errs: Record<string, string> = {};
-    req.forEach((f) => {
-      if (!form[f] || !String(form[f]).trim()) errs[f] = 'Wajib diisi';
-    });
+    if (!form.namaKegiatan.trim()) errs.namaKegiatan = 'Wajib diisi';
+    if (!form.tanggal.trim()) errs.tanggal = 'Wajib diisi';
+    if (!form.tempat.trim()) errs.tempat = 'Wajib diisi';
+    if (!form.leadingSectorId) errs.leadingSectorId = 'Wajib dipilih';
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -158,31 +164,42 @@ export default function KegiatanModal({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Leading Sector</label>
-            <input
-              value={form.leadingSector}
-              onChange={(e) => update('leadingSector', e.target.value)}
+            <select
+              value={form.leadingSectorId}
+              onChange={(e) => update('leadingSectorId', e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-              placeholder="cth. Dinas PUPR"
-            />
-            {errors.leadingSector && <p className="text-xs text-red-600 mt-1">{errors.leadingSector}</p>}
+            >
+              <option value="">Pilih leading sector...</option>
+              {leadingSectorOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            {errors.leadingSectorId && <p className="text-xs text-red-600 mt-1">{errors.leadingSectorId}</p>}
+            {leadingSectorOptions.length === 0 && (
+              <p className="text-xs text-muted mt-1">
+                Belum ada data leading sector — tambahkan dulu lewat menu Master Leading Sector.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1.5">Petugas Protokol</label>
-              <input
-                value={form.petugasProtokol}
-                onChange={(e) => update('petugasProtokol', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-                placeholder="Pisahkan koma"
+              <SearchableSelect
+                options={petugasOptions}
+                value={form.petugasProtokolId || null}
+                onChange={(id) => update('petugasProtokolId', id)}
+                placeholder="Cari nama petugas..."
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">Petugas Liputan</label>
-              <input
-                value={form.petugasLiputan}
-                onChange={(e) => update('petugasLiputan', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-                placeholder="Pisahkan koma"
+              <SearchableSelect
+                options={petugasOptions}
+                value={form.petugasLiputanId || null}
+                onChange={(id) => update('petugasLiputanId', id)}
+                placeholder="Cari nama petugas..."
               />
             </div>
           </div>

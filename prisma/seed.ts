@@ -24,6 +24,45 @@ async function main() {
     create: { username: 'atasan', password: passwordAtasan, nama: 'Pimpinan', role: Role.ATASAN },
   });
 
+  const leadingSectorNames = [
+    'Bagian Protokol dan Komunikasi Pimpinan',
+    'Dinas Pendidikan',
+    'Dinas Kesehatan',
+    'Dinas PUPR',
+    'Diskominfo',
+    'Bagian Umum',
+  ];
+  const leadingSectors = [];
+  for (const nama of leadingSectorNames) {
+    const ls = await prisma.leadingSector.upsert({
+      where: { nama },
+      update: {},
+      create: { nama },
+    });
+    leadingSectors.push(ls);
+  }
+
+  const petugasData = [
+    { nama: 'Rian', jabatan: 'Staf Protokol', noHp: '081234500001' },
+    { nama: 'Dewi', jabatan: 'Staf Protokol', noHp: '081234500002' },
+    { nama: 'Ahmad', jabatan: 'Staf Protokol', noHp: '081234500003' },
+    { nama: 'Aron', jabatan: 'Staf Liputan', noHp: '081234500004' },
+    { nama: 'Fajar', jabatan: 'Staf Liputan', noHp: '081234500005' },
+    { nama: 'Dimas', jabatan: 'Staf Liputan', noHp: '081234500006' },
+  ];
+  const petugasList: Record<string, string> = {};
+  for (const p of petugasData) {
+    const existing = await prisma.petugas.findFirst({ where: { nama: p.nama } });
+    if (existing) {
+      petugasList[p.nama] = existing.id;
+    } else {
+      const created = await prisma.petugas.create({ data: p });
+      petugasList[p.nama] = created.id;
+    }
+  }
+
+  const findSector = (nama: string) => leadingSectors.find((s) => s.nama === nama)!.id;
+
   const count = await prisma.kegiatan.count();
   if (count === 0) {
     const today = new Date();
@@ -41,10 +80,10 @@ async function main() {
           waktu: '09:00',
           tempat: 'Pendopo Kabupaten Brebes',
           pejabat: 'Bupati',
-          leadingSector: 'Bagian Protokol dan Komunikasi Pimpinan',
+          leadingSectorId: findSector('Bagian Protokol dan Komunikasi Pimpinan'),
           statusSambutan: StatusSambutan.BELUM,
-          petugasProtokol: 'Rian, Dewi',
-          petugasLiputan: 'Aron',
+          petugasProtokolId: petugasList['Rian'],
+          petugasLiputanId: petugasList['Aron'],
         },
         {
           namaKegiatan: 'Peresmian Jembatan Desa Kalibuntu',
@@ -52,10 +91,10 @@ async function main() {
           waktu: '08:30',
           tempat: 'Desa Kalibuntu, Kec. Bumiayu',
           pejabat: 'Wakil Bupati',
-          leadingSector: 'Dinas PUPR',
+          leadingSectorId: findSector('Dinas PUPR'),
           statusSambutan: StatusSambutan.SUDAH,
-          petugasProtokol: 'Dewi',
-          petugasLiputan: 'Aron, Fajar',
+          petugasProtokolId: petugasList['Dewi'],
+          petugasLiputanId: petugasList['Fajar'],
           linkUpload: 'https://drive.google.com/drive/folders/contoh1',
         },
         {
@@ -64,11 +103,22 @@ async function main() {
           waktu: '10:00',
           tempat: 'Puskesmas Larangan',
           pejabat: 'Bupati & Wakil Bupati',
-          leadingSector: 'Dinas Kesehatan',
+          leadingSectorId: findSector('Dinas Kesehatan'),
           statusSambutan: StatusSambutan.BELUM,
-          petugasProtokol: 'Rian',
-          petugasLiputan: 'Fajar',
+          petugasProtokolId: petugasList['Ahmad'],
           catatan: 'Menunggu konfirmasi jadwal final',
+        },
+        {
+          namaKegiatan: 'Rapat Koordinasi Kabupaten',
+          tanggal: today,
+          waktu: '09:00',
+          tempat: 'Pendopo Kab. Brebes',
+          pejabat: 'Bupati',
+          leadingSectorId: findSector('Diskominfo'),
+          statusSambutan: StatusSambutan.BELUM,
+          petugasProtokolId: petugasList['Ahmad'],
+          petugasLiputanId: petugasList['Dimas'],
+          catatan: 'Koordinasi persiapan acara tingkat kabupaten.',
         },
       ],
     });

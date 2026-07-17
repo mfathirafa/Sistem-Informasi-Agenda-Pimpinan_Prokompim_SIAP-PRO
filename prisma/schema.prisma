@@ -18,6 +18,16 @@ enum StatusSambutan {
   BELUM
 }
 
+enum StatusKegiatan {
+  DRAFT
+  MENUNGGU_PERSETUJUAN
+  DISETUJUI
+  DILAKSANAKAN
+  MENUNGGU_DOKUMEN
+  SPJ_DIPROSES
+  SPJ_SELESAI
+}
+
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
@@ -29,21 +39,48 @@ model User {
   @@map("users")
 }
 
+model Petugas {
+  id          String   @id @default(cuid())
+  nama        String
+  jabatan     String?
+  noHp        String?
+  statusAktif Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  kegiatanProtokol Kegiatan[] @relation("PetugasProtokolRelation")
+  kegiatanLiputan  Kegiatan[] @relation("PetugasLiputanRelation")
+
+  @@map("petugas")
+}
+
+model LeadingSector {
+  id        String     @id @default(cuid())
+  nama      String     @unique
+  createdAt DateTime   @default(now())
+  kegiatan  Kegiatan[]
+
+  @@map("leading_sector")
+}
+
 model Kegiatan {
-  id              String         @id @default(cuid())
-  namaKegiatan    String
-  tanggal         DateTime
-  waktu           String?
-  tempat          String
-  pejabat         String
-  leadingSector   String
-  statusSambutan  StatusSambutan @default(BELUM)
-  petugasProtokol String?
-  petugasLiputan  String?
-  linkUpload      String?
-  catatan         String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                String         @id @default(cuid())
+  namaKegiatan      String
+  tanggal           DateTime
+  waktu             String?
+  tempat            String
+  pejabat           String
+  leadingSectorId   String
+  leadingSector     LeadingSector  @relation(fields: [leadingSectorId], references: [id])
+  statusSambutan    StatusSambutan @default(BELUM)
+  statusKegiatan    StatusKegiatan @default(DRAFT)
+  petugasProtokolId String?
+  petugasProtokol   Petugas?       @relation("PetugasProtokolRelation", fields: [petugasProtokolId], references: [id])
+  petugasLiputanId  String?
+  petugasLiputan    Petugas?       @relation("PetugasLiputanRelation", fields: [petugasLiputanId], references: [id])
+  linkUpload        String?
+  catatan           String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   @@map("kegiatan")
 }

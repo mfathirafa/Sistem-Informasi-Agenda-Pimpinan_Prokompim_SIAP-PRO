@@ -3,6 +3,7 @@
 import { useState, useMemo, useTransition } from 'react';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
 import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } from '@/app/actions/kegiatan';
+import type { SearchableOption } from '@/components/searchable-select';
 import KegiatanModal from './kegiatan-modal';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
@@ -10,6 +11,7 @@ const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lai
 function pad(n: number) {
   return n < 10 ? '0' + n : '' + n;
 }
+
 function toDateInput(d: Date | string) {
   const dt = new Date(d);
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
@@ -22,10 +24,13 @@ export type KegiatanRow = {
   waktu: string | null;
   tempat: string;
   pejabat: string;
-  leadingSector: string;
+  leadingSectorId: string;
+  leadingSectorNama: string;
   statusSambutan: 'SUDAH' | 'BELUM';
-  petugasProtokol: string | null;
-  petugasLiputan: string | null;
+  petugasProtokolId: string | null;
+  petugasProtokolNama: string | null;
+  petugasLiputanId: string | null;
+  petugasLiputanNama: string | null;
   linkUpload: string | null;
   catatan: string | null;
 };
@@ -33,9 +38,13 @@ export type KegiatanRow = {
 export default function WorksheetClient({
   initialData,
   canEdit,
+  petugasOptions,
+  leadingSectorOptions,
 }: {
   initialData: KegiatanRow[];
   canEdit: boolean;
+  petugasOptions: SearchableOption[];
+  leadingSectorOptions: SearchableOption[];
 }) {
   const [items, setItems] = useState<KegiatanRow[]>(initialData);
   const [search, setSearch] = useState('');
@@ -55,6 +64,9 @@ export default function WorksheetClient({
     );
     return Array.from(set).sort();
   }, [items]);
+
+  const findLeadingSector = (id: string) => leadingSectorOptions.find((o) => o.id === id)?.label || '';
+  const findPetugas = (id: string | null | undefined) => (id ? petugasOptions.find((o) => o.id === id)?.label || '' : '');
 
   const filtered = useMemo(() => {
     return items
@@ -93,8 +105,11 @@ export default function WorksheetClient({
                     ...editingItem,
                     ...data,
                     waktu: data.waktu || null,
-                    petugasProtokol: data.petugasProtokol || null,
-                    petugasLiputan: data.petugasLiputan || null,
+                    leadingSectorNama: findLeadingSector(data.leadingSectorId),
+                    petugasProtokolId: data.petugasProtokolId || null,
+                    petugasProtokolNama: findPetugas(data.petugasProtokolId),
+                    petugasLiputanId: data.petugasLiputanId || null,
+                    petugasLiputanNama: findPetugas(data.petugasLiputanId),
                     linkUpload: data.linkUpload || null,
                     catatan: data.catatan || null,
                   }
@@ -114,8 +129,11 @@ export default function WorksheetClient({
               id: 'temp-' + Date.now(),
               ...data,
               waktu: data.waktu || null,
-              petugasProtokol: data.petugasProtokol || null,
-              petugasLiputan: data.petugasLiputan || null,
+              leadingSectorNama: findLeadingSector(data.leadingSectorId),
+              petugasProtokolId: data.petugasProtokolId || null,
+              petugasProtokolNama: findPetugas(data.petugasProtokolId),
+              petugasLiputanId: data.petugasLiputanId || null,
+              petugasLiputanNama: findPetugas(data.petugasLiputanId),
               linkUpload: data.linkUpload || null,
               catatan: data.catatan || null,
             },
@@ -155,10 +173,10 @@ export default function WorksheetClient({
       k.namaKegiatan,
       k.tempat,
       k.pejabat,
-      k.leadingSector,
+      k.leadingSectorNama,
       k.statusSambutan,
-      k.petugasProtokol || '',
-      k.petugasLiputan || '',
+      k.petugasProtokolNama || '',
+      k.petugasLiputanNama || '',
       k.linkUpload || '',
       k.catatan || '',
     ]);
@@ -281,7 +299,7 @@ export default function WorksheetClient({
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
                     <td className="px-4 py-3 text-muted">{k.tempat}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{k.pejabat}</td>
-                    <td className="px-4 py-3 text-muted">{k.leadingSector}</td>
+                    <td className="px-4 py-3 text-muted">{k.leadingSectorNama}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -291,11 +309,11 @@ export default function WorksheetClient({
                         {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted">{k.petugasProtokol || '-'}</td>
-                    <td className="px-4 py-3 text-muted">{k.petugasLiputan || '-'}</td>
+                    <td className="px-4 py-3 text-muted">{k.petugasProtokolNama || '-'}</td>
+                    <td className="px-4 py-3 text-muted">{k.petugasLiputanNama || '-'}</td>
                     <td className="px-4 py-3">
                       {k.linkUpload ? (
-                        <a
+                        <a /* <-- BAGIAN INI YANG DIPERBAIKI */
                           href={k.linkUpload}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -336,7 +354,14 @@ export default function WorksheetClient({
       </div>
 
       {modalOpen && (
-        <KegiatanModal item={editingItem} onClose={() => setModalOpen(false)} onSave={handleSave} saving={isPending} />
+        <KegiatanModal
+          item={editingItem}
+          onClose={() => setModalOpen(false)}
+          onSave={handleSave}
+          saving={isPending}
+          petugasOptions={petugasOptions}
+          leadingSectorOptions={leadingSectorOptions}
+        />
       )}
     </div>
   );

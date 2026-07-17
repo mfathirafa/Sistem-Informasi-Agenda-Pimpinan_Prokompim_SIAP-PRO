@@ -10,10 +10,10 @@ export type KegiatanInput = {
   waktu?: string;
   tempat: string;
   pejabat: string;
-  leadingSector: string;
+  leadingSectorId: string;
   statusSambutan: 'SUDAH' | 'BELUM';
-  petugasProtokol?: string;
-  petugasLiputan?: string;
+  petugasProtokolId?: string | null;
+  petugasLiputanId?: string | null;
   linkUpload?: string;
   catatan?: string;
 };

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Table2, UserCog, LogOut } from 'lucide-react';
+import { LayoutDashboard, Table2, UserCog, LogOut, Users, Building2 } from 'lucide-react';
 import SealLogo from '@/components/seal-logo';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionPayload } from '@/lib/auth';
@@ -25,6 +25,8 @@ export default function AppShell({
   const navItems = [
     { href: '/dashboard', label: 'Dasbor', icon: <LayoutDashboard size={16} /> },
     { href: '/worksheet', label: 'Worksheet Kegiatan', icon: <Table2 size={16} /> },
+    { href: '/master-petugas', label: 'Master Petugas', icon: <Users size={16} /> },
+    { href: '/master-leading-sector', label: 'Master Leading Sector', icon: <Building2 size={16} /> },
   ];
   if (user.role === 'ADMIN') {
     navItems.push({ href: '/users', label: 'Kelola Pengguna', icon: <UserCog size={16} /> });
@@ -53,14 +55,14 @@ export default function AppShell({
             </form>
           </div>
         </div>
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-white/10">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-white/10 overflow-x-auto">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 whitespace-nowrap transition-colors ${
                   active ? 'border-gold text-white' : 'border-transparent text-white/60 hover:text-white'
                 }`}
               >
