@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { JENIS_DOKUMEN_OPTIONS } from '@/lib/status-dokumen';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { StatusKegiatanValue } from '@/lib/status-kegiatan';
@@ -34,7 +35,15 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
 
   try {
     await prisma.kegiatan.create({
-      data: { ...data, tanggal: new Date(data.tanggal) },
+      data: {
+        ...data,
+        tanggal: new Date(data.tanggal),
+        // Nested create - Prisma menjalankan ini sebagai satu transaksi atomik;
+        // kegiatan + 7 dokumen wajib berhasil dibuat semua, atau gagal semua
+        dokumen: {
+          create: JENIS_DOKUMEN_OPTIONS.map((jenis) => ({ jenis })),
+        },
+      },
     });
     revalidatePath('/worksheet');
     revalidatePath('/dashboard');

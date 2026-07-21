@@ -97,6 +97,7 @@ model Kegiatan {
   catatan           String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  dokumen           Dokumen[]
 
   @@map("kegiatan")
 }
@@ -109,7 +110,9 @@ model Dokumen {
   status      StatusDokumen @default(BELUM_UPLOAD)
   link        String?
   catatan     String?
+  createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
 
   @@unique([kegiatanId, jenis])
   @@map("dokumen")

@@ -123,8 +123,6 @@ async function main() {
       ],
     });
   }
-
-  console.log('Seed selesai.');
 }
 
 main()
