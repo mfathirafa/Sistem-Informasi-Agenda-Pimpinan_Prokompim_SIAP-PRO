@@ -4,21 +4,10 @@ import { useState, useTransition } from 'react';
 import { Trash2 } from 'lucide-react';
 import { createUser, deleteUser } from '@/app/actions/users';
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Admin',
-  STAFF: 'Staf Protokom',
-  ATASAN: 'Pimpinan',
-};
-
+const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', ATASAN: 'Pimpinan' };
 type UserRow = { id: string; username: string; nama: string; role: string };
 
-export default function UsersClient({
-  users: initialUsers,
-  currentUserId,
-}: {
-  users: UserRow[];
-  currentUserId: string;
-}) {
+export default function UsersClient({ users: initialUsers, currentUserId }: { users: UserRow[]; currentUserId: string }) {
   const [users, setUsers] = useState(initialUsers);
   const [form, setForm] = useState({ username: '', password: '', nama: '', role: 'STAFF' });
   const [error, setError] = useState('');
@@ -26,27 +15,14 @@ export default function UsersClient({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.username.trim() || !form.password.trim() || !form.nama.trim()) {
-      setError('Semua kolom wajib diisi');
-      return;
-    }
+    if (!form.username.trim() || !form.password.trim() || !form.nama.trim()) { setError('Semua kolom wajib diisi'); return; }
     setError('');
     startTransition(async () => {
-      const res = await createUser({
-        username: form.username.trim(),
-        password: form.password,
-        nama: form.nama.trim(),
-        role: form.role as 'ADMIN' | 'STAFF' | 'ATASAN',
-      });
+      const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: form.role as 'ADMIN' | 'STAFF' | 'ATASAN' });
       if (res.ok) {
-        setUsers((prev) => [
-          ...prev,
-          { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: form.role },
-        ]);
+        setUsers((prev) => [...prev, { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: form.role }]);
         setForm({ username: '', password: '', nama: '', role: 'STAFF' });
-      } else {
-        setError(res.error || 'Gagal menambah pengguna.');
-      }
+      } else { setError(res.error || 'Gagal menambah pengguna.'); }
     });
   };
 
@@ -79,11 +55,7 @@ export default function UsersClient({
                 <td className="px-4 py-3">{ROLE_LABELS[u.role]}</td>
                 <td className="px-4 py-3 text-right">
                   {u.id !== currentUserId && (
-                    <button
-                      onClick={() => handleDelete(u.id, u.nama)}
-                      aria-label="Hapus pengguna"
-                      className="p-1.5 rounded-md hover:bg-red-50 text-red-600"
-                    >
+                    <button onClick={() => handleDelete(u.id, u.nama)} aria-label="Hapus pengguna" className="p-1.5 rounded-md hover:bg-red-50 text-red-600">
                       <Trash2 size={14} />
                     </button>
                   )}
@@ -96,38 +68,16 @@ export default function UsersClient({
       <div className="bg-white rounded-2xl border border-app p-5 self-start">
         <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Pengguna</h3>
         <form onSubmit={submit} className="space-y-3">
-          <input
-            placeholder="Nama lengkap"
-            value={form.nama}
-            onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-          />
-          <input
-            placeholder="Nama pengguna"
-            value={form.username}
-            onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-          />
-          <input
-            placeholder="Kata sandi"
-            type="text"
-            value={form.password}
-            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-          />
-          <select
-            value={form.role}
-            onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-          >
+          <input placeholder="Nama lengkap" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+          <input placeholder="Nama pengguna" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+          <input placeholder="Kata sandi" type="text" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+          <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm">
             <option value="STAFF">Staf Protokom</option>
             <option value="ATASAN">Pimpinan</option>
             <option value="ADMIN">Admin</option>
           </select>
           {error && <p className="text-xs text-red-600">{error}</p>}
-          <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">
-            {isPending ? 'Menyimpan...' : 'Tambah'}
-          </button>
+          <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Tambah'}</button>
         </form>
       </div>
     </div>
