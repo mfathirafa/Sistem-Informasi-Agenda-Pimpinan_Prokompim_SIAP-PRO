@@ -1,10 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { JENIS_DOKUMEN_OPTIONS } from '@/lib/status-dokumen';
+import { JENIS_DOKUMEN_OPTIONS } from '@/lib/constants/status-dokumen';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { StatusKegiatanValue } from '@/lib/status-kegiatan';
+import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
 
 export type KegiatanInput = {
   namaKegiatan: string;

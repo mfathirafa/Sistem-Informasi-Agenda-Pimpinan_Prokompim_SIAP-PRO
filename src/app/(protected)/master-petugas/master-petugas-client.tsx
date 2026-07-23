@@ -39,7 +39,11 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
         if (editingItem) {
           setItems((prev) => prev.map((p) => p.id === editingItem.id ? { ...p, ...form } : p));
         } else {
-          setItems((prev) => [...prev, { id: 'temp-' + Date.now(), ...form }]);
+          setItems((prev) => [...prev, {
+             id: 'temp-' + Date.now(),
+              ...form,
+            jabatan: form.jabatan ?? null,
+            noHp: form.noHp ?? null }]);
         }
         setModalOpen(false);
       } else { setError(res.error || 'Gagal menyimpan.'); }

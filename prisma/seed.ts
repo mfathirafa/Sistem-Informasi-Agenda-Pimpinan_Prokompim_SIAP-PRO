@@ -32,7 +32,7 @@ async function main() {
     'Diskominfo',
     'Bagian Umum',
   ];
-  const leadingSectors = [];
+  const leadingSectors: { id: string; nama: string }[] = [];
   for (const nama of leadingSectorNames) {
     const ls = await prisma.leadingSector.upsert({
       where: { nama },
