@@ -12,7 +12,8 @@
 ## Environment Variables
 
 ```
-DATABASE_URL=postgresql://...          # Supabase PostgreSQL connection string
+DATABASE_URL=postgresql://...          # Supabase PostgreSQL connection string (via connection pooler)
+DIRECT_URL=postgresql://...            # Supabase PostgreSQL direct connection (tanpa pooler, untuk Prisma Migrate)
 AUTH_SECRET=<random-strong-string>     # JWT secret key. WAJIB ter-set, aplikasi gagal jika tidak ada
 ```
 

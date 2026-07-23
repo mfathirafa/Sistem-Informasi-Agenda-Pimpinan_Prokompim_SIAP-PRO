@@ -2,9 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser, hashPassword } from '@/lib/auth';
-
-export type ActionResult = { ok: boolean; error?: string };
+import { getCurrentUser, hashPassword, type ActionResult } from '@/lib/auth';
 
 export type CreateUserInput = {
   username: string;

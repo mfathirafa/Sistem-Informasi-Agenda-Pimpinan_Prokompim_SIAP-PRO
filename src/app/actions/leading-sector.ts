@@ -2,13 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
-
-export type ActionResult = { ok: boolean; error?: string };
-
-function canEditRole(role: string | undefined) {
-  return role === 'ADMIN' || role === 'STAFF';
-}
+import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 
 export async function createLeadingSector(nama: string): Promise<ActionResult> {
   const user = await getCurrentUser();

@@ -3,7 +3,9 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const SESSION_COOKIE_NAME = 'spj_session';
-const secretKey = process.env.AUTH_SECRET || 'ganti-secret-ini-di-env';
+
+if (!process.env.AUTH_SECRET) throw new Error('AUTH_SECRET environment variable is required.');
+const secretKey = process.env.AUTH_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
 const PUBLIC_PATHS = ['/login'];

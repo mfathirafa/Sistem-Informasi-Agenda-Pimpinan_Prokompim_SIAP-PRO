@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 
 export const SESSION_COOKIE_NAME = 'spj_session';
 
-const secretKey = process.env.AUTH_SECRET || 'ganti-secret-ini-di-env';
+if (!process.env.AUTH_SECRET) throw new Error('AUTH_SECRET environtment variable is required.');
+const secretKey = process.env.AUTH_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export type SessionPayload = {
@@ -13,6 +14,8 @@ export type SessionPayload = {
   nama: string;
   role: 'ADMIN' | 'STAFF' | 'ATASAN';
 };
+
+export type ActionResult = { ok: boolean; error?: string };
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
@@ -60,4 +63,8 @@ export async function getCurrentUser(): Promise<SessionPayload | null> {
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
   return verifySessionToken(token);
+}
+
+export function canEditRole(role: string | undefined): boolean {
+  return role === 'ADMIN' || role === 'STAFF';
 }

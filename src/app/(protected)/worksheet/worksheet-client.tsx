@@ -242,7 +242,7 @@ export default function WorksheetClient({
           <select
             value={filterStatusKegiatan}
             onChange={(e) => setFilterStatusKegiatan(e.target.value)}
-            className="px-3 py-2 rounded-lg border-app text-sm"
+            className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Status Kegiatan</option>
             {STATUS_KEGIATAN_OPTIONS.map((s) => (

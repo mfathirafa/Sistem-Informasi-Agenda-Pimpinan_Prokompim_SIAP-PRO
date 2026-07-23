@@ -40,6 +40,9 @@ src/app/
           page.tsx        ← Server Component
           worksheet-client.tsx  ← Client Component (table, filter, search)
           kegiatan-modal.tsx    ← Client Component (form modal)
+          [id]/
+            page.tsx            ← Server Component (detail kegiatan)
+            detail-client.tsx   ← Client Component (read-only detail view + progress dokumen)
         master-petugas/
           page.tsx        ← Server Component
           master-petugas-client.tsx  ← Client Component
@@ -90,7 +93,7 @@ Dokumen
 - Password hash via `bcryptjs`
 - Token disimpan di httpOnly cookie (`spj_session`, expiry 7 hari)
 - Middleware redirect: unauthenticated → /login, authenticated → /dashboard
-- Helper: `getCurrentUser()` di `src/lib/auth.ts`
+- Helper: `getCurrentUser()`, `canEditRole()`, `ActionResult` type di `src/lib/auth.ts`
 
 ## File Naming Convention
 
@@ -127,7 +130,8 @@ src/
       users/
   components/         ← Reusable components
   lib/
-    auth.ts           ← Auth helpers (JWT, session, password)
+    auth.ts           ← Auth helpers (JWT, session, password, canEditRole, ActionResult)
     prisma.ts         ← Prisma client singleton
     constants/        ← Status constants, labels, badge classes
+    queries/          ← Shared Prisma queries (e.g. kegiatan detail)
 ```

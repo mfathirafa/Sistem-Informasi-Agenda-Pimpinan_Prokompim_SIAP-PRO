@@ -40,22 +40,17 @@ Client component bertugas:
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
-
-export type ActionResult = { ok: boolean; error?: string };
+import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 
 export async function createSomething(data: InputType): Promise<ActionResult> {
-  // 1. Cek session
+  // 1. Cek session + otorisasi
   const user = await getCurrentUser();
-  if (!user) return { ok: false, error: 'Anda harus login.' };
+  if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
 
-  // 2. Cek role / otorisasi
-  if (user.role !== 'ADMIN') return { ok: false, error: 'Tidak punya akses.' };
-
-  // 3. Validasi input
+  // 2. Validasi input
   if (!data.field.trim()) return { ok: false, error: 'Field wajib diisi.' };
 
-  // 4. Eksekusi Prisma
+  // 3. Eksekusi Prisma
   try {
     await prisma.something.create({ data });
     revalidatePath('/target-page');
@@ -90,13 +85,12 @@ const handleSave = (data: InputType) => {
 // Cek session di Server Component
 const user = await getCurrentUser();
 
-// Cek role
-const canEdit = user?.role === 'ADMIN' || user?.role === 'STAFF';
-if (user?.role !== 'ADMIN') redirect('/dashboard');
+// Cek role untuk edit access
+const canEdit = canEditRole(user?.role);
 
 // Cek session di Server Action (sebelum operasi)
 const user = await getCurrentUser();
-if (user?.role !== 'ADMIN') return { ok: false, error: 'Tidak punya akses.' };
+if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
 ```
 
 ## Constants Pattern
@@ -147,10 +141,6 @@ export const BADGE_CLASS: Record<OptionValue, string> = { ... };
 
 Inkonsistensi yang ditemukan di codebase — ini **bukan** standar yang sudah diterapkan, hanya catatan untuk diperbaiki di masa depan:
 
-1. **`canEditRole()` diduplikasi** di 3 file (`actions/petugas.ts`, `actions/leading-sector.ts`, `actions/kegiatan.ts`). Idealnya dijadikan utility bersama di `src/lib/auth.ts`.
+1. **Validasi input tidak konsisten** — `createPetugas` memvalidasi `nama.trim()`, tetapi `createKegiatan` dan `updateKegiatan` tidak melakukan validasi field wajib di server side.
 
-2. **Dua source untuk constants** — `src/lib/status-kegiatan.ts` dan `src/lib/constants/status-kegiatan.ts` menyimpan data yang sama. Seharusnya hanya ada satu di `src/lib/constants/`.
-
-3. **Validasi input tidak konsisten** — `createPetugas` memvalidasi `nama.trim()`, tetapi `createKegiatan` dan `updateKegiatan` tidak melakukan validasi field wajib di server side.
-
-4. **Tipe `ActionResult` didefinisikan ulang** di setiap file actions, padahal definisinya sama persis `{ ok: boolean; error?: string }`.
+> **Resolved (23 Juli 2026):** `canEditRole()` dan `ActionResult` sudah dipindahkan ke `src/lib/auth.ts` sebagai single source of truth. Dua source constants (`src/lib/status-kegiatan.ts` dan `src/lib/constants/status-kegiatan.ts`) sudah dihapus — hanya tersisa `src/lib/constants/`.

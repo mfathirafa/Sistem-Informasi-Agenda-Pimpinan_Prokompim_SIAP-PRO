@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { JENIS_DOKUMEN_OPTIONS } from '@/lib/constants/status-dokumen';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
 
 export type KegiatanInput = {
@@ -20,12 +20,6 @@ export type KegiatanInput = {
   linkUpload?: string;
   catatan?: string;
 };
-
-export type ActionResult = { ok: boolean; error?: string };
-
-function canEditRole(role: string | undefined) {
-  return role === 'ADMIN' || role === 'STAFF';
-}
 
 export async function createKegiatan(data: KegiatanInput): Promise<ActionResult> {
   const user = await getCurrentUser();

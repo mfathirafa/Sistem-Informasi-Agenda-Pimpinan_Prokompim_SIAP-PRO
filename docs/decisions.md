@@ -13,11 +13,13 @@
 | 2026-07-22 | Optimistic UI update setelah Server Action | Client components langsung update state lokal setelah Server Action berhasil, tanpa menunggu revalidate/re-fetch dari server. Lebih responsif untuk aplikasi internal |
 | 2026-07-22 | Prisma singleton pattern di Vercel | `src/lib/prisma.ts` menyimpan instance di `globalThis` untuk menghindari pembukaan koneksi baru di setiap request selama development (hot reload) |
 | 2026-07-22 | Nested create untuk kegiatan + dokumen | Saat membuat kegiatan baru, 7 dokumen wajib dibuat secara atomik menggunakan `prisma.kegiatan.create({ data: { dokumen: { create: [...] } } })` |
+| 2026-07-23 | Centralisasi shared utilities auth | `canEditRole()` dan `ActionResult` type sebelumnya didefinisikan ulang di setiap file action. Dipindahkan ke `src/lib/auth.ts` sebagai single source of truth — mengurangi duplikasi dan potensi inkonsistensi |
+| 2026-07-23 | AUTH_SECRET fail-fast (tidak ada fallback default) | Sebelumnya menggunakan fallback string hardcoded saat env tidak ter-set. Diubah menjadi throw error agar kegagalan konfigurasi terdeteksi sejak awal, bukan diam-diam menggunakan secret lemah |
 
 ## Decisions yang Ditunda
 
 | Item | Status | Catatan |
 |------|--------|---------|
 | Supabase Storage untuk file upload | Belum | Saat ini hanya menyimpan link dokumen (Google Drive/external). Akan dipertimbangkan ketika kebutuhan upload file nyata |
-| Query layer terpisah (lib/queries/) | Belum | Saat ini query masih inline di Server Components. Akan dipertimbangkan ketika query mulai dipakai di banyak tempat |
+| Query layer terpisah (lib/queries/) | 🟡 Sebagian | `lib/queries/kegiatan.ts` sudah dibuat untuk menyimpan query detail kegiatan yang dipakai di route `worksheet/[id]`. Namun mayoritas query masih inline di masing-masing page |
 | Activity Log | Belum | Belum ada di codebase |
