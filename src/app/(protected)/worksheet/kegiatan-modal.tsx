@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
-import type { KegiatanRow } from './worksheet-client';
+import type { KegiatanRow } from '@/lib/worksheet';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
 

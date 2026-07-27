@@ -7,6 +7,7 @@ import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } fr
 import type { SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
 import KegiatanModal from './kegiatan-modal';
+import { findPetugasLabel, type KegiatanRow } from '@/lib/worksheet';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -18,26 +19,6 @@ function toDateInput(d: Date | string) {
   const dt = new Date(d);
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
-
-export type KegiatanRow = {
-  id: string;
-  namaKegiatan: string;
-  tanggal: string;
-  waktu: string | null;
-  tempat: string;
-  pejabat: string;
-  leadingSectorId: string;
-  leadingSectorNama: string;
-  statusSambutan: 'SUDAH' | 'BELUM';
-  statusKegiatan: (typeof STATUS_KEGIATAN_OPTIONS)[number];
-  petugasProtokolId: string | null;
-  petugasProtokolNama: string | null;
-  petugasLiputanId: string | null;
-  petugasLiputanNama: string | null;
-  linkUpload: string | null;
-  catatan: string | null;
-  isLembur: boolean;
-};
 
 export default function WorksheetClient({
   initialData,
@@ -74,8 +55,8 @@ export default function WorksheetClient({
   }, [items]);
 
   const findLeadingSector = (id: string) => leadingSectorOptions.find((o) => o.id === id)?.label || '';
-  const findPetugasProtokol = (id: string | null | undefined) => (id ? petugasProtokolOptions.find((o) => o.id === id)?.label || '' : '');
-  const findPetugasLiputan = (id: string | null | undefined) => (id ? petugasLiputanOptions.find((o) => o.id === id)?.label || '' : '');
+  const findPetugasProtokol = (id: string | null | undefined) => findPetugasLabel(petugasProtokolOptions, id);
+  const findPetugasLiputan = (id: string | null | undefined) => findPetugasLabel(petugasLiputanOptions, id);
 
   const filtered = useMemo(() => {
     return items
