@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Table2, UserCog, LogOut, Users, Building2 } from 'lucide-react';
+import ConfirmDialog from '@/components/confirm-dialog';
 import SealLogo from '@/components/seal-logo';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionPayload } from '@/lib/auth';
@@ -21,6 +23,8 @@ export default function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const logoutFormRef = useRef<HTMLFormElement>(null);
 
   const navItems = [
     { href: '/dashboard', label: 'Dasbor', icon: <LayoutDashboard size={16} /> },
@@ -48,11 +52,14 @@ export default function AppShell({
               <p className="text-sm font-medium leading-tight">{user.nama}</p>
               <p className="text-xs text-white/60 leading-tight">{ROLE_LABELS[user.role]}</p>
             </div>
-            <form action={logoutAction}>
-              <button type="submit" aria-label="Keluar" className="p-2 rounded-lg hover:bg-white/10">
-                <LogOut size={17} />
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => setShowLogoutConfirm(true)}
+              aria-label="Keluar"
+              className="p-2 rounded-lg hover:bg-white/10"  
+            >
+               <LogOut size={17} />
+            </button>
           </div>
         </div>
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-white/10 overflow-x-auto">
@@ -73,6 +80,23 @@ export default function AppShell({
         </nav>
       </header>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">{children}</main>
+
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        title="Keluar dari akun?"
+        message="Anda akan dikembalikan ke halaman login."
+        confirmLabel="Keluar"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          logoutFormRef.current?.requestSubmit();
+        }}
+        onCancel={() => setShowLogoutConfirm(false)}
+        />
+        <form 
+          ref={logoutFormRef} 
+          action={logoutAction} 
+          className="hidden" 
+        />
     </div>
   );
 }

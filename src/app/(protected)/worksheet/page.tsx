@@ -12,22 +12,26 @@ export default async function WorksheetPage() {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-    const [kegiatan, petugas, leadingSectors] = await Promise.all([
+    const [kegiatan, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
         where: {
-          tanggal: { gte: threeMonthsAgo }, // <-- Filter batas waktu
+          tanggal: { gte: threeMonthsAgo },
         },
         orderBy: { tanggal: 'asc' },
         include: { leadingSector: true, petugasProtokol: true, petugasLiputan: true },
       }),
-      prisma.petugas.findMany({ 
-        where: { statusAktif: true }, 
-        orderBy: { nama: 'asc' } 
+      prisma.petugas.findMany({
+        where: { statusAktif: true, kategori: 'PROTOKOL' },
+        orderBy: { nama: 'asc' }
       }),
-      prisma.leadingSector.findMany({ 
-        orderBy: { nama: 'asc' } 
+      prisma.petugas.findMany({
+        where: { statusAktif: true, kategori: 'LIPUTAN' },
+        orderBy: { nama: 'asc' }
       }),
-    ]);
+      prisma.leadingSector.findMany({
+        orderBy: { nama: 'asc' }
+      }),
+    ])
 
     const data = kegiatan.map((k) => ({
       id: k.id,
@@ -46,15 +50,17 @@ export default async function WorksheetPage() {
       petugasLiputanNama: k.petugasLiputan?.nama || null,
       linkUpload: k.linkUpload,
       catatan: k.catatan,
+      isLembur: k.isLembur,
     }));
 
     return (
       <WorksheetClient
         initialData={data}
         canEdit={canEdit}
-        petugasOptions={petugas.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
+        petugasProtokolOptions={petugasProtokol.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
+        petugasLiputanOptions={petugasLiputan.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
         leadingSectorOptions={leadingSectors.map((l) => ({ id: l.id, label: l.nama }))}
-      />
+        />
     );
   } catch (error) {
     console.error('[WORKSHEET_PAGE_ERROR]', error);

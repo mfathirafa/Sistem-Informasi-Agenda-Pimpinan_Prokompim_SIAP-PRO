@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } from '@/app/actions/kegiatan';
 import type { SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
@@ -35,17 +36,20 @@ export type KegiatanRow = {
   petugasLiputanNama: string | null;
   linkUpload: string | null;
   catatan: string | null;
+  isLembur: boolean;
 };
 
 export default function WorksheetClient({
   initialData,
   canEdit,
-  petugasOptions,
+  petugasProtokolOptions,
+  petugasLiputanOptions,
   leadingSectorOptions,
 }: {
   initialData: KegiatanRow[];
   canEdit: boolean;
-  petugasOptions: SearchableOption[];
+  petugasProtokolOptions: SearchableOption[];
+  petugasLiputanOptions: SearchableOption[];
   leadingSectorOptions: SearchableOption[];
 }) {
   const [items, setItems] = useState<KegiatanRow[]>(initialData);
@@ -54,6 +58,7 @@ export default function WorksheetClient({
   const [filterStatus, setFilterStatus] = useState('Semua');
   const [filterStatusKegiatan, setFilterStatusKegiatan] = useState('Semua');
   const [filterPejabat, setFilterPejabat] = useState('Semua');
+  const [filterLembur, setFilterLembur] = useState('Semua');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KegiatanRow | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -69,7 +74,8 @@ export default function WorksheetClient({
   }, [items]);
 
   const findLeadingSector = (id: string) => leadingSectorOptions.find((o) => o.id === id)?.label || '';
-  const findPetugas = (id: string | null | undefined) => (id ? petugasOptions.find((o) => o.id === id)?.label || '' : '');
+  const findPetugasProtokol = (id: string | null | undefined) => (id ? petugasProtokolOptions.find((o) => o.id === id)?.label || '' : '');
+  const findPetugasLiputan = (id: string | null | undefined) => (id ? petugasLiputanOptions.find((o) => o.id === id)?.label || '' : '');
 
   const filtered = useMemo(() => {
     return items
@@ -83,10 +89,12 @@ export default function WorksheetClient({
           const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
           if (key !== filterBulan) return false;
         }
+        if (filterLembur === 'Ya' && !k.isLembur) return false;
+        if (filterLembur === 'Tidak' && k.isLembur) return false;
         return true;
       })
       .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
-  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan]);
+  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan, filterLembur]);
 
   const openAdd = () => {
     setEditingItem(null);
@@ -111,11 +119,12 @@ export default function WorksheetClient({
                     waktu: data.waktu || null,
                     leadingSectorNama: findLeadingSector(data.leadingSectorId),
                     petugasProtokolId: data.petugasProtokolId || null,
-                    petugasProtokolNama: findPetugas(data.petugasProtokolId),
+                    petugasProtokolNama: findPetugasProtokol(data.petugasProtokolId),
                     petugasLiputanId: data.petugasLiputanId || null,
-                    petugasLiputanNama: findPetugas(data.petugasLiputanId),
+                    petugasLiputanNama: findPetugasLiputan(data.petugasLiputanId),
                     linkUpload: data.linkUpload || null,
                     catatan: data.catatan || null,
+                    isLembur: data.isLembur ?? false,
                   }
                 : k
             )
@@ -135,11 +144,12 @@ export default function WorksheetClient({
               waktu: data.waktu || null,
               leadingSectorNama: findLeadingSector(data.leadingSectorId),
               petugasProtokolId: data.petugasProtokolId || null,
-              petugasProtokolNama: findPetugas(data.petugasProtokolId),
+              petugasProtokolNama: findPetugasProtokol(data.petugasProtokolId),
               petugasLiputanId: data.petugasLiputanId || null,
-              petugasLiputanNama: findPetugas(data.petugasLiputanId),
+              petugasLiputanNama: findPetugasLiputan(data.petugasLiputanId),
               linkUpload: data.linkUpload || null,
               catatan: data.catatan || null,
+              isLembur: data.isLembur ?? false,
             },
           ]);
           setModalOpen(false);
@@ -159,8 +169,8 @@ export default function WorksheetClient({
     });
   };
 
-  const exportCSV = () => {
-    const headers = [
+  const exportExcel = () => {
+    const header = [
       'Tanggal',
       'Nama Kegiatan',
       'Tempat',
@@ -172,30 +182,38 @@ export default function WorksheetClient({
       'Petugas Liputan',
       'Link Upload',
       'Catatan',
+      'Lembur',
     ];
     const rows = filtered.map((k) => [
-      toDateInput(k.tanggal),
+      new Date(k.tanggal),
       k.namaKegiatan,
       k.tempat,
       k.pejabat,
       k.leadingSectorNama,
-      k.statusSambutan,
+      k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
       STATUS_KEGIATAN_LABEL[k.statusKegiatan],
       k.petugasProtokolNama || '',
       k.petugasLiputanNama || '',
       k.linkUpload || '',
       k.catatan || '',
+      k.isLembur ? 'Ya' : 'Tidak',
     ]);
-    const csv = [headers, ...rows]
-      .map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `worksheet-spj-${toDateInput(new Date())}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+
+    // Auto-Width
+    const colWidths = header.map((_, ci) =>{
+      const maxLen = Math.max(
+        header[ci].length,
+        ...rows.map((r) => String(r[ci] ?? '').length),
+      );
+      return { wch: Math.min(maxLen + 2, 40) };
+    });
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Worksheet');
+    XLSX.writeFile(wb, `worksheet-spj-${toDateInput(new Date())}.xlsx`);
   };
 
   return (
@@ -263,11 +281,20 @@ export default function WorksheetClient({
               </option>
             ))}
           </select>
+          <select
+            value={filterLembur}
+            onChange={(e) => setFilterLembur(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-app text-sm"
+          >
+            <option value="Semua">Semua Lembur</option>
+            <option value="Ya">Lembur</option>
+            <option value="Tidak">Tidak Lembur</option>
+          </select>
           <button
-            onClick={exportCSV}
+            onClick={exportExcel}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
           >
-            <Download size={15} /> CSV
+            <Download size={15} /> Excel
           </button>
           {canEdit && (
             <button
@@ -295,13 +322,14 @@ export default function WorksheetClient({
                 <th className="px-4 py-3 font-medium">Petugas Protokol</th>
                 <th className="px-4 py-3 font-medium">Petugas Liputan</th>
                 <th className="px-4 py-3 font-medium">Dokumentasi</th>
+                <th className="px-4 py-3 font-medium">Lembur</th>
                 {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 11 : 10} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 12 : 11} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -337,7 +365,7 @@ export default function WorksheetClient({
                     <td className="px-4 py-3 text-muted">{k.petugasLiputanNama || '-'}</td>
                     <td className="px-4 py-3">
                       {k.linkUpload ? (
-                        <a /* <-- BAGIAN INI YANG DIPERBAIKI */
+                        <a
                           href={k.linkUpload}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -345,6 +373,13 @@ export default function WorksheetClient({
                         >
                           <LinkIcon size={13} /> Buka
                         </a>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {k.isLembur ? (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium badge-menunggu-persetujuan">Ya</span>
                       ) : (
                         <span className="text-muted">-</span>
                       )}
@@ -383,7 +418,8 @@ export default function WorksheetClient({
           onClose={() => setModalOpen(false)}
           onSave={handleSave}
           saving={isPending}
-          petugasOptions={petugasOptions}
+          petugasProtokolOptions={petugasProtokolOptions}
+          petugasLiputanOptions={petugasLiputanOptions}
           leadingSectorOptions={leadingSectorOptions}
         />
       )}

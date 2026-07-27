@@ -19,6 +19,7 @@ export type KegiatanInput = {
   petugasLiputanId?: string | null;
   linkUpload?: string;
   catatan?: string;
+  isLembur?: boolean;
 };
 
 export async function createKegiatan(data: KegiatanInput): Promise<ActionResult> {

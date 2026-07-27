@@ -22,14 +22,16 @@ export default function KegiatanModal({
   onClose,
   onSave,
   saving,
-  petugasOptions,
+  petugasProtokolOptions,
+  petugasLiputanOptions,
   leadingSectorOptions,
 }: {
   item: KegiatanRow | null;
   onClose: () => void;
   onSave: (data: KegiatanInput) => void;
   saving: boolean;
-  petugasOptions: SearchableOption[];
+  petugasProtokolOptions: SearchableOption[];
+  petugasLiputanOptions: SearchableOption[];
   leadingSectorOptions: SearchableOption[];
 }) {
   const [form, setForm] = useState<KegiatanInput>(() =>
@@ -47,6 +49,7 @@ export default function KegiatanModal({
           petugasLiputanId: item.petugasLiputanId,
           linkUpload: item.linkUpload || '',
           catatan: item.catatan || '',
+          isLembur: item.isLembur,
         }
       : {
           namaKegiatan: '',
@@ -61,9 +64,13 @@ export default function KegiatanModal({
           petugasLiputanId: null,
           linkUpload: '',
           catatan: '',
+          isLembur: false,
         }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCustomPejabat, setIsCustomPejabat] = useState(
+    () => item != null && !PEJABAT_OPTIONS.includes(item.pejabat),
+  );
 
   const update = <K extends keyof KegiatanInput>(field: K, value: KegiatanInput[K]) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -75,6 +82,7 @@ export default function KegiatanModal({
     if (!form.tanggal.trim()) errs.tanggal = 'Wajib diisi';
     if (!form.tempat.trim()) errs.tempat = 'Wajib diisi';
     if (!form.leadingSectorId) errs.leadingSectorId = 'Wajib dipilih';
+    if (isCustomPejabat && !form.pejabat.trim()) errs.pejabat = 'Nama pejabat wajib diisi';
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -156,8 +164,16 @@ export default function KegiatanModal({
             <div>
               <label className="block text-sm font-medium mb-1.5">Pejabat</label>
               <select
-                value={form.pejabat}
-                onChange={(e) => update('pejabat', e.target.value)}
+                value={isCustomPejabat ? 'Lainnya' : form.pejabat}
+                onChange={(e) => {
+                  if (e.target.value === 'Lainnya') {
+                    setIsCustomPejabat(true);
+                    update('pejabat', '');
+                  } else {
+                    setIsCustomPejabat(false);
+                    update('pejabat', e.target.value);
+                  }
+                }}
                 className="w-full px-3 py-2 rounded-lg border border-app text-sm"
               >
                 {PEJABAT_OPTIONS.map((p) => (
@@ -166,6 +182,16 @@ export default function KegiatanModal({
                   </option>
                 ))}
               </select>
+              {isCustomPejabat && (
+                <input
+                  autoFocus
+                  value={form.pejabat}
+                  onChange={(e) => update('pejabat', e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-app text-sm mt-2"
+                  placeholder="Ketik nama pejabat..."
+                />
+              )}
+              {errors.pejabat && <p className="text-xs text-red-600 mt-1">{errors.pejabat}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">Status Sambutan</label>
@@ -200,11 +226,20 @@ export default function KegiatanModal({
               </p>
             )}
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.isLembur ?? false}
+              onChange={(e) => update('isLembur', e.target.checked)}
+              className="rounded border-app"
+            />
+            Lembur
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1.5">Petugas Protokol</label>
               <SearchableSelect
-                options={petugasOptions}
+                options={petugasProtokolOptions}
                 value={form.petugasProtokolId || null}
                 onChange={(id) => update('petugasProtokolId', id)}
                 placeholder="Cari nama petugas..."
@@ -213,7 +248,7 @@ export default function KegiatanModal({
             <div>
               <label className="block text-sm font-medium mb-1.5">Petugas Liputan</label>
               <SearchableSelect
-                options={petugasOptions}
+                options={petugasLiputanOptions}
                 value={form.petugasLiputanId || null}
                 onChange={(id) => update('petugasLiputanId', id)}
                 placeholder="Cari nama petugas..."

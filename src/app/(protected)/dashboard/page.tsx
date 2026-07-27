@@ -17,7 +17,11 @@
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
 
-      const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+      const rangeConfig = {
+        startOffset: -3,
+        monthCount: 6,
+      };
+      const rangeStartDate = new Date(today.getFullYear(), today.getMonth() + rangeConfig.startOffset, 1);
 
       const [
         bulanIniCount,
@@ -41,17 +45,17 @@
           take: 5,
         }),
         prisma.kegiatan.findMany({
-          where: { tanggal: { gte: sixMonthsAgo } },
+          where: { tanggal: { gte: rangeStartDate } },
           select: { tanggal: true }
         })
       ]);
 
       const chartMap: Record<string, { bulan: string; jumlah: number }> = {};
-      const now = new Date();
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      for (let i = 0; i < rangeConfig.monthCount; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() + rangeConfig.startOffset + i, 1);
         const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-        chartMap[key] = { bulan: d.toLocaleDateString('id-ID', { month: 'short' }), jumlah: 0 };
+        const label = d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
+        chartMap[key] = { bulan: label, jumlah:0 };
       }
 
       chartDataRaw.forEach((k) => {

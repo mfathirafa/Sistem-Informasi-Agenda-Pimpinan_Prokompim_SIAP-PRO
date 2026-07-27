@@ -43,17 +43,18 @@ async function main() {
   }
 
   const petugasData = [
-    { nama: 'Rian', jabatan: 'Staf Protokol', noHp: '081234500001' },
-    { nama: 'Dewi', jabatan: 'Staf Protokol', noHp: '081234500002' },
-    { nama: 'Ahmad', jabatan: 'Staf Protokol', noHp: '081234500003' },
-    { nama: 'Aron', jabatan: 'Staf Liputan', noHp: '081234500004' },
-    { nama: 'Fajar', jabatan: 'Staf Liputan', noHp: '081234500005' },
-    { nama: 'Dimas', jabatan: 'Staf Liputan', noHp: '081234500006' },
+    { nama: 'Rian', jabatan: 'Staf Protokol', noHp: '081234500001', kategori: 'PROTOKOL' as const },
+    { nama: 'Dewi', jabatan: 'Staf Protokol', noHp: '081234500002', kategori: 'PROTOKOL' as const },
+    { nama: 'Ahmad', jabatan: 'Staf Protokol', noHp: '081234500003', kategori: 'PROTOKOL' as const },
+    { nama: 'Aron', jabatan: 'Staf Liputan', noHp: '081234500004', kategori: 'LIPUTAN' as const},
+    { nama: 'Fajar', jabatan: 'Staf Liputan', noHp: '081234500005', kategori: 'LIPUTAN' as const },
+    { nama: 'Dimas', jabatan: 'Staf Liputan', noHp: '081234500006', kategori: 'LIPUTAN' as const },
   ];
   const petugasList: Record<string, string> = {};
   for (const p of petugasData) {
     const existing = await prisma.petugas.findFirst({ where: { nama: p.nama } });
     if (existing) {
+      await prisma.petugas.update({ where: { id: existing.id }, data: { kategori: p.kategori } });
       petugasList[p.nama] = existing.id;
     } else {
       const created = await prisma.petugas.create({ data: p });
@@ -84,6 +85,7 @@ async function main() {
           statusSambutan: StatusSambutan.BELUM,
           petugasProtokolId: petugasList['Rian'],
           petugasLiputanId: petugasList['Aron'],
+          isLembur: true,
         },
         {
           namaKegiatan: 'Peresmian Jembatan Desa Kalibuntu',

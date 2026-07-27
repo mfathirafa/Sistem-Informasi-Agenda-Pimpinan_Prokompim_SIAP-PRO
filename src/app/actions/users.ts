@@ -17,7 +17,18 @@ export async function createUser(data: CreateUserInput): Promise<ActionResult> {
     return { ok: false, error: 'Hanya admin yang bisa mengelola pengguna.' };
   }
 
-  const existing = await prisma.user.findUnique({ where: { username: data.username } });
+  const username = data.username.trim();
+  if(username.length < 3) {
+    return { ok: false, error:'Nama pengguna minimal 3 karakter.'};
+  }
+  if(data.password.length < 6) {
+    return { ok: false, error:'Kata sandi minimal 6 karakter.' };
+  }
+  if(!data.nama.trim()) {
+    return { ok: false, error:'Nama wajib diisi.' };
+  }
+
+  const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
     return { ok: false, error: 'Nama pengguna sudah dipakai.' };
   }

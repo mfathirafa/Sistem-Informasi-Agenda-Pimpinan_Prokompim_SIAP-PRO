@@ -24,6 +24,7 @@ export default async function DetailKegiatanPage({ params }: { params: Promise<{
           tempat: kegiatan.tempat,
           pejabat: kegiatan.pejabat,
           leadingSectorNama: kegiatan.leadingSector.nama,
+          isLembur: kegiatan.isLembur,
         }}
         dokumen={dokumenSorted.map((d) => ({
           id: d.id,

@@ -22,7 +22,11 @@
 |-------|--------|---------|
 | Activity Log | ⏳ Belum | Belum ada implementasi activity log di codebase |
 | Dashboard Baru | ⏳ Belum | Dashboard saat ini masih basic. "Dashboard Baru" kemungkinan dashboard lanjutan dengan metrik lebih lengkap |
-| Export | 🟡 Sebagian | Export CSV sudah ada di Worksheet. Mungkin perlu format tambahan |
+| Export | 🟡 Sebagian | Export CSV sudah ada di Worksheet. Rencana: upgrade ke XLSX (sheetjs) dengan auto-width, header bold, format tanggal |
+| Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + form checkbox + kolom tabel + detail + CSV + seed. Belum migration |
+| Dashboard Flex Range | ⏳ Belum | Grafik 6 bulan: -3 bulan, bulan ini, +2 bulan. Struktur extensible untuk custom date range |
+| Filter Petugas per Divisi | ⏳ Belum | Dropdown Petugas Protokol/Liputan hanya menampilkan petugas sesuai divisi |
+| Multi Select Petugas | ⏳ Belum | Desain awal: ubah field relasi ke array/relation table untuk multi petugas per divisi |
 
 ## Fitur yang Ada di Project tapi Belum di Roadmap
 
@@ -35,6 +39,13 @@
 
 ## Changelog
 
+### 24 Juli 2026 — Sesi 5: UI Improvements & Lembur Field
+
+| Temuan | Status | Catatan |
+|--------|--------|---------|
+| R1: Konfirmasi Logout | ✅ Selesai | `confirm-dialog.tsx` reusable component + animasi + aksesibilitas (role=dialog, aria-modal, Escape, focus mgmt) + loading state |
+| R2: Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + form checkbox + kolom tabel + detail + CSV + seed. Belum migration |
+
 ### 23 Juli 2026 — Sesi 4: Architecture Cleanup
 
 | Temuan | Status | Catatan |
@@ -43,6 +54,6 @@
 | H2: `canEditRole()` duplikasi | ✅ Fixed | Dipindahkan ke `lib/auth.ts`, semua action mengimport dari satu sumber |
 | H3: Action import konsisten | ✅ Fixed | `kegiatan.ts`, `petugas.ts`, `leading-sector.ts` semua pakai `canEditRole()` dari `@/lib/auth` |
 | H4: `ActionResult` duplikasi | ✅ Fixed | Dipindahkan ke `lib/auth.ts`, semua 4 action files mengimport dari satu sumber |
-| M1: Error handling page | 🟡 Partial | `dashboard/page.tsx` dan `master-petugas/page.tsx` sudah ditambah try/catch. 2 page lainnya (master-leading-sector, users) belum |
-| L1: setTimeout cleanup | ⏳ Belum | `searchable-select.tsx` handleBlur |
-| L2: "Lainnya" custom input | ⏳ Belum | `kegiatan-modal.tsx` pejabat select |
+| M1: Error handling page | ✅ Fixed | Semua 4 page sudah ditambah try/catch: `dashboard`, `master-petugas`, `master-leading-sector`, `users` |
+| L1: setTimeout cleanup | ✅ Fixed | `searchable-select.tsx` — tambah `useEffect` cleanup untuk `blurTimeout` saat unmount |
+| L2: "Lainnya" custom input | ✅ Fixed | `kegiatan-modal.tsx` — pejabat select sekarang support custom input "Lainnya" dengan validasi + edit mode sync |

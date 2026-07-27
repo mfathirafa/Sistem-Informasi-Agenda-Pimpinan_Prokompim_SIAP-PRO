@@ -56,13 +56,19 @@ model User {
   @@map("users")
 }
 
+enum KategoriPetugas {
+  PROTOKOL
+  LIPUTAN
+}
+
 model Petugas {
   id          String   @id @default(cuid())
   nama        String
   jabatan     String?
   noHp        String?
-  statusAktif Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  kategori    KategoriPetugas @default(PROTOKOL)
+  statusAktif Boolean         @default(true)
+  createdAt   DateTime        @default(now())
 
   kegiatanProtokol Kegiatan[] @relation("PetugasProtokolRelation")
   kegiatanLiputan  Kegiatan[] @relation("PetugasLiputanRelation")
@@ -96,6 +102,7 @@ model Kegiatan {
   petugasLiputan    Petugas?       @relation("PetugasLiputanRelation", fields: [petugasLiputanId], references: [id])
   linkUpload        String?
   catatan           String?
+  isLembur          Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   dokumen           Dokumen[]

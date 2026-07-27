@@ -19,6 +19,7 @@ type KegiatanDetail = {
   tempat: string;
   pejabat: string;
   leadingSectorNama: string;
+  isLembur: boolean;
 };
 
 type DokumenDetail = {
@@ -86,6 +87,10 @@ export default function DetailClient({
           <div>
             <dt className="text-muted">Waktu</dt>
             <dd className="font-medium">{kegiatan.waktu || '-'}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Lembur</dt>
+            <dd className="font-medium">{kegiatan.isLembur ? 'Ya' : 'Tidak'}</dd>
           </div>
         </dl>
       </div>
