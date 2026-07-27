@@ -12,9 +12,9 @@
 
 | Fitur | Status | Catatan |
 |-------|--------|---------|
-| Workflow Status Manajemen | 🟡 Sebagian | Enum status sudah di Prisma schema + constants + UI dropdown di modal. Namun belum ada logika transisi status (validasi urutan workflow, status blocking, dsb.) |
-| Manajemen Dokumen | 🟡 Sebagian | Model Dokumen + backfill script + auto-create 7 dokumen saat tambah kegiatan sudah ada. Namun belum ada UI khusus untuk upload/manajemen dokumen per kegiatan |
-| Detail Worksheet | ✅ Selesai | Route `worksheet/[id]` + `detail-client.tsx` + `lib/queries/kegiatan.ts` sudah dibuat. Fitur read-only (lihat detail kegiatan + progress dokumen). Edit/upload dokumen belum ada |
+| Workflow Status Manajemen | ✅ Selesai | State machine di `lib/workflow.ts` + validasi transisi di `updateKegiatan()` |
+| Manajemen Dokumen | ✅ Selesai | Edit inline status/link/catatan per dokumen via server action `updateDokumen()` |
+| Detail Worksheet | ✅ Selesai | Route `worksheet/[id]` + inline edit dokumen + progress bar |
 
 ## Sprint 3
 
@@ -22,11 +22,12 @@
 |-------|--------|---------|
 | Activity Log | ⏳ Belum | Belum ada implementasi activity log di codebase |
 | Dashboard Baru | ⏳ Belum | Dashboard saat ini masih basic. "Dashboard Baru" kemungkinan dashboard lanjutan dengan metrik lebih lengkap |
-| Export | 🟡 Sebagian | Export CSV sudah ada di Worksheet. Rencana: upgrade ke XLSX (sheetjs) dengan auto-width, header bold, format tanggal |
-| Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + form checkbox + kolom tabel + detail + CSV + seed. Belum migration |
-| Dashboard Flex Range | ⏳ Belum | Grafik 6 bulan: -3 bulan, bulan ini, +2 bulan. Struktur extensible untuk custom date range |
-| Filter Petugas per Divisi | ⏳ Belum | Dropdown Petugas Protokol/Liputan hanya menampilkan petugas sesuai divisi |
-| Multi Select Petugas | ⏳ Belum | Desain awal: ubah field relasi ke array/relation table untuk multi petugas per divisi |
+| Export | ✅ Selesai | Upgrade ke XLSX (SheetJS) dengan auto-width, format tanggal DD/MM/YYYY, freeze header |
+| Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + migration + form checkbox + kolom tabel + filter (Semua/Ya/Tidak) + detail + export |
+| Dashboard Flex Range | ✅ Selesai | Grafik 6 bulan (-3, now, +2) dengan `rangeConfig` object, siap custom date range |
+| Filter Petugas per Divisi | ✅ Selesai | Enum `KategoriPetugas` + field `kategori` di Petugas, query terpisah Protokol/Liputan |
+| Multi Select Petugas | 🟡 Sebagian | Kode type + lookup utility sudah dipersiapkan di `lib/worksheet.ts`. Implementasi multi-select masih menunggu |
+| Seed Data | ✅ Selesai | 20 data kegiatan realistis dengan variasi tanggal, pejabat, status, lembur, petugas |
 
 ## Fitur yang Ada di Project tapi Belum di Roadmap
 
@@ -45,6 +46,37 @@
 |--------|--------|---------|
 | R1: Konfirmasi Logout | ✅ Selesai | `confirm-dialog.tsx` reusable component + animasi + aksesibilitas (role=dialog, aria-modal, Escape, focus mgmt) + loading state |
 | R2: Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + form checkbox + kolom tabel + detail + CSV + seed. Belum migration |
+
+### 27 Juli 2026 — Sesi 6: Fitur Lengkap + Seed Data
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| R1: Konfirmasi Logout | ✅ Selesai | `confirm-dialog.tsx` reusable + native Server Action pattern (`<form action={logoutAction}>`) |
+| R2: Kolom Lembur + Filter | ✅ Selesai | `isLembur` migration + filter dropdown (Semua/Ya/Tidak) |
+| R3: Export Excel | ✅ Selesai | XLSX (SheetJS) gantikan CSV — auto-width, format tanggal, tanpa bold/freeze (CE limitation) |
+| R4: Dashboard Grafik | ✅ Selesai | rangeConfig `{startOffset:-3, monthCount:6}`, label tahun 2-digit |
+| R5: Filter Petugas Protokol | ✅ Selesai | Enum `KategoriPetugas` + field `kategori` di model Petugas |
+| R6: Filter Petugas Liputan | ✅ Selesai | Query terpisah Protokol/Liputan dari database |
+| R7: Persiapan Multi Petugas | ✅ Selesai | Type + lookup utility di `lib/worksheet.ts`, siap array migration |
+| R8: Seed Data | ✅ Selesai | 20 data realistis, -90 s/d +60 hari, 7 status kegiatan, variasi lembur & pejabat |
+
+### 27 Juli 2026 — Sesi 7: Workflow + Manajemen Dokumen
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Validasi Workflow Status | ✅ Selesai | `lib/workflow.ts` state machine + validasi di `updateKegiatan()` — transisi hanya maju 1 langkah |
+| Manajemen Dokumen | ✅ Selesai | `actions/dokumen.ts` + inline edit di `detail-client.tsx` — edit status/link/catatan per dokumen |
+
+**Decisions:**
+- Tidak perlu Prisma migration — schema Dokumen sudah lengkap (status, link, catatan)
+- Tidak ada file upload / Supabase Storage — hanya metadata + link Google Drive
+- Inline edit per dokumen (bukan modal) — konsisten dengan UX aplikasi
+- Progress dihitung dari helper `hitungProgressDokumen()` yang sudah ada
+
+**Files:**
+- `src/app/actions/dokumen.ts` — NEW: server action `updateDokumen()` dengan validasi URL + enum
+- `src/app/(protected)/worksheet/[id]/detail-client.tsx` — MODIFIED: view mode + edit mode per dokumen
+- `src/lib/workflow.ts` — NEW (Sesi 7 sebelumnya): state machine `canTransition()` + `validateTransition()`
 
 ### 23 Juli 2026 — Sesi 4: Architecture Cleanup
 

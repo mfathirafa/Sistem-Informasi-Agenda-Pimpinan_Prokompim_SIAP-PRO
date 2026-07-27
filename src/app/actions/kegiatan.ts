@@ -5,6 +5,7 @@ import { JENIS_DOKUMEN_OPTIONS } from '@/lib/constants/status-dokumen';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
+import { validateTransition } from '@/lib/workflow';
 
 export type KegiatanInput = {
   namaKegiatan: string;
@@ -55,6 +56,14 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   }
 
   try {
+    const existing = await prisma.kegiatan.findUnique({ where: { id }, select: { statusKegiatan: true } });
+    if (!existing) {
+      return { ok: false, error: 'Kegiatan tidak ditemukan.' };
+    }
+
+    const error = validateTransition(existing.statusKegiatan, data.statusKegiatan);
+    if (error) return { ok: false, error };
+
     await prisma.kegiatan.update({
       where: { id },
       data: { ...data, tanggal: new Date(data.tanggal) },
