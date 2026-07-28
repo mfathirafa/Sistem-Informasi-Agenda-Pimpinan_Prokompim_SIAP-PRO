@@ -52,6 +52,20 @@ enum JenisPenugasan {
   SPPD
 }
 
+enum Entity {
+  KEGIATAN
+  DOKUMEN
+  PETUGAS
+  LEADING_SECTOR
+  USER
+}
+
+enum ActionLog {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
@@ -59,6 +73,7 @@ model User {
   nama      String
   role      Role     @default(STAFF)
   createdAt DateTime @default(now())
+  activityLog ActivityLog[]
 
   @@map("users")
 }
@@ -139,4 +154,21 @@ model Dokumen {
 
   @@unique([kegiatanId, jenis])
   @@map("dokumen")
+}
+
+model ActivityLog {
+  id        String    @id @default(cuid())
+  entity    Entity
+  entityId  String
+  action    ActionLog
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  changes   Json?
+  createdAt DateTime  @default(now())
+
+  @@index([entity])
+  @@index([entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_log")
 }

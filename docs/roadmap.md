@@ -20,13 +20,13 @@
 
 | Fitur | Status | Catatan |
 |-------|--------|---------|
-| Activity Log | ⏳ Belum | Belum ada implementasi activity log di codebase |
+| Activity Log (Schema) | 🟡 Sebagian | Model + migration applied + helper `logActivity()` sudah ada, integrasi actions + UI belum |
 | Dashboard Baru | ⏳ Belum | Dashboard saat ini masih basic. "Dashboard Baru" kemungkinan dashboard lanjutan dengan metrik lebih lengkap |
 | Export | ✅ Selesai | Upgrade ke XLSX (SheetJS) dengan auto-width, format tanggal DD/MM/YYYY, freeze header |
 | Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + migration + form checkbox + kolom tabel + filter (Semua/Ya/Tidak) + detail + export |
 | Dashboard Flex Range | ✅ Selesai | Grafik 6 bulan (-3, now, +2) dengan `rangeConfig` object, siap custom date range |
 | Filter Petugas per Divisi | ✅ Selesai | Enum `KategoriPetugas` + field `kategori` di Petugas, query terpisah Protokol/Liputan |
-| Multi Select Petugas | 🟡 Sebagian | Kode type + lookup utility sudah dipersiapkan di `lib/worksheet.ts`. Implementasi multi-select masih menunggu |
+| Multi Petugas | ✅ Selesai | Junction table `KegiatanPetugas` + multi-select modal + validasi kategori (Sesi 8) |
 | Seed Data | ✅ Selesai | 20 data kegiatan realistis dengan variasi tanggal, pejabat, status, lembur, petugas |
 
 ## Fitur yang Ada di Project tapi Belum di Roadmap
@@ -89,3 +89,23 @@
 | M1: Error handling page | ✅ Fixed | Semua 4 page sudah ditambah try/catch: `dashboard`, `master-petugas`, `master-leading-sector`, `users` |
 | L1: setTimeout cleanup | ✅ Fixed | `searchable-select.tsx` — tambah `useEffect` cleanup untuk `blurTimeout` saat unmount |
 | L2: "Lainnya" custom input | ✅ Fixed | `kegiatan-modal.tsx` — pejabat select sekarang support custom input "Lainnya" dengan validasi + edit mode sync |
+
+### 28 Juli 2026 — Sesi 8: Refactor Domain Model
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Multi Petugas via Junction Table | ✅ Selesai | `KegiatanPetugas` + migration dengan data migration + seed |
+| Workflow 4 Status | ✅ Selesai | 7 → 4: `ACARA_MASUK → MENUNGGU_PENUGASAN → KEGIATAN_SELESAI → SPJ_SELESAI` |
+| StatusPublikasi | ✅ Selesai | Enum `BELUM_DIRILIS / DIRILIS` |
+| JenisPenugasan | ✅ Selesai | Enum `LEMBUR / SPPD` gantikan `isLembur` Boolean |
+| Fix Edit Multi Petugas | ✅ Selesai | Modal init dari data existing junction table |
+| Validasi Server-Side | ✅ Selesai | Field wajib + leading sector exists check |
+
+### 28 Juli 2026 — Sesi 9: Activity Log (Schema + Helper)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Schema Activity Log | ✅ Selesai | `Entity`/`ActionLog` enum + `ActivityLog` model + migration |
+| Helper `activity-log.ts` | ✅ Selesai | `logActivity()` + `getEntityName()` |
+| Integrasi ke Actions | ⏳ Belum | Belum dimulai |
+| UI Activity Log | ⏳ Belum | Belum ada page |
