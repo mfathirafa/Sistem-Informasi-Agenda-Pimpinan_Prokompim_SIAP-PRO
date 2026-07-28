@@ -39,7 +39,7 @@ export default function WorksheetClient({
   const [filterStatus, setFilterStatus] = useState('Semua');
   const [filterStatusKegiatan, setFilterStatusKegiatan] = useState('Semua');
   const [filterPejabat, setFilterPejabat] = useState('Semua');
-  const [filterLembur, setFilterLembur] = useState('Semua');
+  const [filterPenugasan, setFilterPenugasan] = useState('Semua');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KegiatanRow | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -55,8 +55,8 @@ export default function WorksheetClient({
   }, [items]);
 
   const findLeadingSector = (id: string) => leadingSectorOptions.find((o) => o.id === id)?.label || '';
-  const findPetugasProtokol = (id: string | null | undefined) => findPetugasLabel(petugasProtokolOptions, id);
-  const findPetugasLiputan = (id: string | null | undefined) => findPetugasLabel(petugasLiputanOptions, id);
+  const findPetugasProtokol = (ids: string[]) => findPetugasLabel(petugasProtokolOptions, ids);
+  const findPetugasLiputan = (ids: string[]) => findPetugasLabel(petugasLiputanOptions, ids);
 
   const filtered = useMemo(() => {
     return items
@@ -70,12 +70,11 @@ export default function WorksheetClient({
           const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
           if (key !== filterBulan) return false;
         }
-        if (filterLembur === 'Ya' && !k.isLembur) return false;
-        if (filterLembur === 'Tidak' && k.isLembur) return false;
+        if (filterPenugasan !== 'Semua' && k.jenisPenugasan !== filterPenugasan) return false;
         return true;
       })
       .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
-  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan, filterLembur]);
+  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan, filterPenugasan]);
 
   const openAdd = () => {
     setEditingItem(null);
@@ -99,13 +98,12 @@ export default function WorksheetClient({
                     ...data,
                     waktu: data.waktu || null,
                     leadingSectorNama: findLeadingSector(data.leadingSectorId),
-                    petugasProtokolId: data.petugasProtokolId || null,
-                    petugasProtokolNama: findPetugasProtokol(data.petugasProtokolId),
-                    petugasLiputanId: data.petugasLiputanId || null,
-                    petugasLiputanNama: findPetugasLiputan(data.petugasLiputanId),
+                    petugasProtokolIds: data.petugasProtokolIds,
+                    petugasProtokolNama: findPetugasProtokol(data.petugasProtokolIds),
+                    petugasLiputanIds: data.petugasLiputanIds,
+                    petugasLiputanNama: findPetugasLiputan(data.petugasLiputanIds),
                     linkUpload: data.linkUpload || null,
                     catatan: data.catatan || null,
-                    isLembur: data.isLembur ?? false,
                   }
                 : k
             )
@@ -124,13 +122,12 @@ export default function WorksheetClient({
               ...data,
               waktu: data.waktu || null,
               leadingSectorNama: findLeadingSector(data.leadingSectorId),
-              petugasProtokolId: data.petugasProtokolId || null,
-              petugasProtokolNama: findPetugasProtokol(data.petugasProtokolId),
-              petugasLiputanId: data.petugasLiputanId || null,
-              petugasLiputanNama: findPetugasLiputan(data.petugasLiputanId),
+              petugasProtokolIds: data.petugasProtokolIds,
+              petugasProtokolNama: findPetugasProtokol(data.petugasProtokolIds),
+              petugasLiputanIds: data.petugasLiputanIds,
+              petugasLiputanNama: findPetugasLiputan(data.petugasLiputanIds),
               linkUpload: data.linkUpload || null,
               catatan: data.catatan || null,
-              isLembur: data.isLembur ?? false,
             },
           ]);
           setModalOpen(false);
@@ -163,7 +160,8 @@ export default function WorksheetClient({
       'Petugas Liputan',
       'Link Upload',
       'Catatan',
-      'Lembur',
+      'Jenis Penugasan',
+      'Status Publikasi',
     ];
     const rows = filtered.map((k) => [
       new Date(k.tanggal),
@@ -177,7 +175,8 @@ export default function WorksheetClient({
       k.petugasLiputanNama || '',
       k.linkUpload || '',
       k.catatan || '',
-      k.isLembur ? 'Ya' : 'Tidak',
+      k.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD',
+      k.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis',
     ]);
     
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
@@ -263,13 +262,13 @@ export default function WorksheetClient({
             ))}
           </select>
           <select
-            value={filterLembur}
-            onChange={(e) => setFilterLembur(e.target.value)}
+            value={filterPenugasan}
+            onChange={(e) => setFilterPenugasan(e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Semua Lembur</option>
+            <option value="Semua">Semua Penugasan</option>
             <option value="Ya">Lembur</option>
-            <option value="Tidak">Tidak Lembur</option>
+            <option value="Tidak">SPPD</option>
           </select>
           <button
             onClick={exportExcel}
@@ -303,14 +302,15 @@ export default function WorksheetClient({
                 <th className="px-4 py-3 font-medium">Petugas Protokol</th>
                 <th className="px-4 py-3 font-medium">Petugas Liputan</th>
                 <th className="px-4 py-3 font-medium">Dokumentasi</th>
-                <th className="px-4 py-3 font-medium">Lembur</th>
+                <th className="px-4 py-3 font-medium">Penugasan</th>
+                <th className="px-4 py-3 font-medium">Publikasi</th>
                 {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 12 : 11} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 13 : 12} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -359,11 +359,14 @@ export default function WorksheetClient({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {k.isLembur ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium badge-menunggu-persetujuan">Ya</span>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${k.jenisPenugasan === 'LEMBUR' ? 'badge-menunggu-persetujuan' : 'badge-sudah'}`}>
+                        {k.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${k.statusPublikasi === 'DIRILIS' ? 'badge-sudah' : 'badge-belum'}`}>
+                        {k.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis'}
+                      </span>
                     </td>
                     {canEdit && (
                       <td className="px-4 py-3">

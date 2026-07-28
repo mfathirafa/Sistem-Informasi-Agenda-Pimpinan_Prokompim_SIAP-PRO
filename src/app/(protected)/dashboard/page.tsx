@@ -38,7 +38,7 @@
         prisma.kegiatan.count({ where: { statusSambutan: 'SUDAH' } }),
         prisma.kegiatan.count({ where: { statusSambutan: 'BELUM' } }),
         prisma.kegiatan.count({ where: { OR: [{ linkUpload: null }, { linkUpload: '' }] } }),
-        prisma.kegiatan.count({ where: { OR: [{ petugasProtokolId: null }, { petugasLiputanId: null }] } }),
+        prisma.kegiatan.count({ where: { petugas: { none: {} } } }),
         prisma.kegiatan.findMany({
           where: { tanggal: { gte: today } },
           orderBy: { tanggal: 'asc' },

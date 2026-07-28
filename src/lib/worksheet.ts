@@ -12,13 +12,14 @@ export type KegiatanRow = {
     leadingSectorNama: string;
     statusSambutan: 'SUDAH' | 'BELUM';
     statusKegiatan: (typeof STATUS_KEGIATAN_OPTIONS)[number];
-    petugasProtokolId: string | null;
-    petugasProtokolNama: string | null;
-    petugasLiputanId: string | null;
-    petugasLiputanNama: string | null;
+    petugasProtokolIds: string[];
+    petugasProtokolNama: string[];
+    petugasLiputanIds: string[];
+    petugasLiputanNama: string[];
     linkUpload: string | null;
     catatan: string | null;
-    isLembur: boolean;
+    jenisPenugasan: 'LEMBUR' | 'SPPD';
+    statusPublikasi: 'BELUM_DIRILIS' | 'DIRILIS';
 };
 
 /** Cari nama petugas dari daftar opsi berdasarkan ID.
@@ -26,8 +27,7 @@ export type KegiatanRow = {
  * `id: string | string[] | null | undefined` dan mapping array. */
 export function findPetugasLabel(
     options: SearchableOption[],
-    id: string | null | undefined,
-): string {
-    if (!id) return '';
-    return options.find((o) => o.id === id)?.label || '';
+    ids: string[],
+): string[] {
+    return ids.map((id) => options.find((o) => o.id === id)?.label || id).filter(Boolean);
 }

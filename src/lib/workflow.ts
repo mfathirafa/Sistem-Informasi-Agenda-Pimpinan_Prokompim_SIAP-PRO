@@ -2,12 +2,9 @@ import { StatusKegiatan } from "@prisma/client";
 
 // Urutan workflow - index menentukan posisi
 const WORKFLOW_ORDER = [
-    StatusKegiatan.DRAFT,
-    StatusKegiatan.MENUNGGU_PERSETUJUAN,
-    StatusKegiatan.DISETUJUI,
-    StatusKegiatan.DILAKSANAKAN,
-    StatusKegiatan.MENUNGGU_DOKUMEN,
-    StatusKegiatan.SPJ_DIPROSES,
+    StatusKegiatan.ACARA_MASUK,
+    StatusKegiatan.MENUNGGU_PENUGASAN,
+    StatusKegiatan.KEGIATAN_SELESAI,
     StatusKegiatan.SPJ_SELESAI,
 ] as const;
 

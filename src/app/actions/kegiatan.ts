@@ -16,11 +16,12 @@ export type KegiatanInput = {
   leadingSectorId: string;
   statusSambutan: 'SUDAH' | 'BELUM';
   statusKegiatan: StatusKegiatanValue;
-  petugasProtokolId?: string | null;
-  petugasLiputanId?: string | null;
+  petugasProtokolIds: string[];
+  petugasLiputanIds: string[];
   linkUpload?: string;
   catatan?: string;
-  isLembur?: boolean;
+  jenisPenugasan: 'LEMBUR' | 'SPPD';
+  statusPublikasi: 'BELUM_DIRILIS' | 'DIRILIS';
 };
 
 export async function createKegiatan(data: KegiatanInput): Promise<ActionResult> {
@@ -30,12 +31,47 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
   }
 
   try {
+    // Validasi field wajib
+    if (!data.namaKegiatan.trim()) return { ok: false, error: 'Nama kegiatan wajib diisi.' };
+    if (!data.tanggal) return { ok: false, error: 'Tanggal wajib diisi.' };
+    if (!data.tempat.trim()) return { ok: false, error: 'Tempat wajib diisi.' };
+    if (!data.leadingSectorId) return { ok: false, error: 'Leading sector wajib dipilih.' };
+
+    // Validasi leading sector ada di database
+    const leadingExists = await prisma.leadingSector.count({
+      where: { id: data.leadingSectorId },
+    });
+    if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
+    
+    const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
+
+    // Validasi petugas sesuai kategori
+    if (petugasProtokolIds.length > 0) {
+      const valid = await prisma.petugas.count({
+        where: { id: { in: petugasProtokolIds }, kategori: 'PROTOKOL' },
+      });
+      if (valid !== petugasProtokolIds.length) {
+        return { ok: false, error: 'Petugas Protokol tidak valid.' };
+      }
+    }
+    if (petugasLiputanIds.length > 0) {
+      const valid = await prisma.petugas.count({
+        where: { id: { in: petugasLiputanIds }, kategori: 'LIPUTAN'},
+      });
+      if (valid !== petugasLiputanIds.length) {
+        return { ok: false, error: 'Petugas Liputan tidak valid.'};
+      }
+    }
     await prisma.kegiatan.create({
       data: {
-        ...data,
+        ...kegiatanData,
         tanggal: new Date(data.tanggal),
-        // Nested create - Prisma menjalankan ini sebagai satu transaksi atomik;
-        // kegiatan + 7 dokumen wajib berhasil dibuat semua, atau gagal semua
+        petugas: {
+          create: [
+            ...petugasProtokolIds.map((id) => ({ petugasId: id })),
+            ...petugasLiputanIds.map((id) => ({ petugasId: id })),
+          ],
+        },
         dokumen: {
           create: JENIS_DOKUMEN_OPTIONS.map((jenis) => ({ jenis })),
         },
@@ -64,9 +100,51 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     const error = validateTransition(existing.statusKegiatan, data.statusKegiatan);
     if (error) return { ok: false, error };
 
+    // Validasi field wajib
+    if (!data.namaKegiatan.trim()) return { ok: false, error: 'Nama kegiatan wajib diisi.' };
+    if (!data.tanggal) return { ok: false, error: 'Tanggal wajib diisi.' };
+    if (!data.tempat.trim()) return { ok: false, error: 'Tempat wajib diisi.' };
+    if (!data.leadingSectorId) return { ok: false, error: 'Leading sector wajib dipilih.' };
+
+    // Validasi leading sector ada di database
+    const leadingExists = await prisma.leadingSector.count({
+      where: { id: data.leadingSectorId },
+    });
+    if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
+
+    const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
+
+    // Validasi petugas sesuai kategori
+    if (petugasProtokolIds.length > 0) {
+      const valid = await prisma.petugas.count({
+        where: { id: { in: petugasProtokolIds }, kategori: 'PROTOKOL'},
+      });
+      if (valid !== petugasProtokolIds.length) {
+        return { ok: false, error: 'Petugas Protokol tidak valid.' };
+      }
+    }
+    if (petugasLiputanIds.length > 0) {
+      const valid = await prisma.petugas.count({
+        where: { id: {in: petugasLiputanIds }, kategori: 'LIPUTAN' },
+      });
+      if (valid !== petugasLiputanIds.length) {
+        return { ok: false, error: 'Petugas Liputan tidak valid.' };
+      }
+    }
+
     await prisma.kegiatan.update({
       where: { id },
-      data: { ...data, tanggal: new Date(data.tanggal) },
+      data: { 
+        ...kegiatanData, 
+        tanggal: new Date(data.tanggal),
+        petugas: {
+          deleteMany: {},
+          create: [
+            ...petugasProtokolIds.map((id) => ({ petugasId: id })),
+            ...petugasLiputanIds.map((id) => ({ petugasId: id })), 
+          ],
+        },
+      },
     });
     revalidatePath('/worksheet');
     revalidatePath('/dashboard');

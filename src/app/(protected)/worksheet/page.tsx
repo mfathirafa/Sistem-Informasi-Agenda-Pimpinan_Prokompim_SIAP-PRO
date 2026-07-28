@@ -18,7 +18,7 @@ export default async function WorksheetPage() {
           tanggal: { gte: threeMonthsAgo },
         },
         orderBy: { tanggal: 'asc' },
-        include: { leadingSector: true, petugasProtokol: true, petugasLiputan: true },
+        include: { leadingSector: true, petugas: { include: { petugas: true } } },
       }),
       prisma.petugas.findMany({
         where: { statusAktif: true, kategori: 'PROTOKOL' },
@@ -44,13 +44,22 @@ export default async function WorksheetPage() {
       leadingSectorNama: k.leadingSector.nama,
       statusSambutan: k.statusSambutan,
       statusKegiatan: k.statusKegiatan,
-      petugasProtokolId: k.petugasProtokolId,
-      petugasProtokolNama: k.petugasProtokol?.nama || null,
-      petugasLiputanId: k.petugasLiputanId,
-      petugasLiputanNama: k.petugasLiputan?.nama || null,
+      petugasProtokolIds: k.petugas
+        .filter((p) => p.petugas.kategori === 'PROTOKOL')
+        .map((p) => p.petugas.id),
+      petugasProtokolNama: k.petugas
+        .filter((p) => p.petugas.kategori === 'PROTOKOL')
+        .map((p) => p.petugas.nama),
+      petugasLiputanIds: k.petugas
+        .filter((p) => p.petugas.kategori === 'LIPUTAN')
+        .map((p) => p.petugas.id),
+      petugasLiputanNama: k.petugas
+        .filter((p) => p.petugas.kategori === 'LIPUTAN')
+        .map((p) => p.petugas.nama),
       linkUpload: k.linkUpload,
       catatan: k.catatan,
-      isLembur: k.isLembur,
+      jenisPenugasan: k.jenisPenugasan,
+      statusPublikasi: k.statusPublikasi,
     }));
 
     return (

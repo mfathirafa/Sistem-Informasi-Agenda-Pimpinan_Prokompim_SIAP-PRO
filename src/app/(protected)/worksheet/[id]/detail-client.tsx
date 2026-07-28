@@ -22,7 +22,8 @@ type KegiatanDetail = {
   tempat: string;
   pejabat: string;
   leadingSectorNama: string;
-  isLembur: boolean;
+  jenisPenugasan: string;
+  statusPublikasi: string;
 };
 
 type DokumenDetail = {
@@ -141,7 +142,11 @@ export default function DetailClient({
           </div>
           <div>
             <dt className="text-muted">Lembur</dt>
-            <dd className="font-medium">{kegiatan.isLembur ? 'Ya' : 'Tidak'}</dd>
+            <dd className="font-medium">{kegiatan.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD'}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Status Publikasi</dt>
+            <dd className="font-medium">{kegiatan.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis'}</dd>
           </div>
         </dl>
       </div>

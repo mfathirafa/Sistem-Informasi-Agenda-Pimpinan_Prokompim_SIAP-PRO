@@ -45,11 +45,12 @@ export default function KegiatanModal({
           leadingSectorId: item.leadingSectorId,
           statusSambutan: item.statusSambutan,
           statusKegiatan: item.statusKegiatan,
-          petugasProtokolId: item.petugasProtokolId,
-          petugasLiputanId: item.petugasLiputanId,
+          petugasProtokolIds: item.petugasProtokolIds,
+          petugasLiputanIds: item.petugasLiputanIds,
           linkUpload: item.linkUpload || '',
           catatan: item.catatan || '',
-          isLembur: item.isLembur,
+          jenisPenugasan: item.jenisPenugasan,
+          statusPublikasi: item.statusPublikasi,
         }
       : {
           namaKegiatan: '',
@@ -59,12 +60,13 @@ export default function KegiatanModal({
           pejabat: 'Bupati',
           leadingSectorId: leadingSectorOptions[0]?.id || '',
           statusSambutan: 'BELUM',
-          statusKegiatan: 'DRAFT',
-          petugasProtokolId: null,
-          petugasLiputanId: null,
+          statusKegiatan: 'ACARA_MASUK',
+          petugasProtokolIds: [],
+          petugasLiputanIds: [],
           linkUpload: '',
           catatan: '',
-          isLembur: false,
+          jenisPenugasan: 'LEMBUR',
+          statusPublikasi: 'BELUM_DIRILIS',
         }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -226,33 +228,51 @@ export default function KegiatanModal({
               </p>
             )}
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isLembur ?? false}
-              onChange={(e) => update('isLembur', e.target.checked)}
-              className="rounded border-app"
-            />
-            Lembur
-          </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Jenis Penugasan</label>
+            <select 
+              value={form.jenisPenugasan} 
+              onChange={(e) => update('jenisPenugasan', e.target.value as 'LEMBUR' | 'SPPD')}
+              className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+            >
+              <option value="LEMBUR">Lembur</option>
+              <option value="SPPD">SPPD (Perjalanan Dinas)</option>
+            </select>
+          </div>
+           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1.5">Petugas Protokol</label>
-              <SearchableSelect
-                options={petugasProtokolOptions}
-                value={form.petugasProtokolId || null}
-                onChange={(id) => update('petugasProtokolId', id)}
-                placeholder="Cari nama petugas..."
-              />
+              <select
+                multiple
+                size={3}
+                value={form.petugasProtokolIds || []}
+                onChange={(e) => {
+                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
+                  update('petugasProtokolIds', selected);
+                }}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+              >
+                {petugasProtokolOptions.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">Petugas Liputan</label>
-              <SearchableSelect
-                options={petugasLiputanOptions}
-                value={form.petugasLiputanId || null}
-                onChange={(id) => update('petugasLiputanId', id)}
-                placeholder="Cari nama petugas..."
-              />
+              <select
+                multiple
+                size={3}
+                value={form.petugasLiputanIds || []}
+                onChange={(e) => {
+                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
+                  update('petugasLiputanIds', selected);
+                }}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+              >
+                {petugasLiputanOptions.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div>

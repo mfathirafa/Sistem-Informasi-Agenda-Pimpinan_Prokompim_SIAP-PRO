@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -20,13 +20,15 @@ enum StatusSambutan {
 }
 
 enum StatusKegiatan {
-  DRAFT
-  MENUNGGU_PERSETUJUAN
-  DISETUJUI
-  DILAKSANAKAN
-  MENUNGGU_DOKUMEN
-  SPJ_DIPROSES
+  ACARA_MASUK
+  MENUNGGU_PENUGASAN
+  KEGIATAN_SELESAI
   SPJ_SELESAI
+}
+
+enum StatusPublikasi {
+  BELUM_DIRILIS
+  DIRILIS
 }
 
 enum JenisDokumen {
@@ -43,6 +45,11 @@ enum StatusDokumen {
   BELUM_UPLOAD
   SUDAH_UPLOAD
   PERLU_REVISI
+}
+
+enum JenisPenugasan {
+  LEMBUR
+  SPPD
 }
 
 model User {
@@ -62,7 +69,7 @@ enum KategoriPetugas {
 }
 
 model Petugas {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   nama        String
   jabatan     String?
   noHp        String?
@@ -70,8 +77,7 @@ model Petugas {
   statusAktif Boolean         @default(true)
   createdAt   DateTime        @default(now())
 
-  kegiatanProtokol Kegiatan[] @relation("PetugasProtokolRelation")
-  kegiatanLiputan  Kegiatan[] @relation("PetugasLiputanRelation")
+  kegiatan KegiatanPetugas[]
 
   @@map("petugas")
 }
@@ -86,41 +92,50 @@ model LeadingSector {
 }
 
 model Kegiatan {
-  id                String         @id @default(cuid())
-  namaKegiatan      String
-  tanggal           DateTime
-  waktu             String?
-  tempat            String
-  pejabat           String
-  leadingSectorId   String
-  leadingSector     LeadingSector  @relation(fields: [leadingSectorId], references: [id])
-  statusSambutan    StatusSambutan @default(BELUM)
-  statusKegiatan    StatusKegiatan @default(DRAFT)
-  petugasProtokolId String?
-  petugasProtokol   Petugas?       @relation("PetugasProtokolRelation", fields: [petugasProtokolId], references: [id])
-  petugasLiputanId  String?
-  petugasLiputan    Petugas?       @relation("PetugasLiputanRelation", fields: [petugasLiputanId], references: [id])
-  linkUpload        String?
-  catatan           String?
-  isLembur          Boolean        @default(false)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  dokumen           Dokumen[]
+  id              String            @id @default(cuid())
+  namaKegiatan    String
+  tanggal         DateTime
+  waktu           String?
+  tempat          String
+  pejabat         String
+  leadingSectorId String
+  leadingSector   LeadingSector     @relation(fields: [leadingSectorId], references: [id])
+  statusSambutan  StatusSambutan    @default(BELUM)
+  statusKegiatan  StatusKegiatan    @default(ACARA_MASUK)
+  statusPublikasi StatusPublikasi   @default(BELUM_DIRILIS)
+  jenisPenugasan  JenisPenugasan    @default(LEMBUR)
+  linkUpload      String?
+  catatan         String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  dokumen         Dokumen[]
+  petugas         KegiatanPetugas[]
 
   @@map("kegiatan")
 }
 
-model Dokumen {
-  id          String        @id @default(cuid())
-  kegiatanId  String
-  kegiatan    Kegiatan      @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
-  jenis       JenisDokumen
-  status      StatusDokumen @default(BELUM_UPLOAD)
-  link        String?
-  catatan     String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+model KegiatanPetugas {
+  kegiatanId String
+  kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  petugasId  String
+  petugas    Petugas  @relation(fields: [petugasId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
+  @@id([kegiatanId, petugasId])
+  @@index([petugasId])
+  @@map("kegiatan_petugas")
+}
+
+model Dokumen {
+  id         String        @id @default(cuid())
+  kegiatanId String
+  kegiatan   Kegiatan      @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  jenis      JenisDokumen
+  status     StatusDokumen @default(BELUM_UPLOAD)
+  link       String?
+  catatan    String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   @@unique([kegiatanId, jenis])
   @@map("dokumen")

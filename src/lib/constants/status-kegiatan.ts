@@ -7,21 +7,15 @@ export const STATUS_KEGIATAN_OPTIONS = Object.values(StatusKegiatan);
 export type StatusKegiatanValue = StatusKegiatan;
 
 export const STATUS_KEGIATAN_LABEL: Record<StatusKegiatanValue, string> = {
-  DRAFT: 'Draft',
-  MENUNGGU_PERSETUJUAN: 'Menunggu Persetujuan',
-  DISETUJUI: 'Disetujui',
-  DILAKSANAKAN: 'Dilaksanakan',
-  MENUNGGU_DOKUMEN: 'Menunggu Dokumen',
-  SPJ_DIPROSES: 'SPJ Diproses',
-  SPJ_SELESAI: 'SPJ Selesai',
+ ACARA_MASUK: 'Acara Masuk',
+ MENUNGGU_PENUGASAN: 'Menunggu Penugasan',
+ KEGIATAN_SELESAI: 'Kegiatan Selesai',
+ SPJ_SELESAI: 'SPJ Selesai',
 };
 
 export const STATUS_KEGIATAN_BADGE_CLASS: Record<StatusKegiatanValue, string> = {
-  DRAFT: 'badge-draft',
-  MENUNGGU_PERSETUJUAN: 'badge-menunggu-persetujuan',
-  DISETUJUI: 'badge-disetujui',
-  DILAKSANAKAN: 'badge-dilaksanakan',
-  MENUNGGU_DOKUMEN: 'badge-menunggu-dokumen',
-  SPJ_DIPROSES: 'badge-spj-diproses',
+  ACARA_MASUK: 'badge-draft',
+  MENUNGGU_PENUGASAN: 'badge-menunggu-persetujuan',
+  KEGIATAN_SELESAI: 'badge-sudah',
   SPJ_SELESAI: 'badge-sudah',
 };
