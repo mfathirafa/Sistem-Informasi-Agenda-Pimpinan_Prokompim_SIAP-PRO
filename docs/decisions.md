@@ -23,3 +23,5 @@
 | Supabase Storage untuk file upload | Belum | Saat ini hanya menyimpan link dokumen (Google Drive/external). Akan dipertimbangkan ketika kebutuhan upload file nyata |
 | Query layer terpisah (lib/queries/) | 🟡 Sebagian | `lib/queries/kegiatan.ts` sudah dibuat untuk menyimpan query detail kegiatan yang dipakai di route `worksheet/[id]`. Namun mayoritas query masih inline di masing-masing page |
 | Activity Log | ✅ Selesai | Normalisasi snapshot via `toJsonValue()` — Date→ISO string, undefined handling, prototype guard. `meta.entityName` untuk identitas entity. Filter/pagination/detail modal di halaman Activity Log. |
+| Laporan SPJ | ✅ Selesai | Halaman `/laporan` view-only — date range filter, summary cards, export XLSX via SheetJS (reuse existing lib), print via `window.print()` + `@media print`. Akses semua role. |
+| Dashboard Lanjutan | ✅ Selesai | Metrik baru tanpa mengubah layout existing. Distribusi status (PieChart donut), progress dokumen (div progress bar + `hitungProgressDokumen()`), top petugas/sektor (horizontal BarChart). Scope tahun berjalan. Semua chart dalam satu file `DashboardStats`. |

@@ -1,10 +1,12 @@
- import { CalendarDays, CheckCircle2, Clock, FileWarning, UserX } from 'lucide-react';
-  import { prisma } from '@/lib/prisma';
-  import DashboardCharts from './dashboard-charts';
+import { CalendarDays, CheckCircle2, Clock, FileWarning, UserX } from 'lucide-react';
+import { prisma } from '@/lib/prisma';
+import DashboardCharts from './dashboard-charts';
+import DashboardStats from './dashboard-stats';
+import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
 
-  function pad(n: number) {
-    return n < 10 ? '0' + n : '' + n;
-  }
+function pad(n: number) {
+  return n < 10 ? '0' + n : '' + n;
+}
 
   export default async function DashboardPage() {
     try {
@@ -22,6 +24,7 @@
         monthCount: 6,
       };
       const rangeStartDate = new Date(today.getFullYear(), today.getMonth() + rangeConfig.startOffset, 1);
+      const currentYearStart = new Date(today.getFullYear(), 0, 1);
 
       const [
         bulanIniCount,
@@ -31,7 +34,11 @@
         dokumenBelumUploadCount,
         belumAdaPetugasCount,
         upcoming,
-        chartDataRaw
+        chartDataRaw,
+        statusDist, 
+        kegiatanWithDokumen,
+        topPetugasRaw,
+        topSektorRaw,
       ] = await Promise.all([
         prisma.kegiatan.count({ where: { tanggal: { gte: startOfMonth, lte: endOfMonth } } }),
         prisma.kegiatan.count({ where: { tanggal: { gte: today, lt: tomorrow } } }),
@@ -47,7 +54,28 @@
         prisma.kegiatan.findMany({
           where: { tanggal: { gte: rangeStartDate } },
           select: { tanggal: true }
-        })
+        }),
+        // --- NEW QUERIES ---
+        prisma.kegiatan.groupBy({
+          by: ['statusKegiatan'],
+          _count: true,
+        }),
+        prisma.kegiatan.findMany({
+          where: { tanggal: { gte: currentYearStart } },
+          select: { id: true, namaKegiatan: true, dokumen: { select: { status: true } } },
+        }),
+        prisma.kegiatanPetugas.groupBy({
+          by: ['petugasId'],
+          _count: true,
+          orderBy: { _count: { petugasId: 'desc' } },
+          take: 5,
+        }),
+        prisma.kegiatan.groupBy({
+          by: ['leadingSectorId'],
+          _count: true,
+          orderBy: { _count: { leadingSectorId: 'desc' } },
+          take: 5,
+        }),
       ]);
 
       const chartMap: Record<string, { bulan: string; jumlah: number }> = {};
@@ -64,6 +92,52 @@
         if (chartMap[key]) chartMap[key].jumlah += 1;
       });
       const chartData = Object.values(chartMap);
+
+      // --- Status distribution ---
+      const statusDistData = statusDist.map((s) => ({
+        status: s.statusKegiatan,
+        count: s._count,
+      }));
+
+      // --- Progress dokumen per kegiatan (tahun berjalan) ---
+      let progressLengkap = 0;
+      let progressBelum = 0;
+      const perluPerhatianList: string[] = [];
+      kegiatanWithDokumen.forEach((k) => {
+        const pct = hitungProgressDokumen(k.dokumen);
+        if (pct === 100) {
+          progressLengkap++;
+        } else {
+          progressBelum++;
+          perluPerhatianList.push(k.namaKegiatan);
+        }
+      });
+
+      // --- Top 5 Petugas ---
+      const topPetugasIds = topPetugasRaw.map((t) => t.petugasId);
+      const petugasNama = topPetugasIds.length > 0
+        ? await prisma.petugas.findMany({
+            where: { id: { in: topPetugasIds } },
+            select: { id: true, nama: true, kategori: true },
+        })
+        : [];
+      const topPetugasData = topPetugasRaw.map((t) => {
+        const p = petugasNama.find((x) => x.id === t.petugasId);
+        return { nama: p?.nama || '(dihapus)', count: t._count, kategori: p?.kategori || '' };
+      });
+
+      // --- Top 5 leading sector
+      const topSektorIds = topSektorRaw.map((t) => t.leadingSectorId);
+      const sektorNama = topSektorIds.length > 0
+        ? await prisma.leadingSector.findMany({
+            where: { id: { in: topSektorIds } },
+            select: { id: true, nama: true },
+        })
+        : [];
+        const topSektorData = topSektorRaw.map((t) => {
+          const s = sektorNama.find((x) => x.id === t.leadingSectorId);
+          return { nama: s?.nama || '(dihapus)', count: t._count};
+        });
 
       const stats = [
         { label: 'Kegiatan bulan ini', value: bulanIniCount, icon: <CalendarDays size={18} />, tone: 'default' as const
@@ -93,6 +167,7 @@
               </div>
             ))}
           </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3 bg-white rounded-2xl border border-app p-5 shadow-sm">
               <h3 className="font-display text-base font-semibold text-navy mb-4">Jumlah Kegiatan per Bulan</h3>
@@ -119,6 +194,42 @@
               )}
             </div>
           </div>
+
+          {/* --- Row 3: Charts baru (distribusi + progress + top petugas + top sektor) --- */}
+          <DashboardStats 
+            statusDist={statusDistData}
+            progressLengkap={progressLengkap}
+            progressBelum={progressBelum}
+            topPetugas={topPetugasData}
+            topSektor={topSektorData}
+          />
+
+          {/* --- Row 4: Perlu Perhatian --- */}
+          {(belumAdaPetugasCount > 0 || progressBelum > 0) && (
+            <div className="bg-white rounded-2xl border border-app p-5 shadow-sm">
+              <h3 className="font-display text-base font-semibold text-navy mb-3">Perlu Perhatian</h3>
+              <ul className="space-y-2 text-sm">
+                {belumAdaPetugasCount > 0 && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+                    <span><strong>{belumAdaPetugasCount}</strong> kegiatan belum ada petugas</span>
+                  </li>
+                )}
+                {progressBelum > 0 && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
+                    <span><strong>{progressBelum}</strong> kegiatan dengan dokumen belum lengkap</span>
+                  </li>
+                )}
+                {perluPerhatianList.length > 0 && (
+                  <li className="text-muted text-xs mt-1">
+                    {perluPerhatianList.slice(0, 3).join(', ')}
+                    {perluPerhatianList.length > 3 && `, +${perluPerhatianList.length - 3} lagi`}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
       );
     } catch (error) {

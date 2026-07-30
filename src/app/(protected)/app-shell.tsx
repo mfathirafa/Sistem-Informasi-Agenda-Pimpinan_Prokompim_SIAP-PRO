@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Table2, UserCog, LogOut, Users, Building2 } from 'lucide-react';
+import { LayoutDashboard, Table2, UserCog, LogOut, Users, Building2, History, FileText } from 'lucide-react';
 import ConfirmDialog from '@/components/confirm-dialog';
 import SealLogo from '@/components/seal-logo';
 import { logoutAction } from '@/app/actions/auth';
@@ -29,11 +29,13 @@ export default function AppShell({
   const navItems = [
     { href: '/dashboard', label: 'Dasbor', icon: <LayoutDashboard size={16} /> },
     { href: '/worksheet', label: 'Worksheet Kegiatan', icon: <Table2 size={16} /> },
+    { href: '/laporan', label: 'Laporan', icon: <FileText size={16} />},
     { href: '/master-petugas', label: 'Master Petugas', icon: <Users size={16} /> },
     { href: '/master-leading-sector', label: 'Master Leading Sector', icon: <Building2 size={16} /> },
   ];
   if (user.role === 'ADMIN') {
     navItems.push({ href: '/users', label: 'Kelola Pengguna', icon: <UserCog size={16} /> });
+    navItems.push({ href: '/activity-log', label: 'Activity Log', icon: <History size={16} /> });
   }
 
   return (
