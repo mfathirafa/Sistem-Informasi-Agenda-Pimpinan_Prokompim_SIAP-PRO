@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
+import { logActivity } from '@/lib/activity-log';
 
 export async function createLeadingSector(nama: string): Promise<ActionResult> {
   const user = await getCurrentUser();
@@ -13,7 +14,16 @@ export async function createLeadingSector(nama: string): Promise<ActionResult> {
   if (existing) return { ok: false, error: 'Leading sector ini sudah ada di daftar.' };
 
   try {
-    await prisma.leadingSector.create({ data: { nama: nama.trim() } });
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.leadingSector.create({ data: { nama: nama.trim() } });
+      await logActivity({
+        entity: 'LEADING_SECTOR',
+        entityId: created.id,
+        action: 'CREATE',
+        userId: user!.id,
+        changes: { after: { nama: nama.trim() }, meta: { entityName: nama.trim() } },
+      }, tx);
+    });
     revalidatePath('/master-leading-sector');
     revalidatePath('/worksheet');
     return { ok: true };
@@ -27,7 +37,19 @@ export async function deleteLeadingSector(id: string): Promise<ActionResult> {
   if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
 
   try {
-    await prisma.leadingSector.delete({ where: { id } });
+    const existing = await prisma.leadingSector.findUnique({ where: { id } });
+    if (!existing) return { ok: false, error: 'Leading sector tidak ditemukan.' };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.leadingSector.delete({ where: { id } });
+      await logActivity({
+        entity: 'LEADING_SECTOR',
+        entityId: id,
+        action: 'DELETE',
+        userId: user!.id,
+        changes: { before: existing, meta: { entityName: existing.nama } },
+      }, tx);
+    });
     revalidatePath('/master-leading-sector');
     revalidatePath('/worksheet');
     return { ok: true };

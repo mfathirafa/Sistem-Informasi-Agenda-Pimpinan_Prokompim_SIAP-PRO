@@ -22,4 +22,4 @@
 |------|--------|---------|
 | Supabase Storage untuk file upload | Belum | Saat ini hanya menyimpan link dokumen (Google Drive/external). Akan dipertimbangkan ketika kebutuhan upload file nyata |
 | Query layer terpisah (lib/queries/) | 🟡 Sebagian | `lib/queries/kegiatan.ts` sudah dibuat untuk menyimpan query detail kegiatan yang dipakai di route `worksheet/[id]`. Namun mayoritas query masih inline di masing-masing page |
-| Activity Log | Belum | Belum ada di codebase |
+| Activity Log | ✅ Selesai | Normalisasi snapshot via `toJsonValue()` — Date→ISO string, undefined handling, prototype guard. `meta.entityName` untuk identitas entity. Filter/pagination/detail modal di halaman Activity Log. |

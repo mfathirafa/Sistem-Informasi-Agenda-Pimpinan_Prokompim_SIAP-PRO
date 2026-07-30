@@ -20,7 +20,7 @@
 
 | Fitur | Status | Catatan |
 |-------|--------|---------|
-| Activity Log (Schema) | 🟡 Sebagian | Model + migration applied + helper `logActivity()` sudah ada, integrasi actions + UI belum |
+| Activity Log | ✅ Selesai | Model + migration + helper + integrasi semua Server Actions + halaman Activity Log (filter/pagination/detail modal). Normalisasi snapshot via `toJsonValue()` — Date/NaN/undefined handling. `meta.entityName` untuk identitas entity. No-op UPDATE guard. Diff petugas di UPDATE kegiatan. |
 | Dashboard Baru | ⏳ Belum | Dashboard saat ini masih basic. "Dashboard Baru" kemungkinan dashboard lanjutan dengan metrik lebih lengkap |
 | Export | ✅ Selesai | Upgrade ke XLSX (SheetJS) dengan auto-width, format tanggal DD/MM/YYYY, freeze header |
 | Kolom Lembur | ✅ Selesai | `isLembur Boolean @default(false)` di schema + migration + form checkbox + kolom tabel + filter (Semua/Ya/Tidak) + detail + export |
@@ -101,11 +101,29 @@
 | Fix Edit Multi Petugas | ✅ Selesai | Modal init dari data existing junction table |
 | Validasi Server-Side | ✅ Selesai | Field wajib + leading sector exists check |
 
-### 28 Juli 2026 — Sesi 9: Activity Log (Schema + Helper)
+### 29 Juli 2026 — Sesi 9: Activity Log — Normalisasi Snapshot & Type Safety
 
 | Fitur | Status | Catatan |
 |-------|--------|---------|
 | Schema Activity Log | ✅ Selesai | `Entity`/`ActionLog` enum + `ActivityLog` model + migration |
-| Helper `activity-log.ts` | ✅ Selesai | `logActivity()` + `getEntityName()` |
-| Integrasi ke Actions | ⏳ Belum | Belum dimulai |
-| UI Activity Log | ⏳ Belum | Belum ada page |
+| Helper `logActivity()` + `getEntityName()` | ✅ Selesai | Integrasi via `prisma.$transaction`. `getEntityName()` prioritaskan `meta.entityName`, fallback pola lama. |
+| Integrasi ke Actions | ✅ Selesai | CREATE/UPDATE/DELETE kegiatan, dokumen, petugas, leading-sector, users |
+| UI Activity Log | ✅ Selesai | Halaman `/activity-log` — filter entity/action/user/search, pagination sliding window, detail modal CREATE/UPDATE/DELETE |
+| Normalisasi snapshot (`toJsonValue`) | ✅ Selesai | Recursive converter — Date→ISO string, Number.isFinite guard, undefined→null/omit, prototype guard. Type-safe tanpa cast `as unknown as Prisma.InputJsonValue`. |
+| `meta.entityName` | ✅ Selesai | Semua log menyertakan `meta.entityName` untuk identitas entity. Kompatibel dengan log lama. |
+| No-op UPDATE guard | ✅ Selesai | UPDATE tanpa perubahan field skip transaction — `updatedAt` tidak berubah tanpa audit log. |
+| Diff petugas di UPDATE kegiatan | ✅ Selesai | Existing vs baru via sort+dedup. Log `{id, nama}` per kategori Protokol/Liputan. |
+
+**Decisions:**
+- `toJsonValue()` (recursive internal, return `InputJsonValue \| null`) dipisah dari `normalizeSnapshot()` (root, return `InputJsonObject`) untuk type safety tanpa casts di pipeline normalisasi.
+- Proto guard via `Object.getPrototypeOf(value)` cegah Map/Set/class instances masuk diam-diam.
+- `meta.entityName` ditambahkan di semua log — fallback ke pola lama untuk kompatibilitas.
+
+**Files:**
+- `src/lib/activity-log.ts` — MODIFIED: `toJsonValue()` + `normalizeSnapshot()` + `getEntityName(changes)`
+- `src/app/actions/kegiatan.ts` — MODIFIED: petugas diff, no-op guard, meta
+- `src/app/actions/petugas.ts` — MODIFIED: no-op guard, meta
+- `src/app/actions/leading-sector.ts` — MODIFIED: meta
+- `src/app/actions/users.ts` — MODIFIED: meta
+- `src/app/actions/dokumen.ts` — MODIFIED: hasDiff guard, meta via nama kegiatan
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: `getEntityName(log.changes)`

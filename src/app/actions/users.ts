@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hashPassword, type ActionResult } from '@/lib/auth';
+import { logActivity } from '@/lib/activity-log';
 
 export type CreateUserInput = {
   username: string;
@@ -35,9 +36,19 @@ export async function createUser(data: CreateUserInput): Promise<ActionResult> {
 
   try {
     const hashed = await hashPassword(data.password);
-    await prisma.user.create({
-      data: { username: data.username, password: hashed, nama: data.nama, role: data.role },
-    });
+    const { password: _, ...dataWithoutPassword } = data;
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: { username: data.username, password: hashed, nama: data.nama, role: data.role },
+      });
+      await logActivity({
+      entity: 'USER',
+      entityId: created.id,
+      action: 'CREATE',
+      userId: current!.id,
+      changes: { after: dataWithoutPassword, meta: { entityName: dataWithoutPassword.nama } },
+    }, tx);
+    }) 
     revalidatePath('/users');
     return { ok: true };
   } catch {
@@ -55,7 +66,20 @@ export async function deleteUser(id: string): Promise<ActionResult> {
   }
 
   try {
-    await prisma.user.delete({ where: { id } });
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return { ok: false, error: 'Pengguna tidak ditemukan.' };
+
+    const { password: _, ...existingWithoutPassword } = existing;
+    await prisma.$transaction(async (tx) => {
+      await tx.user.delete({ where: { id } });
+      await logActivity({
+        entity: 'USER',
+        entityId: id,
+        action: 'DELETE',
+        userId: current!.id,
+        changes: { before: existingWithoutPassword, meta: { entityName: existingWithoutPassword.nama } },
+      }, tx);
+    });
     revalidatePath('/users');
     return { ok: true };
   } catch {
