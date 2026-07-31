@@ -28,7 +28,8 @@
 | Dashboard Flex Range | ✅ Selesai | Grafik 6 bulan (-3, now, +2) dengan `rangeConfig` object, siap custom date range |
 | Filter Petugas per Divisi | ✅ Selesai | Enum `KategoriPetugas` + field `kategori` di Petugas, query terpisah Protokol/Liputan |
 | Multi Petugas | ✅ Selesai | Junction table `KegiatanPetugas` + multi-select modal + validasi kategori (Sesi 8) |
-| Seed Data | ✅ Selesai | 20 data kegiatan realistis dengan variasi tanggal, pejabat, status, lembur, petugas |
+| Seed Data | ✅ Selesai | 20 data kegiatan realistis dengan variasi tanggal, pejabat, status, lembur, petugas. Sesi 12: tambah 7 dokumen per kegiatan dengan variasi status |
+| Kalender Kegiatan | ✅ Selesai | Halaman `/kalender` — grid bulanan (Sen→Min), prev/next via `?bulan=YYYY-MM`, chip nama + warna status di desktop, dot + count di mobile, klik chip ke `/worksheet/[id]`. Server Component murni tanpa library baru. Akses semua role. |
 
 ## Fitur yang Ada di Project tapi Belum di Roadmap
 
@@ -40,6 +41,53 @@
 | Manajemen Session | ✅ Selesai | JWT session dengan expiry 7 hari, cookie httpOnly, middleware redirect |
 
 ## Changelog
+
+### 31 Juli 2026 — Sesi 13: Kalender Kegiatan
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Kalender Kegiatan | ✅ Selesai | Halaman `/kalender` — tampilan agenda bulanan: grid 7 kolom (Sen→Min), navigasi prev/next, chip kegiatan berwarna status, highlight hari ini, legend status. Klik chip → `/worksheet/[id]`. Desktop: chip nama + warna; mobile: dot berwarna + count. |
+
+**Decisions:**
+- Server Component murni — navigasi prev/next via `<Link>` ke `?bulan=YYYY-MM`, tanpa client component/`useState`. Konsisten pola `laporan/page.tsx`.
+- `searchParams` async (`await`) karena Next.js 15.
+- Helper grid terpisah `lib/kalender.ts` (`getMonthGrid`, start Senin) — pure function, mudah diverifikasi.
+- Reuse `STATUS_KEGIATAN_*` constants untuk warna chip/legend — tidak duplikasi.
+- `DOT_COLOR` lokal di page (hanya dipakai kalender) — tidak menambah shared constants.
+- Grouping tanggal pakai komponen lokal (`getFullYear/getMonth/getDate`) — hindari bug UTC off-by-one.
+- Query minimal (id, nama, tanggal, waktu, status) tanpa include petugas/sektor — detail di `/worksheet/[id]`.
+- Tanpa library baru (native grid div, lucide-react icon).
+
+**Files:**
+- `src/lib/kalender.ts` — NEW: `getMonthGrid(tahun, bulan)` + type `MingguKalender`
+- `src/app/(protected)/kalender/page.tsx` — NEW: Server Component kalender
+- `src/app/(protected)/app-shell.tsx` — MODIFIED: nav item "Kalender" (icon Calendar)
+
+**Verifikasi:**
+- `npx tsc --noEmit` — bersih ✅
+- `npm run build` — compiled successfully ✅
+- Manual: sidebar menu Kalender, `/kalender` normal, chip sesuai status, klik chip → detail, `?bulan=abc` fallback bulan berjalan ✅
+
+### 31 Juli 2026 — Sesi 12: Seed Data Dokumen (Variasi Status)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Seed Data Dokumen | ✅ Selesai | `prisma/seed.ts` sekarang membuat 7 dokumen per kegiatan (20×7 = 140 baris) dengan status bervariasi sesuai `statusKegiatan`. Sebelumnya seed tidak membuat dokumen sama sekali → progress dokumen dashboard selalu 0% dan card Perlu Perhatian tidak pernah muncul. |
+
+**Decisions:**
+- Pola `polaDokumen: Record<StatusKegiatan, StatusDokumen[]>` memetakan status kegiatan ke 7 status dokumen: SPJ_SELESAI = semua upload, KEGIATAN_SELESAI = 5 upload + 1 revisi + 1 belum, MENUNGGU_PENUGASAN = 1 upload, ACARA_MASUK = semua belum.
+- Enum Prisma eksplisit (`StatusDokumen.SUDAH_UPLOAD` dst) — type-safe penuh, otomatis mengikuti perubahan enum.
+- `Object.values(JenisDokumen)` sebagai single source of truth 7 jenis dokumen.
+- Idempoten — kegiatan di-reseed bersih (delete + recreate), dokumen ikut cascade.
+
+**Files:**
+- `prisma/seed.ts` — MODIFIED: import `JenisDokumen`/`StatusDokumen` + blok `polaDokumen` + `dokumenData` + `createMany` dokumen setelah `kegiatanPetugas.createMany()`
+
+**Verifikasi:**
+- `npx prisma db seed` — berhasil ✅
+- `npx tsc --noEmit` — bersih ✅
+- `npm run build` — compiled successfully, 13/13 pages ✅ (hanya pre-existing warnings: Dynamic Server Usage, ESLint circular JSON)
+- Visual: progress dokumen dashboard bervariasi, card Perlu Perhatian muncul, 7 baris dokumen per kegiatan ✅
 
 ### 24 Juli 2026 — Sesi 5: UI Improvements & Lembur Field
 

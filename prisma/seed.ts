@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role, StatusSambutan, StatusKegiatan } from '@prisma/client';
+import { PrismaClient, Role, StatusSambutan, StatusKegiatan, JenisDokumen, StatusDokumen } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -266,6 +266,40 @@ async function main() {
     ]);
 
     await prisma.kegiatanPetugas.createMany({ data: petugasJunctionData });
+
+    const polaDokumen: Record<StatusKegiatan, StatusDokumen[]> ={
+      SPJ_SELESAI: [
+        StatusDokumen.SUDAH_UPLOAD, StatusDokumen.SUDAH_UPLOAD, StatusDokumen.SUDAH_UPLOAD,
+        StatusDokumen.SUDAH_UPLOAD, StatusDokumen.SUDAH_UPLOAD, StatusDokumen.SUDAH_UPLOAD,
+        StatusDokumen.SUDAH_UPLOAD,
+      ],
+      KEGIATAN_SELESAI: [
+        StatusDokumen.SUDAH_UPLOAD, StatusDokumen.SUDAH_UPLOAD, StatusDokumen.SUDAH_UPLOAD,
+        StatusDokumen.SUDAH_UPLOAD, StatusDokumen.PERLU_REVISI, StatusDokumen.BELUM_UPLOAD,
+        StatusDokumen.BELUM_UPLOAD,
+      ],
+      MENUNGGU_PENUGASAN: [
+        StatusDokumen.SUDAH_UPLOAD, StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD,
+        StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD,
+        StatusDokumen.BELUM_UPLOAD,
+      ],
+      ACARA_MASUK: [
+        StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD,
+        StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD, StatusDokumen.BELUM_UPLOAD,
+        StatusDokumen.BELUM_UPLOAD,
+      ],
+    };
+
+    const jenisDokumen = Object.values(JenisDokumen);
+    const dokumenData = createdKegiatan.flatMap((k) => 
+      polaDokumen[k.statusKegiatan].map((status, i) => ({
+        kegiatanId: k.id,
+        jenis: jenisDokumen[i],
+        status,
+      }))
+    );
+
+    await prisma.dokumen.createMany({ data: dokumenData });
   }
 }
 

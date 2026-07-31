@@ -15,6 +15,8 @@
 | 2026-07-22 | Nested create untuk kegiatan + dokumen | Saat membuat kegiatan baru, 7 dokumen wajib dibuat secara atomik menggunakan `prisma.kegiatan.create({ data: { dokumen: { create: [...] } } })` |
 | 2026-07-23 | Centralisasi shared utilities auth | `canEditRole()` dan `ActionResult` type sebelumnya didefinisikan ulang di setiap file action. Dipindahkan ke `src/lib/auth.ts` sebagai single source of truth — mengurangi duplikasi dan potensi inkonsistensi |
 | 2026-07-23 | AUTH_SECRET fail-fast (tidak ada fallback default) | Sebelumnya menggunakan fallback string hardcoded saat env tidak ter-set. Diubah menjadi throw error agar kegagalan konfigurasi terdeteksi sejak awal, bukan diam-diam menggunakan secret lemah |
+| 2026-07-31 | Seed dokumen dengan variasi status | Seed harus mencerminkan kondisi nyata agar dashboard bermakna. Pola `Record<StatusKegiatan, StatusDokumen[]>` memetakan status kegiatan ke 7 status dokumen; enum Prisma eksplisit untuk type-safety; `Object.values(JenisDokumen)` sebagai single source of truth 7 jenis dokumen. Sebelumnya seed tidak membuat dokumen → progress dokumen selalu 0% dan card Perlu Perhatian tidak pernah muncul |
+| 2026-07-31 | Kalender sebagai Server Component murni (tanpa library) | Kalender bulanan dibuat dengan native grid div + navigasi `<Link>` ke `?bulan=YYYY-MM`, bukan react-big-calendar/fullcalendar (berat, butuh wrapper + CSS custom). Grid helper `getMonthGrid()` dipisah ke `lib/kalender.ts` agar pure & testable. Reuse `STATUS_KEGIATAN_*` constants. Chip status mengikuti badge class existing. Akses semua role (view-only) — klik ke `/worksheet/[id]` |
 
 ## Decisions yang Ditunda
 
