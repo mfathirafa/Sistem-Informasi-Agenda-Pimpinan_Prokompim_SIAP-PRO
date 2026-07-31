@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Trash2, Plus } from 'lucide-react';
-import { createLeadingSector, deleteLeadingSector } from '@/app/actions/leading-sector';
+import { Trash2, Plus, Pencil, X } from 'lucide-react';
+import { createLeadingSector, updateLeadingSector, deleteLeadingSector } from '@/app/actions/leading-sector';
 
 export type LeadingSectorRow = { id: string; nama: string };
 
@@ -11,6 +11,32 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
   const [nama, setNama] = useState('');
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [editingItem, setEditingItem] = useState<LeadingSectorRow | null>(null);
+  const [editNama, setEditNama] = useState('');
+  const [editError, setEditError] = useState('');
+
+  const openEdit = (item: LeadingSectorRow) => {
+    setEditingItem(item);
+    setEditNama(item.nama);
+    setEditError('');
+  };
+
+  const submitEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    if (!editNama.trim()) { setEditError('Nama wajib diisi.'); return; }
+    setEditError('');
+    startTransition(async () => {
+      const res = await updateLeadingSector(editingItem.id, editNama.trim());
+      if (res.ok) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === editingItem.id ? { ...i, nama: editNama.trim() } : i))
+            .sort((a, b) => a.nama.localeCompare(b.nama))
+        );
+        setEditingItem(null);
+      } else { setEditError(res.error || 'Gagal menyimpan.'); }
+    });
+  }; 
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +76,16 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
             ) : items.map((item) => (
               <tr key={item.id} className="border-t border-app">
                 <td className="px-4 py-3 font-medium">{item.nama}</td>
-                {canEdit && (
+                 {canEdit && (
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => handleDelete(item.id, item.nama)} aria-label="Hapus" className="p-1.5 rounded-md hover:bg-red-50 text-red-600">
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex justify-end gap-1.5">
+                      <button onClick={() => openEdit(item)} aria-label="Edit" className="p-1.5 rounded-md hover:bg-app text-navy">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(item.id, item.nama)} aria-label="Hapus" className="p-1.5 rounded-md hover:bg-red-50 text-red-600">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 )}
               </tr>
@@ -62,18 +93,9 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
           </tbody>
         </table>
       </div>
-      {canEdit && (
-        <div className="bg-white rounded-2xl border border-app p-5 self-start">
-          <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Leading Sector</h3>
-          <form onSubmit={submit} className="space-y-3">
-            <input placeholder="cth. Dinas Pendidikan" value={nama} onChange={(e) => setNama(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
-            {error && <p className="text-xs text-red-600">{error}</p>}
-            <button type="submit" disabled={isPending} className="btn-primary w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium">
-              <Plus size={15} /> {isPending ? 'Menyimpan...' : 'Tambah'}
-            </button>
-          </form>
+                  </form>
+          </div>
         </div>
       )}
     </div>
   );
-}

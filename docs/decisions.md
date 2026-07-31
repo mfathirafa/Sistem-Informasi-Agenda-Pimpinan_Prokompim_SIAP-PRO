@@ -17,6 +17,11 @@
 | 2026-07-23 | AUTH_SECRET fail-fast (tidak ada fallback default) | Sebelumnya menggunakan fallback string hardcoded saat env tidak ter-set. Diubah menjadi throw error agar kegagalan konfigurasi terdeteksi sejak awal, bukan diam-diam menggunakan secret lemah |
 | 2026-07-31 | Seed dokumen dengan variasi status | Seed harus mencerminkan kondisi nyata agar dashboard bermakna. Pola `Record<StatusKegiatan, StatusDokumen[]>` memetakan status kegiatan ke 7 status dokumen; enum Prisma eksplisit untuk type-safety; `Object.values(JenisDokumen)` sebagai single source of truth 7 jenis dokumen. Sebelumnya seed tidak membuat dokumen → progress dokumen selalu 0% dan card Perlu Perhatian tidak pernah muncul |
 | 2026-07-31 | Kalender sebagai Server Component murni (tanpa library) | Kalender bulanan dibuat dengan native grid div + navigasi `<Link>` ke `?bulan=YYYY-MM`, bukan react-big-calendar/fullcalendar (berat, butuh wrapper + CSS custom). Grid helper `getMonthGrid()` dipisah ke `lib/kalender.ts` agar pure & testable. Reuse `STATUS_KEGIATAN_*` constants. Chip status mengikuti badge class existing. Akses semua role (view-only) — klik ke `/worksheet/[id]` |
+| 2026-07-31 | PASSWORD_MASK `'********'` di Activity Log untuk update password | `updateUser` mencatat `before/after.password = PASSWORD_MASK` — tetap ada jejak "password diubah" tanpa pernah menyimpan/ekspos nilai asli. Konsisten dengan createUser/deleteUser yang sudah membuang password via destructure. Disetujui user |
+| 2026-07-31 | Proteksi admin terakhir di `updateUser` | Jika target ber-role ADMIN dan akan di-demote, hitung admin lain (`count({ role: 'ADMIN', id: { not: id } })`); jika 0 → tolak "Tidak bisa menurunkan role administrator terakhir." Self-demote tetap boleh selama masih ada admin lain |
+| 2026-07-31 | No-op guard `updateUser` menyertakan `passwordChanged` | Reset password sendirian (nama & role tidak berubah) TETAP dieksekusi — guard hanya skip jika tidak ada perubahan sama sekali. Mencegah bug "reset password di-skip diam-diam" |
+| 2026-07-31 | Hash bcrypt di luar Prisma transaction | `hashPassword()` (~100ms) dijalankan sebelum `$transaction` agar koneksi DB tidak tertahan selama hashing |
+| 2026-07-31 | Input password user form → `type="password"` | Form tambah user (dan reset) tidak lagi plaintext. Disetujui user, kecil & dalam scope |
 
 ## Decisions yang Ditunda
 

@@ -42,6 +42,34 @@
 
 ## Changelog
 
+### 31 Juli 2026 — Sesi 14: Kelengkapan CRUD Admin 🚧 SEDANG BERJALAN
+
+> Status: File 1-2 selesai & verified, File 3 bug fix disiapkan (belum diterapkan), File 4-5 belum, verifikasi tsc/build belum dijalankan. Lanjut di Sesi 15.
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Edit/Rename Leading Sector | 🚧 Sebagian | Server action `updateLeadingSector(id, nama)` di `actions/leading-sector.ts` ✅ selesai — validasi trim, no-op guard, cek duplikat `findFirst({ nama, NOT: { id } })`, log UPDATE, revalidate 2 path. UI tombol Edit + modal di `master-leading-sector-client.tsx` ada BUG JSX (blok form Tambah terhapus + closing tag stray di baris 96-99) — fix disiapkan, belum diterapkan |
+| Edit User + Reset Password | 🚧 Sebagian | Server action `updateUser(id, data)` di `actions/users.ts` ✅ selesai — edit nama + role, reset password opsional (hash bcrypt sama dengan create), `PASSWORD_MASK = '********'` di Activity Log (nilai asli tidak pernah disimpan), proteksi admin terakhir (demote yang menyisakan 0 admin ditolak), no-op guard menyertakan passwordChanged. UI di `users-client.tsx` belum dimulai |
+| Input password form user → `type="password"` | 📌 Belum | Di `users-client.tsx` — ubah dari `type="text"` (form tambah user) |
+| FIELD_LABEL password di Activity Log | 📌 Belum | `activity-log-client.tsx` — tambah `password: 'Kata Sandi'` |
+
+**Decisions:**
+- Masker `********` (PASSWORD_MASK) di Activity Log saat password diubah — tetap ada jejak "password diubah" tanpa pernah menyimpan/ekspos nilai asli.
+- Proteksi admin terakhir: `existing.role === 'ADMIN' && roleChanged` → hitung admin lain; jika 0, tolak demote. Self-demote tetap boleh selama masih ada admin lain.
+- No-op guard `updateUser` menyertakan `passwordChanged` — reset password sendirian tetap dieksekusi (anti-bug skip diam-diam).
+- Hash bcrypt dilakukan DI LUAR `$transaction` — jangan tahan koneksi DB selama ~100ms hashing.
+- Username tidak diedit di `updateUser` (di luar scope).
+- Ikuti pola `updatePetugas` (auth → trim → fetch existing → diff/no-op → transaction → revalidate).
+
+**Files:**
+- `src/app/actions/leading-sector.ts` — MODIFIED: tambah `updateLeadingSector()` antara create & delete
+- `src/app/actions/users.ts` — MODIFIED: tambah `PASSWORD_MASK`, `UpdateUserInput`, `updateUser()` antara create & delete
+- `src/app/(protected)/master-leading-sector/master-leading-sector-client.tsx` — MODIFIED: tombol Edit + modal edit (SEBAGIAN, bug JSX)
+- `src/app/(protected)/users/users-client.tsx` — 📌 belum (tombol Edit + modal + type=password)
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — 📌 belum (FIELD_LABEL password)
+
+**Verifikasi:** belum dijalankan — `npx tsc --noEmit`, `npm run build`, skenario manual (rename, rename duplikat, no-op, reset password saja, log masker, demote admin terakhir, akses STAFF/ATASAN). Lihat `memory/session-sesi14.md`.
+
 ### 31 Juli 2026 — Sesi 13: Kalender Kegiatan
 
 | Fitur | Status | Catatan |
