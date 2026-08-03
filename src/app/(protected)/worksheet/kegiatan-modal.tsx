@@ -4,20 +4,13 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from '@/lib/worksheet';
-import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
+import { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL } from '@/lib/constants/status-publikasi';
+import { toDateInput } from '@/lib/format';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
-
-function pad(n: number) {
-  return n < 10 ? '0' + n : '' + n;
-}
-function toDateInput(d: Date | string) {
-  const dt = new Date(d);
-  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-}
 
 export default function KegiatanModal({
   item,

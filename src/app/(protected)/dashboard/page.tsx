@@ -4,10 +4,6 @@ import DashboardCharts from './dashboard-charts';
 import DashboardStats from './dashboard-stats';
 import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
 
-function pad(n: number) {
-  return n < 10 ? '0' + n : '' + n;
-}
-
   export default async function DashboardPage() {
     try {
       const today = new Date();
@@ -81,14 +77,14 @@ function pad(n: number) {
       const chartMap: Record<string, { bulan: string; jumlah: number }> = {};
       for (let i = 0; i < rangeConfig.monthCount; i++) {
         const d = new Date(today.getFullYear(), today.getMonth() + rangeConfig.startOffset + i, 1);
-        const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const label = d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
         chartMap[key] = { bulan: label, jumlah:0 };
       }
 
       chartDataRaw.forEach((k) => {
         const d = new Date(k.tanggal);
-        const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         if (chartMap[key]) chartMap[key].jumlah += 1;
       });
       const chartData = Object.values(chartMap);

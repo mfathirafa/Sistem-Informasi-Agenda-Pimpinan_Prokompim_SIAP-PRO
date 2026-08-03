@@ -4,20 +4,11 @@ import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
     BarChart, Bar, XAxis, YAxis,
 } from 'recharts';
+import { STATUS_KEGIATAN_CHART_COLOR, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
 
-const STATUS_COLORS: Record<string, string> = {
-    ACARA_MASUK: '#A78BFA',
-    MENUNGGU_PENUGASAN: '#FBBF24',
-    KEGIATAN_SELESAI: '#34D399',
-    SPJ_SELESAI: '#60A5FA',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-    ACARA_MASUK: 'Acara Masuk',
-    MENUNGGU_PENUGASAN: 'Menunggu Penugasan',
-    KEGIATAN_SELESAI: 'Kegiatan Selesai',
-    SPJ_SELESAI: 'SPJ Selesai',
-};
+// Aliased ke Record<string, string> agar aman diindex key string dari recharts.
+const STATUS_COLORS: Record<string, string> = STATUS_KEGIATAN_CHART_COLOR;
+const STATUS_LABEL: Record<string, string> = STATUS_KEGIATAN_LABEL;
 
 const KATEGORI_COLORS: Record<string, string> = {
     PROTOKOL: '#16294D',

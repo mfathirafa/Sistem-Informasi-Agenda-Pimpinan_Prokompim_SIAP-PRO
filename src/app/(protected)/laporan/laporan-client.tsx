@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useTransition } from "react";
-import { Download, Printer } from "lucide-react";
+import { Download, FileDown } from "lucide-react";
 import * as XLSX from 'xlsx';
-import { STATUS_KEGIATAN_LABEL } from "@/lib/constants/status-kegiatan";
+import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
+import { formatTanggal } from '@/lib/format';
 import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from "@/lib/constants/status-penugasan";
-import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS, type StatusPublikasiValue } from "@/lib/constants/status-publikasi";
+import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from "@/lib/constants/status-publikasi";
 import type { StatusKegiatan } from "@prisma/client";
 
 type KegiatanItem = {
@@ -33,13 +34,6 @@ type Props = {
     startDate: string;
     endDate: string;
 };
-
-function pad(n: number) { return n < 10 ? '0' + n : '' + n; }
-
-function formatTanggal(iso: string) {
-    const d = new Date(iso);
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-}
 
 export default function LaporanClient({ data, startDate, endDate }: Props) {
     const router = useRouter();
@@ -102,10 +96,16 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
     return (
         <div className="space-y-4">
-            <h1 className="text-2xl font-bold">Laporan SPJ</h1>
+            {/* Header khusus cetak/PDF — tersembunyi di layar */}
+            <div className="hidden print:block text-center mb-4">
+                <h1 className="text-lg font-bold">LAPORAN KEGIATAN PROTOKOL</h1>
+                <p className="text-sm">Periode: {formatTanggal(localStart)} s.d. {formatTanggal(localEnd)}</p>
+            </div>
+
+            <h1 className="text-2xl font-bold no-print">Laporan SPJ</h1>
 
             {/* Filter */}
-            <div className="flex flex-wrap gap-3 items-end">
+            <div className="no-print flex flex-wrap gap-3 items-end">
                 <div className="flex flex-col gap-1">
                     <label className="text-xs text-gray-500">Tanggal Awal</label>
                     <input 
@@ -141,12 +141,12 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     onClick={() => window.print()}
                     className="px-4 py-1.5 border text-sm rounded hover:bg-gray-100 flex items-center gap-1.5"
                 >
-                    <Printer size={14} /> Cetak
+                    <FileDown size={14} /> Export PDF
                 </button>
             </div>
 
             {/* Summary */}
-            <div className="flex flex-wrap gap-3">
+            <div className="no-print flex flex-wrap gap-3">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm">
                     <span className="text-blue-600 font-semibold">{summary.total}</span>{' '}
                     <span className="text-blue-500">total kegiatan</span>
@@ -189,7 +189,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.picNoHp || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.leadingSectorNama}</td>
                                 <td className="p-2.5">
-                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusCellClass(k.statusKegiatan)}`}> 
+                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
                                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
                                     </span>
                                 </td>
@@ -209,18 +209,10 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     body { font-size: 10pt; }
                     table { page-break-after: auto; }
                     tr { page-break-inside: avoid; }
+                    .overflow-x-auto { overflow: visible !important; }
+                    table th.hidden, table td.hidden { display: table-cell !important; }
                 }
             `}</style>
         </div>
     );
-}
-
-function statusCellClass(status: StatusKegiatan): string {
-    const map: Record<StatusKegiatan, string> = {
-        ACARA_MASUK: 'bg-purple-100 text-purple-800',
-        MENUNGGU_PENUGASAN: 'bg-yellow-100 text-yellow-800',
-        KEGIATAN_SELESAI: 'bg-green-100 text-green-800',
-        SPJ_SELESAI: 'bg-blue-100 text-blue-800',
-    };
-    return map[status] || 'bg-gray-100 text-gray-800';
 }

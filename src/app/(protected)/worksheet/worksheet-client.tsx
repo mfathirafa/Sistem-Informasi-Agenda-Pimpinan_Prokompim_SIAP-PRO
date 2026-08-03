@@ -7,20 +7,13 @@ import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } fr
 import type { SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS } from '@/lib/constants/status-penugasan';
-import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
+import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
 import KegiatanModal from './kegiatan-modal';
 import { findPetugasLabel, type KegiatanRow } from '@/lib/worksheet';
+import ConfirmDialog from '@/components/confirm-dialog';
+import { toDateInput } from '@/lib/format';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
-
-function pad(n: number) {
-  return n < 10 ? '0' + n : '' + n;
-}
-
-function toDateInput(d: Date | string) {
-  const dt = new Date(d);
-  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-}
 
 export default function WorksheetClient({
   initialData,
@@ -42,15 +35,19 @@ export default function WorksheetClient({
   const [filterStatusKegiatan, setFilterStatusKegiatan] = useState('Semua');
   const [filterPejabat, setFilterPejabat] = useState('Semua');
   const [filterPenugasan, setFilterPenugasan] = useState('Semua');
+  const [filterSektor, setFilterSektor] = useState('Semua');
+  const [filterPic, setFilterPic] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KegiatanRow | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [isPending, startTransition] = useTransition();
 
   const bulanOptions = useMemo(() => {
     const set = new Set(
       items.map((k) => {
         const d = new Date(k.tanggal);
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       })
     );
     return Array.from(set).sort();
@@ -63,20 +60,22 @@ export default function WorksheetClient({
   const filtered = useMemo(() => {
     return items
       .filter((k) => {
-        if (search && !`${k.namaKegiatan} ${k.tempat} ${k.perihalSurat || ''}`.toLowerCase().includes(search.toLowerCase())) return false;
+        if (search && !`${k.namaKegiatan} ${k.tempat} ${k.perihalSurat || ''} ${k.picNama || ''} ${k.picNoHp || ''} ${k.pejabat} ${k.leadingSectorNama}`.toLowerCase().includes(search.toLowerCase())) return false;
         if (filterStatus !== 'Semua' && k.statusSambutan !== filterStatus) return false;
         if (filterStatusKegiatan !== 'Semua' && k.statusKegiatan !== filterStatusKegiatan) return false;
         if (filterPejabat !== 'Semua' && k.pejabat !== filterPejabat) return false;
         if (filterBulan !== 'Semua') {
           const d = new Date(k.tanggal);
-          const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           if (key !== filterBulan) return false;
         }
         if (filterPenugasan !== 'Semua' && k.jenisPenugasan !== filterPenugasan) return false;
+        if (filterSektor !== 'Semua' && k.leadingSectorId !== filterSektor) return false;
+        if (filterPic && !(k.picNama || '').toLowerCase().includes(filterPic.toLowerCase())) return false;
         return true;
       })
       .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
-  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan, filterPenugasan]);
+  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan, filterPenugasan, filterSektor, filterPic]);
 
   const openAdd = () => {
     setEditingItem(null);
@@ -148,12 +147,21 @@ export default function WorksheetClient({
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (!window.confirm('Hapus kegiatan ini?')) return;
+  const handleDelete = (id: string, nama: string) => {
+    setConfirmDelete({ id, nama });
+    setDeleteError('');
+  };
+
+  const confirmDeleteAction = () => {
+    if (!confirmDelete) return;
     startTransition(async () => {
-      const res = await deleteKegiatan(id);
-      if (res.ok) setItems((prev) => prev.filter((k) => k.id !== id));
-      else alert(res.error || 'Gagal menghapus.');
+      const res = await deleteKegiatan(confirmDelete.id);
+      if (res.ok) {
+        setItems((prev) => prev.filter((k) => k.id !== confirmDelete.id));
+        setConfirmDelete(null);
+      } else {
+        setDeleteError(res.error || 'Gagal menghapus.');
+      }
     });
   };
 
@@ -220,7 +228,7 @@ export default function WorksheetClient({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama kegiatan atau tempat..."
+            placeholder="Cari kegiatan, tempat, atau PIC..."
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
           />
         </div>
@@ -287,6 +295,22 @@ export default function WorksheetClient({
               <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
             ))}
           </select>
+          <select
+            value={filterSektor}
+            onChange={(e) => setFilterSektor(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-app text-sm"
+          >
+            <option value="Semua">Semua Sektor</option>
+            {leadingSectorOptions.map((s) => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
+          </select>
+          <input
+            value={filterPic}
+            onChange={(e) => setFilterPic(e.target.value)}
+            placeholder="Filter PIC..."
+            className="px-3 py-2 rounded-lg border border-app text-sm w-36"
+          />
           <button
             onClick={exportExcel}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
@@ -306,7 +330,7 @@ export default function WorksheetClient({
 
       <div className="bg-white rounded-2xl border border-app overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                 <th className="px-4 py-3 font-medium">Tanggal</th>
@@ -402,7 +426,7 @@ export default function WorksheetClient({
                             <Edit2 size={14} />
                           </button>
                           <button
-                            onClick={() => handleDelete(k.id)}
+                            onClick={() => handleDelete(k.id, k.namaKegiatan)}
                             aria-label="Hapus"
                             className="p-1.5 rounded-md hover:bg-red-50 text-red-600"
                           >
@@ -418,6 +442,20 @@ export default function WorksheetClient({
           </table>
         </div>
       </div>
+
+      {deleteError && (
+        <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>
+      )}
+
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title="Hapus kegiatan ini?"
+        message={confirmDelete ? `"${confirmDelete.nama}" akan dihapus permanen beserta dokumen terkait.` : ''}
+        confirmLabel="Hapus"
+        loading={isPending}
+        onConfirm={confirmDeleteAction}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {modalOpen && (
         <KegiatanModal

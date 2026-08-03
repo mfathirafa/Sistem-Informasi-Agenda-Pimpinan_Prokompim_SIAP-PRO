@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { Trash2, Plus, X } from 'lucide-react';
 import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '@/app/actions/petugas';
+import ConfirmDialog from '@/components/confirm-dialog';
 
 export type PetugasRow = {
   id: string;
@@ -20,6 +21,8 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [editingItem, setEditingItem] = useState<PetugasRow | null>(null);
   const [form, setForm] = useState<PetugasInput>(emptyForm);
   const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [isPending, startTransition] = useTransition();
 
   const openAdd = () => { setEditingItem(null); setForm(emptyForm); setError(''); setModalOpen(true); };
@@ -51,11 +54,20 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   };
 
   const handleDelete = (id: string, nama: string) => {
-    if (!window.confirm(`Hapus petugas "${nama}"?`)) return;
+    setConfirmDelete({ id, nama });
+    setDeleteError('');
+  };
+
+  const confirmDeleteAction = () => {
+    if (!confirmDelete) return;
     startTransition(async () => {
-      const res = await deletePetugas(id);
-      if (res.ok) setItems((prev) => prev.filter((p) => p.id !== id));
-      else alert(res.error || 'Gagal menghapus.');
+      const res = await deletePetugas(confirmDelete.id);
+      if (res.ok) {
+        setItems((prev) => prev.filter((p) => p.id !== confirmDelete.id));
+        setConfirmDelete(null);
+      } else {
+        setDeleteError(res.error || 'Gagal menghapus.');
+      }
     });
   };
 
@@ -111,6 +123,20 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
           </tbody>
         </table>
       </div>
+
+      {deleteError && (
+        <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>
+      )}
+
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title="Hapus petugas ini?"
+        message={confirmDelete ? `Petugas "${confirmDelete.nama}" akan dihapus permanen.` : ''}
+        confirmLabel="Hapus"
+        loading={isPending}
+        onConfirm={confirmDeleteAction}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {modalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={() => setModalOpen(false)}>

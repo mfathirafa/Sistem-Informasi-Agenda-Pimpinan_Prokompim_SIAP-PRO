@@ -42,6 +42,38 @@
 
 ## Changelog
 
+### 3 Agustus 2026 — Sprint18 (R8): Polish & Hardening (tech debt cleanup)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| A: ConfirmDialog untuk semua delete | ✅ Selesai | Gantikan `window.confirm` native dengan `ConfirmDialog` reusable di 4 client: worksheet, master-petugas, master-leading-sector, users. Pola `confirmDelete`/`deleteError`/`confirmDeleteAction` konsisten |
+| B: Konsolidasi warna/label status | ✅ Selesai | `STATUS_KEGIATAN_CHART_COLOR` + `STATUS_KEGIATAN_CELL_CLASS` masuk ke `constants/status-kegiatan.ts` — hapus duplikat lokal di dashboard-stats & laporan-client |
+| C: Konsolidasi helper tanggal | ✅ Selesai | `lib/format.ts` baru (`padDate`, `toDateInput`, `formatTanggal`) — hapus duplikat `pad`/`formatTanggal`/`toDateInput` lokal di laporan-client, kegiatan-modal, worksheet-client. Key `YYYY-MM` pakai native `String().padStart(2,'0')` |
+
+**Decisions:**
+- **Gunakan ConfirmDialog yang sudah ada** daripada `window.confirm` — konsisten, aksesibel (Escape, focus mgmt), loading state. Zero UI baru.
+- **Status color/class single-source** — chart hex & tailwind cell class dipindah ke constants, diindex oleh enum value (type-safe).
+- **Date helper single-source** — `lib/format.ts`. `padDate` untuk angka, `toDateInput` untuk input date `YYYY-MM-DD`, `formatTanggal` untuk `DD/MM/YYYY`. Key bulan chart/URL (`YYYY-MM`) bukan tanggung jawab helper ini → native `padStart`.
+- Tidak ada perubahan visual, tidak ada perubahan schema, tidak ada migration.
+
+**Files:**
+- `src/lib/format.ts` — NEW: helper tanggal shared
+- `src/lib/constants/status-kegiatan.ts` — MODIFIED: + `STATUS_KEGIATAN_CHART_COLOR`, `STATUS_KEGIATAN_CELL_CLASS`
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: ConfirmDialog delete + hapus `pad` lokal
+- `src/app/(protected)/worksheet/kegiatan-modal.tsx` — MODIFIED: pakai `toDateInput` dari `lib/format`
+- `src/app/(protected)/master-petugas/master-petugas-client.tsx` — MODIFIED: ConfirmDialog delete
+- `src/app/(protected)/master-leading-sector/master-leading-sector-client.tsx` — MODIFIED: ConfirmDialog delete
+- `src/app/(protected)/users/users-client.tsx` — MODIFIED: ConfirmDialog delete
+- `src/app/(protected)/dashboard/dashboard-stats.tsx` — MODIFIED: warna status dari constants
+- `src/app/(protected)/dashboard/page.tsx` — MODIFIED: key bulan pakai `padStart`
+- `src/app/(protected)/kalender/page.tsx` — MODIFIED: `fmtBulan` pakai `padStart`
+- `src/app/(protected)/laporan/laporan-client.tsx` — MODIFIED: `formatTanggal` + cell class dari shared
+
+**Verifikasi:**
+- `npx tsc --noEmit` — hasil di bawah
+- `npm run lint` — hasil di bawah
+- `npm run build` — hasil di bawah
+
 ### 3 Agustus 2026 — Sprint17 (R7): Perihal Surat + PIC + Activity Log STAFF
 
 | Fitur | Status | Catatan |

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { Trash2, Pencil, X } from 'lucide-react';
 import { createUser, updateUser, deleteUser } from '@/app/actions/users';
+import ConfirmDialog from '@/components/confirm-dialog';
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', KEPALA_BAGIAN: 'Kepala Bagian' };
 type UserRow = { id: string; username: string; nama: string; role: string };
@@ -15,6 +16,8 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [editForm, setEditForm] = useState({ nama: '', role: 'STAFF' as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '' });
   const [editError, setEditError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
+  const [deleteError, setDeleteError] = useState('');
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,11 +58,20 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   };
 
   const handleDelete = (id: string, nama: string) => {
-    if (!window.confirm(`Hapus pengguna ${nama}?`)) return;
+    setConfirmDelete({ id, nama });
+    setDeleteError('');
+  };
+
+  const confirmDeleteAction = () => {
+    if (!confirmDelete) return;
     startTransition(async () => {
-      const res = await deleteUser(id);
-      if (res.ok) setUsers((prev) => prev.filter((u) => u.id !== id));
-      else alert(res.error || 'Gagal menghapus pengguna.');
+      const res = await deleteUser(confirmDelete.id);
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== confirmDelete.id));
+        setConfirmDelete(null);
+      } else {
+        setDeleteError(res.error || 'Gagal menghapus pengguna.');
+      }
     });
   };
 
@@ -113,6 +125,20 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
           <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Tambah'}</button>
         </form>
       </div>
+
+      {deleteError && (
+        <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>
+      )}
+
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title="Hapus pengguna ini?"
+        message={confirmDelete ? `Pengguna "${confirmDelete.nama}" akan dihapus permanen.` : ''}
+        confirmLabel="Hapus"
+        loading={isPending}
+        onConfirm={confirmDeleteAction}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {editingUser && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={() => setEditingUser(null)}>

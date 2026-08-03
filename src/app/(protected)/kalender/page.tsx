@@ -19,10 +19,6 @@ const DOT_COLOR: Record<StatusKegiatanValue, string> = {
     SPJ_SELESAI: 'bg-navy',
 };
 
-function pad(n: number) {
-    return n < 10 ? '0' + n : '' + n;
-}
-
 // Parse ?bulan=YYYY-MM. Invalid/kosong -> bulan berjalan.
 function parseBulan(value: string | undefined): { tahun: number; bulan: number } {
     const now = new Date();
@@ -44,7 +40,7 @@ export default async function KalenderPage({
         const { tahun, bulan: bulanIdx } = parseBulan(bulan);
         const periode = new Date(tahun, bulanIdx, 1);
 
-        const fmtBulan = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+        const fmtBulan = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const prev = new Date(tahun, bulanIdx - 1, 1);
         const next = new Date(tahun, bulanIdx + 1, 1);
         
