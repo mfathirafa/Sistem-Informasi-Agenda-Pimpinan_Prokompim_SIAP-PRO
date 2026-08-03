@@ -13,11 +13,11 @@ export default async function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <SealLogo size={64} />
           <h1 className="font-display text-2xl mt-4 text-navy font-semibold text-center">
-            Sistem Manajemen SPJ
+            SIAP-PRO
           </h1>
           <p className="text-muted text-sm mt-1 text-center">
-            Bagian Protokol dan Komunikasi Pimpinan
-            <br />
+            Sistem Informasi Agenda Pimpinan Prokompim <br />
+            Bagian Protokol dan Komunikasi Pimpinan <br />
             Sekretariat Daerah Kabupaten Brebes
           </p>
         </div>

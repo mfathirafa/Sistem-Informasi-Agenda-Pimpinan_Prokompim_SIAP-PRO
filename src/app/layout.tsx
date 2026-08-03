@@ -19,7 +19,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Sistem Manajemen SPJ - Protokom Sekda Brebes',
+  title: 'SIAP-PRO - Sistem Informasi Agenda Pimpinan Prokompim',
   description: 'Worksheet kegiatan Bupati dan Wakil Bupati Kabupaten Brebes',
 };
 

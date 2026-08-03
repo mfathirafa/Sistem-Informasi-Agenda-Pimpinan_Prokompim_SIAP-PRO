@@ -6,6 +6,8 @@ import * as XLSX from 'xlsx';
 import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } from '@/app/actions/kegiatan';
 import type { SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
+import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS } from '@/lib/constants/status-penugasan';
+import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
 import KegiatanModal from './kegiatan-modal';
 import { findPetugasLabel, type KegiatanRow } from '@/lib/worksheet';
 
@@ -175,8 +177,8 @@ export default function WorksheetClient({
       k.petugasLiputanNama || '',
       k.linkUpload || '',
       k.catatan || '',
-      k.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD',
-      k.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis',
+      JENIS_PENUGASAN_LABEL[k.jenisPenugasan],
+      STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
     ]);
     
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
@@ -267,8 +269,9 @@ export default function WorksheetClient({
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Penugasan</option>
-            <option value="Ya">Lembur</option>
-            <option value="Tidak">SPPD</option>
+            {JENIS_PENUGASAN_OPTIONS.map((j) => (
+              <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
+            ))}
           </select>
           <button
             onClick={exportExcel}
@@ -359,13 +362,13 @@ export default function WorksheetClient({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${k.jenisPenugasan === 'LEMBUR' ? 'badge-menunggu-persetujuan' : 'badge-sudah'}`}>
-                        {k.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD'}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]}`}>
+                        {JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${k.statusPublikasi === 'DIRILIS' ? 'badge-sudah' : 'badge-belum'}`}>
-                        {k.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis'}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_PUBLIKASI_BADGE_CLASS[k.statusPublikasi]}`}>
+                        {STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}
                       </span>
                     </td>
                     {canEdit && (

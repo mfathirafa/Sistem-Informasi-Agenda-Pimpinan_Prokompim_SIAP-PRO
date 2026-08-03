@@ -93,9 +93,48 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
           </tbody>
         </table>
       </div>
-                  </form>
+
+      {canEdit && (
+        <div className="bg-white rounded-2xl border border-app p-5 self-start">
+          <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Leading Sector</h3>  
+          <form onSubmit={submit} className="space-y-3">
+            <input placeholder="cth. Dinas Pendidikan" value={nama} onChange={(e) => setNama(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <button type="submit" disabled={isPending} className="btn-primary w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-medium">
+              <Plus size={15} /> {isPending ? 'Menyimpan...' : 'Tambah'}  
+            </button>
+        </form>
+      </div>
+      )}
+
+      {editingItem && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={() => setEditingItem(null)}>
+          <div className="bg-white rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-app">
+              <h3 className="font-display text-lg font-semibold text-navy">Edit Leading Sector</h3>
+              <button onClick={() => setEditingItem(null)} aria-label="Tutup" className="p-1 rounded-md hover:bg-app">
+                <X size={18} />
+              </button>  
           </div>
+          <form onSubmit={submitEdit} className="px-5 py-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Nama</label>
+              <input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="cth. Dinas Pendidikan" />
+            </div> 
+            {editError && <p className="text-xs text-red-600">{editError}</p>} 
+            <div className="flex gap-2 pt-2">
+              <button type="button" onClick={() => setEditingItem(null)} className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium">
+                Batal
+              </button>
+              <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">
+                {isPending ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>  
+          </form>
         </div>
+      </div>
       )}
     </div>
   );
+}

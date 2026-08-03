@@ -13,6 +13,8 @@ import {
   type JenisDokumenValue,
   type StatusDokumenValue,
 } from '@/lib/constants/status-dokumen';
+import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from '@/lib/constants/status-penugasan';
+import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 
 type KegiatanDetail = {
   id: string;
@@ -22,8 +24,8 @@ type KegiatanDetail = {
   tempat: string;
   pejabat: string;
   leadingSectorNama: string;
-  jenisPenugasan: string;
-  statusPublikasi: string;
+  jenisPenugasan: JenisPenugasanValue;
+  statusPublikasi: StatusPublikasiValue;
 };
 
 type DokumenDetail = {
@@ -141,12 +143,12 @@ export default function DetailClient({
             <dd className="font-medium">{kegiatan.waktu || '-'}</dd>
           </div>
           <div>
-            <dt className="text-muted">Lembur</dt>
-            <dd className="font-medium">{kegiatan.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD'}</dd>
+            <dt className="text-muted">Jenis Penugasan</dt>
+            <dd className="font-medium">{JENIS_PENUGASAN_LABEL[kegiatan.jenisPenugasan]}</dd>
           </div>
           <div>
             <dt className="text-muted">Status Publikasi</dt>
-            <dd className="font-medium">{kegiatan.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis'}</dd>
+            <dd className="font-medium">{STATUS_PUBLIKASI_LABEL[kegiatan.statusPublikasi]}</dd>
           </div>
         </dl>
       </div>

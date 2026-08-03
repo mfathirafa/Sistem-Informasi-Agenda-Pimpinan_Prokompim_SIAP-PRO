@@ -252,11 +252,19 @@ async function main() {
           catatan: 'Menunggu approval anggaran',
           jenisPenugasan: 'SPPD', statusPublikasi: 'BELUM_DIRILIS',
         },
+        {
+         namaKegiatan: 'Pendampingan Rapat Paripurna DPRD',
+          tanggal: addDays(8), waktu: '13:00',
+          tempat: 'Gedung DPRD Kabupaten Brebes',
+          pejabat: 'Bupati', leadingSectorId: findSector('Bagian Protokol dan Komunikasi Pimpinan'),
+          statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.ACARA_MASUK,
+          jenisPenugasan: 'KEGIATAN', statusPublikasi: 'BELUM_DIRILIS',
+      },
       ],
     });
 
     // Buat relasi petugas melalui junction table
-    const createdKegiatan = await prisma.kegiatan.findMany({ orderBy: { createdAt: 'asc' }, take: 20 });
+    const createdKegiatan = await prisma.kegiatan.findMany({ orderBy: { createdAt: 'asc' }, take: 21 });
     const pilihProtokol = (i: number) => petugasList[protokolPetugas[i % 3]];
     const pilihLiputan = (i: number) => petugasList[liputanPetugas[i % 3]];
 

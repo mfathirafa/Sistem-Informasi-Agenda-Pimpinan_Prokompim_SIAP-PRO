@@ -5,6 +5,8 @@ import { useState, useMemo, useTransition } from "react";
 import { Download, Printer } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { STATUS_KEGIATAN_LABEL } from "@/lib/constants/status-kegiatan";
+import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from "@/lib/constants/status-penugasan";
+import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS, type StatusPublikasiValue } from "@/lib/constants/status-publikasi";
 import type { StatusKegiatan } from "@prisma/client";
 
 type KegiatanItem = {
@@ -19,8 +21,8 @@ type KegiatanItem = {
     statusKegiatan: StatusKegiatan;
     petugasProtokolNama: string[];
     petugasLiputanNama: string[];
-    jenisPenugasan: string;
-    statusPublikasi: string;
+    jenisPenugasan: JenisPenugasanValue;
+    statusPublikasi: StatusPublikasiValue;
 };
 
 type Props = {
@@ -77,8 +79,8 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
             STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan,
             k.petugasProtokolNama.join(', '),
             k.petugasLiputanNama.join(', '),
-            k.jenisPenugasan === 'LEMBUR' ? 'Lembur' : 'SPPD',
-            k.statusPublikasi === 'DIRILIS' ? 'Dirilis' : 'Belum Dirilis',
+            JENIS_PENUGASAN_LABEL[k.jenisPenugasan],
+            STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
         ]);
 
         const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);

@@ -28,6 +28,7 @@ enum StatusKegiatan {
 
 enum StatusPublikasi {
   BELUM_DIRILIS
+  TIDAK_DIRILIS
   DIRILIS
 }
 
@@ -50,6 +51,7 @@ enum StatusDokumen {
 enum JenisPenugasan {
   LEMBUR
   SPPD
+  KEGIATAN
 }
 
 enum Entity {

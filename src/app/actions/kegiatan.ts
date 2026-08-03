@@ -5,6 +5,8 @@ import { JENIS_DOKUMEN_OPTIONS } from '@/lib/constants/status-dokumen';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
+import { JenisPenugasanValue } from '@/lib/constants/status-penugasan';
+import { StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import { validateTransition } from '@/lib/workflow';
 import { logActivity } from '@/lib/activity-log';
 
@@ -21,8 +23,8 @@ export type KegiatanInput = {
   petugasLiputanIds: string[];
   linkUpload?: string;
   catatan?: string;
-  jenisPenugasan: 'LEMBUR' | 'SPPD';
-  statusPublikasi: 'BELUM_DIRILIS' | 'DIRILIS';
+  jenisPenugasan: JenisPenugasanValue;
+  statusPublikasi: StatusPublikasiValue;
 };
 
 export async function createKegiatan(data: KegiatanInput): Promise<ActionResult> {

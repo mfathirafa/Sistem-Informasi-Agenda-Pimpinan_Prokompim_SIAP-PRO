@@ -6,6 +6,8 @@ import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from '@/lib/worksheet';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
+import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL } from '@/lib/constants/status-penugasan';
+import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL } from '@/lib/constants/status-publikasi';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -232,12 +234,23 @@ export default function KegiatanModal({
             <label className="block text-sm font-medium mb-1.5">Jenis Penugasan</label>
             <select 
               value={form.jenisPenugasan} 
-              onChange={(e) => update('jenisPenugasan', e.target.value as 'LEMBUR' | 'SPPD')}
+              onChange={(e) => update('jenisPenugasan', e.target.value as (typeof JENIS_PENUGASAN_OPTIONS)[number])}
               className="w-full px-3 py-2 rounded-lg border border-app text-sm"
             >
-              <option value="LEMBUR">Lembur</option>
-              <option value="SPPD">SPPD (Perjalanan Dinas)</option>
+             {JENIS_PENUGASAN_OPTIONS.map((j) => (
+              <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
+            ))}
             </select>
+          </div>
+          <div>
+           <label className="block text-sm font-medium mb-1.5">Status Publikasi</label>
+          <select value={form.statusPublikasi} onChange={(e) => update('statusPublikasi', e.target.value as (typeof STATUS_PUBLIKASI_OPTIONS)[number])}
+          className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+          >
+          {STATUS_PUBLIKASI_OPTIONS.map((s) => (
+          <option key={s} value={s}>{STATUS_PUBLIKASI_LABEL[s]}</option>
+          ))}
+          </select>
           </div>
            <div className="grid grid-cols-2 gap-3">
             <div>

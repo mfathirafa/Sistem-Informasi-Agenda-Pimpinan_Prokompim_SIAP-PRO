@@ -5,6 +5,8 @@ node_modules
 .next
 out
 
+.claude
+
 # production
 build
 

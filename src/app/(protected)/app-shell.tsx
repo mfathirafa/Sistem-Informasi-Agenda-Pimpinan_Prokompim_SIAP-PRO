@@ -46,8 +46,8 @@ export default function AppShell({
           <div className="flex items-center gap-3">
             <SealLogo size={36} />
             <div>
-              <p className="font-display font-semibold text-sm leading-tight">Sistem Manajemen SPJ</p>
-              <p className="text-xs text-white/60 leading-tight">Protokom Sekda Brebes</p>
+              <p className="font-display font-semibold text-sm leading-tight">SIAP-PRO</p>
+              <p className="text-xs text-white/60 leading-tight">Sistem Informasi Agenda Pimpinan Prokompim</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

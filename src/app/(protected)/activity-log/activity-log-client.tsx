@@ -45,6 +45,7 @@ const FIELD_LABEL: Record<string, string> = {
   statusAktif: 'Status Aktif',
   username: 'Username',
   role: 'Role',
+  password: 'Password',
   status: 'Status',
   link: 'Link',
 };

@@ -1,5 +1,7 @@
 import type { SearchableOption } from "@/components/searchable-select";
 import { STATUS_KEGIATAN_OPTIONS } from "./constants/status-kegiatan";
+import { JenisPenugasanValue } from "./constants/status-penugasan"; 
+import { StatusPublikasiValue } from "./constants/status-publikasi";
 
 export type KegiatanRow = {
     id: string;
@@ -18,8 +20,8 @@ export type KegiatanRow = {
     petugasLiputanNama: string[];
     linkUpload: string | null;
     catatan: string | null;
-    jenisPenugasan: 'LEMBUR' | 'SPPD';
-    statusPublikasi: 'BELUM_DIRILIS' | 'DIRILIS';
+    jenisPenugasan: JenisPenugasanValue;
+    statusPublikasi: StatusPublikasiValue;
 };
 
 /** Cari nama petugas dari daftar opsi berdasarkan ID.
