@@ -1,24 +1,57 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { buildKegiatanWhere, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter } from '@/lib/queries/kegiatan';
 import WorksheetClient from './worksheet-client';
 
-export default async function WorksheetPage() {
+const PAGE_SIZE = 20;
+
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function WorksheetPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   const canEdit = user?.role === 'ADMIN' || user?.role === 'STAFF';
 
   try {
+    const params = await searchParams;
+    const rawPage = Number(params.page);
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+    const filters: KegiatanFilter = {
+      q: typeof params.q === 'string' ? params.q : undefined,
+      bulan: typeof params.bulan === 'string' ? params.bulan : undefined,
+      status: typeof params.status === 'string' ? params.status : undefined,
+      statusKegiatan: typeof params.statusKegiatan === 'string' ? params.statusKegiatan : undefined,
+      pejabat: typeof params.pejabat === 'string' ? params.pejabat : undefined,
+      penugasan: typeof params.penugasan === 'string' ? params.penugasan : undefined,
+      sektor: typeof params.sektor === 'string' ? params.sektor : undefined,
+      pic: typeof params.pic === 'string' ? params.pic : undefined,
+    };
+
     // Opsional: Batasi data agar tidak menarik ribuan histori dari tahun-tahun lama
     // Misalnya: Tarik data dari 3 bulan yang lalu ke depan
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-    const [kegiatan, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
+    const where = buildKegiatanWhere(filters, threeMonthsAgo);
+
+    // Hitung total terlebih dahulu agar page bisa di-clamp sebelum findMany.
+    const total = await prisma.kegiatan.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const safePage = Math.min(page, totalPages);
+
+    const [kegiatan, months, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
-        where: {
-          tanggal: { gte: threeMonthsAgo },
-        },
+        where,
         orderBy: { tanggal: 'asc' },
-        include: { leadingSector: true, petugas: { include: { petugas: true } } },
+        include: kegiatanInclude,
+        skip: (safePage - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.kegiatan.findMany({
+        where: { tanggal: { gte: threeMonthsAgo } },
+        select: { tanggal: true },
       }),
       prisma.petugas.findMany({
         where: { statusAktif: true, kategori: 'PROTOKOL' },
@@ -31,48 +64,33 @@ export default async function WorksheetPage() {
       prisma.leadingSector.findMany({
         orderBy: { nama: 'asc' }
       }),
-    ])
+    ]);
 
-    const data = kegiatan.map((k) => ({
-      id: k.id,
-      namaKegiatan: k.namaKegiatan,
-      tanggal: k.tanggal.toISOString(),
-      waktu: k.waktu,
-      tempat: k.tempat,
-      pejabat: k.pejabat,
-      perihalSurat: k.perihalSurat,
-      picNama: k.picNama,
-      picNoHp: k.picNoHp,
-      leadingSectorId: k.leadingSectorId,
-      leadingSectorNama: k.leadingSector.nama,
-      statusSambutan: k.statusSambutan,
-      statusKegiatan: k.statusKegiatan,
-      petugasProtokolIds: k.petugas
-        .filter((p) => p.petugas.kategori === 'PROTOKOL')
-        .map((p) => p.petugas.id),
-      petugasProtokolNama: k.petugas
-        .filter((p) => p.petugas.kategori === 'PROTOKOL')
-        .map((p) => p.petugas.nama),
-      petugasLiputanIds: k.petugas
-        .filter((p) => p.petugas.kategori === 'LIPUTAN')
-        .map((p) => p.petugas.id),
-      petugasLiputanNama: k.petugas
-        .filter((p) => p.petugas.kategori === 'LIPUTAN')
-        .map((p) => p.petugas.nama),
-      linkUpload: k.linkUpload,
-      catatan: k.catatan,
-      jenisPenugasan: k.jenisPenugasan,
-      statusPublikasi: k.statusPublikasi,
-    }));
+    const data = kegiatan.map(mapKegiatanToRow);
+
+    // Opsi filter bulan dari seluruh data dalam window (bukan hanya halaman aktif).
+    const bulanOptions = Array.from(
+      new Set(
+        months.map((m) => {
+          const d = m.tanggal;
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        })
+      )
+    ).sort();
 
     return (
       <WorksheetClient
         initialData={data}
+        total={total}
+        page={safePage}
+        pageSize={PAGE_SIZE}
+        filters={filters}
+        bulanOptions={bulanOptions}
         canEdit={canEdit}
         petugasProtokolOptions={petugasProtokol.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
         petugasLiputanOptions={petugasLiputan.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
         leadingSectorOptions={leadingSectors.map((l) => ({ id: l.id, label: l.nama }))}
-        />
+      />
     );
   } catch (error) {
     console.error('[WORKSHEET_PAGE_ERROR]', error);

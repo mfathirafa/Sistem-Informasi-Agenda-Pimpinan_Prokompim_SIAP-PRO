@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from '@/lib/worksheet';
 import { type SearchableOption } from '@/components/searchable-select';
+import PetugasPicker from '@/components/petugas-picker';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL } from '@/lib/constants/status-publikasi';
@@ -75,6 +76,14 @@ export default function KegiatanModal({
     () => item != null && !PEJABAT_OPTIONS.includes(item.pejabat),
   );
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [saving, onClose]);
+
   const update = <K extends keyof KegiatanInput>(field: K, value: KegiatanInput[K]) =>
     setForm((f) => ({ ...f, [field]: value }));
 
@@ -94,13 +103,19 @@ export default function KegiatanModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="kegiatan-modal-title"
+    >
       <div
         className="bg-white rounded-2xl max-w-lg w-full overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-app">
-          <h3 className="font-display text-lg font-semibold text-navy">
+          <h3 id="kegiatan-modal-title" className="font-display text-lg font-semibold text-navy">
             {item ? 'Edit Kegiatan' : 'Tambah Kegiatan'}
           </h3>
           <button onClick={onClose} aria-label="Tutup" className="p-1 rounded-md hover:bg-app">
@@ -280,41 +295,21 @@ export default function KegiatanModal({
           ))}
           </select>
           </div>
-           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Petugas Protokol</label>
-              <select
-                multiple
-                size={3}
-                value={form.petugasProtokolIds || []}
-                onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
-                  update('petugasProtokolIds', selected);
-                }}
-                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-              >
-                {petugasProtokolOptions.map((o) => (
-                  <option key={o.id} value={o.id}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Petugas Liputan</label>
-              <select
-                multiple
-                size={3}
-                value={form.petugasLiputanIds || []}
-                onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
-                  update('petugasLiputanIds', selected);
-                }}
-                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-              >
-                {petugasLiputanOptions.map((o) => (
-                  <option key={o.id} value={o.id}>{o.label}</option>
-                ))}
-              </select>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <PetugasPicker
+              label="Petugas Protokol"
+              options={petugasProtokolOptions}
+              selected={form.petugasProtokolIds || []}
+              onChange={(ids) => update('petugasProtokolIds', ids)}
+              disabled={saving}
+            />
+            <PetugasPicker
+              label="Petugas Liputan"
+              options={petugasLiputanOptions}
+              selected={form.petugasLiputanIds || []}
+              onChange={(ids) => update('petugasLiputanIds', ids)}
+              disabled={saving}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Link Upload Dokumentasi</label>

@@ -22,9 +22,6 @@ export default async function LoginPage() {
           </p>
         </div>
         <LoginForm />
-        <div className="mt-5 text-xs text-muted text-center leading-relaxed">
-          Akun percobaan — Admin: admin/admin123 · Staf: staff/staff123 · Kepala Bagian: atasan/atasan123
-        </div>
       </div>
     </div>
   );

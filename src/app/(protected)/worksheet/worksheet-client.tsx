@@ -1,81 +1,84 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { createKegiatan, updateKegiatan, deleteKegiatan, type KegiatanInput } from '@/app/actions/kegiatan';
+import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
 import type { SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
+import type { KegiatanFilter } from '@/lib/queries/kegiatan';
 import KegiatanModal from './kegiatan-modal';
-import { findPetugasLabel, type KegiatanRow } from '@/lib/worksheet';
+import type { KegiatanRow } from '@/lib/worksheet';
 import ConfirmDialog from '@/components/confirm-dialog';
+import Pagination from '@/components/pagination';
 import { toDateInput } from '@/lib/format';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
+/** Format daftar nama petugas menjadi "Nama A, Nama B +N" agar sel tabel tetap ringkas. */
+function petugasSummary(names: string[]): string {
+  if (names.length === 0) return '-';
+  const shown = names.slice(0, 2);
+  const extra = names.length - shown.length;
+  return extra > 0 ? `${shown.join(', ')} +${extra}` : shown.join(', ');
+}
+
 export default function WorksheetClient({
   initialData,
+  total,
+  page,
+  pageSize,
+  filters,
+  bulanOptions,
   canEdit,
   petugasProtokolOptions,
   petugasLiputanOptions,
   leadingSectorOptions,
 }: {
   initialData: KegiatanRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  filters: KegiatanFilter;
+  bulanOptions: string[];
   canEdit: boolean;
   petugasProtokolOptions: SearchableOption[];
   petugasLiputanOptions: SearchableOption[];
   leadingSectorOptions: SearchableOption[];
 }) {
-  const [items, setItems] = useState<KegiatanRow[]>(initialData);
-  const [search, setSearch] = useState('');
-  const [filterBulan, setFilterBulan] = useState('Semua');
-  const [filterStatus, setFilterStatus] = useState('Semua');
-  const [filterStatusKegiatan, setFilterStatusKegiatan] = useState('Semua');
-  const [filterPejabat, setFilterPejabat] = useState('Semua');
-  const [filterPenugasan, setFilterPenugasan] = useState('Semua');
-  const [filterSektor, setFilterSektor] = useState('Semua');
-  const [filterPic, setFilterPic] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KegiatanRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [isPending, startTransition] = useTransition();
 
-  const bulanOptions = useMemo(() => {
-    const set = new Set(
-      items.map((k) => {
-        const d = new Date(k.tanggal);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      })
-    );
-    return Array.from(set).sort();
-  }, [items]);
+  const totalPages = Math.ceil(total / pageSize);
+  const pageStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const pageEnd = Math.min(page * pageSize, total);
 
-  const findLeadingSector = (id: string) => leadingSectorOptions.find((o) => o.id === id)?.label || '';
-  const findPetugasProtokol = (ids: string[]) => findPetugasLabel(petugasProtokolOptions, ids);
-  const findPetugasLiputan = (ids: string[]) => findPetugasLabel(petugasLiputanOptions, ids);
+  /** Terapkan satu filter (sinkron ke URL), selalu kembali ke halaman 1. */
+  const setFilter = (key: string, value: string | undefined) => {
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) params.set(key, value);
+      else params.delete(key);
+      params.delete('page');
+      router.replace(`/worksheet?${params.toString()}`);
+    });
+  };
 
-  const filtered = useMemo(() => {
-    return items
-      .filter((k) => {
-        if (search && !`${k.namaKegiatan} ${k.tempat} ${k.perihalSurat || ''} ${k.picNama || ''} ${k.picNoHp || ''} ${k.pejabat} ${k.leadingSectorNama}`.toLowerCase().includes(search.toLowerCase())) return false;
-        if (filterStatus !== 'Semua' && k.statusSambutan !== filterStatus) return false;
-        if (filterStatusKegiatan !== 'Semua' && k.statusKegiatan !== filterStatusKegiatan) return false;
-        if (filterPejabat !== 'Semua' && k.pejabat !== filterPejabat) return false;
-        if (filterBulan !== 'Semua') {
-          const d = new Date(k.tanggal);
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          if (key !== filterBulan) return false;
-        }
-        if (filterPenugasan !== 'Semua' && k.jenisPenugasan !== filterPenugasan) return false;
-        if (filterSektor !== 'Semua' && k.leadingSectorId !== filterSektor) return false;
-        if (filterPic && !(k.picNama || '').toLowerCase().includes(filterPic.toLowerCase())) return false;
-        return true;
-      })
-      .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
-  }, [items, search, filterStatus, filterStatusKegiatan, filterPejabat, filterBulan, filterPenugasan, filterSektor, filterPic]);
+  const handlePageChange = (p: number) => {
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', String(p));
+      router.replace(`/worksheet?${params.toString()}`);
+    });
+  };
 
   const openAdd = () => {
     setEditingItem(null);
@@ -88,61 +91,13 @@ export default function WorksheetClient({
 
   const handleSave = (data: KegiatanInput) => {
     startTransition(async () => {
-      if (editingItem) {
-        const res = await updateKegiatan(editingItem.id, data);
-        if (res.ok) {
-          setItems((prev) =>
-            prev.map((k) =>
-              k.id === editingItem.id
-                ? {
-                    ...editingItem,
-                    ...data,
-                    waktu: data.waktu || null,
-                    perihalSurat: data.perihalSurat || null,
-                    picNama: data.picNama || null,
-                    picNoHp: data.picNoHp || null,
-                    leadingSectorNama: findLeadingSector(data.leadingSectorId),
-                    petugasProtokolIds: data.petugasProtokolIds,
-                    petugasProtokolNama: findPetugasProtokol(data.petugasProtokolIds),
-                    petugasLiputanIds: data.petugasLiputanIds,
-                    petugasLiputanNama: findPetugasLiputan(data.petugasLiputanIds),
-                    linkUpload: data.linkUpload || null,
-                    catatan: data.catatan || null,
-                  }
-                : k
-            )
-          );
-          setModalOpen(false);
-          if (res.warning) alert(res.warning);
-        } else {
-          alert(res.error || 'Gagal menyimpan.');
-        }
+      const res = editingItem ? await updateKegiatan(editingItem.id, data) : await createKegiatan(data);
+      if (res.ok) {
+        setModalOpen(false);
+        router.refresh(); // sinkronkan ulang data + total dengan server
+        if (res.warning) alert(res.warning);
       } else {
-        const res = await createKegiatan(data);
-        if (res.ok) {
-          setItems((prev) => [
-            ...prev,
-            {
-              id: 'temp-' + Date.now(),
-              ...data,
-              waktu: data.waktu || null,
-              perihalSurat: data.perihalSurat || null,
-              picNama: data.picNama || null,
-              picNoHp: data.picNoHp || null,
-              leadingSectorNama: findLeadingSector(data.leadingSectorId),
-              petugasProtokolIds: data.petugasProtokolIds,
-              petugasProtokolNama: findPetugasProtokol(data.petugasProtokolIds),
-              petugasLiputanIds: data.petugasLiputanIds,
-              petugasLiputanNama: findPetugasLiputan(data.petugasLiputanIds),
-              linkUpload: data.linkUpload || null,
-              catatan: data.catatan || null,
-            },
-          ]);
-          setModalOpen(false);
-          if (res.warning) alert(res.warning);
-        } else {
-          alert(res.error || 'Gagal menyimpan.');
-        }
+        alert(res.error || 'Gagal menyimpan.');
       }
     });
   };
@@ -157,15 +112,21 @@ export default function WorksheetClient({
     startTransition(async () => {
       const res = await deleteKegiatan(confirmDelete.id);
       if (res.ok) {
-        setItems((prev) => prev.filter((k) => k.id !== confirmDelete.id));
         setConfirmDelete(null);
+        router.refresh();
       } else {
         setDeleteError(res.error || 'Gagal menghapus.');
       }
     });
   };
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const res = await getKegiatanExport(filters);
+    if (!res.ok) {
+      alert(res.error || 'Gagal mengekspor.');
+      return;
+    }
+    const data = res.data;
     const header = [
       'Tanggal',
       'Nama Kegiatan',
@@ -184,7 +145,7 @@ export default function WorksheetClient({
       'Jenis Penugasan',
       'Status Publikasi',
     ];
-    const rows = filtered.map((k) => [
+    const rows = data.map((k) => [
       new Date(k.tanggal),
       k.namaKegiatan,
       k.perihalSurat || '',
@@ -202,11 +163,11 @@ export default function WorksheetClient({
       JENIS_PENUGASAN_LABEL[k.jenisPenugasan],
       STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
     ]);
-    
+
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
 
     // Auto-Width
-    const colWidths = header.map((_, ci) =>{
+    const colWidths = header.map((_, ci) => {
       const maxLen = Math.max(
         header[ci].length,
         ...rows.map((r) => String(r[ci] ?? '').length),
@@ -226,16 +187,17 @@ export default function WorksheetClient({
         <div className="relative flex-1 max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            defaultValue={filters.q || ''}
             placeholder="Cari kegiatan, tempat, atau PIC..."
+            onBlur={(e) => setFilter('q', e.target.value.trim() || undefined)}
+            onKeyDown={(e) => e.key === 'Enter' && setFilter('q', (e.target as HTMLInputElement).value.trim() || undefined)}
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
           />
         </div>
         <div className="flex flex-wrap gap-2">
           <select
-            value={filterBulan}
-            onChange={(e) => setFilterBulan(e.target.value)}
+            value={filters.bulan || 'Semua'}
+            onChange={(e) => setFilter('bulan', e.target.value === 'Semua' ? undefined : e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Bulan</option>
@@ -253,8 +215,8 @@ export default function WorksheetClient({
             })}
           </select>
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            value={filters.status || 'Semua'}
+            onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Status</option>
@@ -262,8 +224,8 @@ export default function WorksheetClient({
             <option value="BELUM">Belum Sambutan</option>
           </select>
           <select
-            value={filterStatusKegiatan}
-            onChange={(e) => setFilterStatusKegiatan(e.target.value)}
+            value={filters.statusKegiatan || 'Semua'}
+            onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Status Kegiatan</option>
@@ -274,8 +236,8 @@ export default function WorksheetClient({
             ))}
           </select>
           <select
-            value={filterPejabat}
-            onChange={(e) => setFilterPejabat(e.target.value)}
+            value={filters.pejabat || 'Semua'}
+            onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Pejabat</option>
@@ -286,8 +248,8 @@ export default function WorksheetClient({
             ))}
           </select>
           <select
-            value={filterPenugasan}
-            onChange={(e) => setFilterPenugasan(e.target.value)}
+            value={filters.penugasan || 'Semua'}
+            onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Penugasan</option>
@@ -296,8 +258,8 @@ export default function WorksheetClient({
             ))}
           </select>
           <select
-            value={filterSektor}
-            onChange={(e) => setFilterSektor(e.target.value)}
+            value={filters.sektor || 'Semua'}
+            onChange={(e) => setFilter('sektor', e.target.value === 'Semua' ? undefined : e.target.value)}
             className="px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Sektor</option>
@@ -306,9 +268,10 @@ export default function WorksheetClient({
             ))}
           </select>
           <input
-            value={filterPic}
-            onChange={(e) => setFilterPic(e.target.value)}
+            defaultValue={filters.pic || ''}
             placeholder="Filter PIC..."
+            onBlur={(e) => setFilter('pic', e.target.value.trim() || undefined)}
+            onKeyDown={(e) => e.key === 'Enter' && setFilter('pic', (e.target as HTMLInputElement).value.trim() || undefined)}
             className="px-3 py-2 rounded-lg border border-app text-sm w-36"
           />
           <button
@@ -328,7 +291,7 @@ export default function WorksheetClient({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-app overflow-hidden">
+      <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] text-sm">
             <thead>
@@ -352,14 +315,14 @@ export default function WorksheetClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {initialData.length === 0 ? (
                 <tr>
                   <td colSpan={canEdit ? 16 : 15} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
               ) : (
-                filtered.map((k) => (
+                initialData.map((k) => (
                   <tr key={k.id} className="border-t border-app hover:bg-slate-50">
                     <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
                       {new Date(k.tanggal).toLocaleDateString('id-ID', {
@@ -389,8 +352,8 @@ export default function WorksheetClient({
                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted">{k.petugasProtokolNama || '-'}</td>
-                    <td className="px-4 py-3 text-muted">{k.petugasLiputanNama || '-'}</td>
+                    <td className="px-4 py-3 text-muted">{petugasSummary(k.petugasProtokolNama)}</td>
+                    <td className="px-4 py-3 text-muted">{petugasSummary(k.petugasLiputanNama)}</td>
                     <td className="px-4 py-3">
                       {k.linkUpload ? (
                         <a
@@ -442,6 +405,15 @@ export default function WorksheetClient({
           </table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted">
+            Menampilkan {pageStart}–{pageEnd} dari {total} kegiatan
+          </span>
+          <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+        </div>
+      )}
 
       {deleteError && (
         <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>

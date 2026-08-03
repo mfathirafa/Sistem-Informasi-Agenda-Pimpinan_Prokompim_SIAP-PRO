@@ -9,6 +9,7 @@ import { JenisPenugasanValue } from '@/lib/constants/status-penugasan';
 import { StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import { validateTransition } from '@/lib/workflow';
 import { logActivity } from '@/lib/activity-log';
+import { buildKegiatanWhere, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter } from '@/lib/queries/kegiatan';
 
 export type KegiatanInput = {
   namaKegiatan: string;
@@ -308,4 +309,23 @@ export async function deleteKegiatan(id: string): Promise<ActionResult> {
   } catch {
     return { ok: false, error: 'Gagal menghapus kegiatan.' };
   }
+}
+
+/** Ambil semua kegiatan hasil filter aktif untuk export Excel (tanpa pagination).
+ * Client hanya memegang 1 halaman — action ini mengembalikan seluruh hasil filter. */
+export async function getKegiatanExport(filters: KegiatanFilter) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { ok: false as const, error: 'Sesi berakhir. Silakan login kembali.' };
+  }
+
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const where = buildKegiatanWhere(filters, threeMonthsAgo);
+  const kegiatan = await prisma.kegiatan.findMany({
+    where,
+    orderBy: { tanggal: 'asc' },
+    include: kegiatanInclude,
+  });
+  return { ok: true as const, data: kegiatan.map(mapKegiatanToRow) };
 }

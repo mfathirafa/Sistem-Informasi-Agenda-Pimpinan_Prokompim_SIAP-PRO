@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Trash2, Plus, X } from 'lucide-react';
 import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '@/app/actions/petugas';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -24,6 +24,15 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending) setModalOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [modalOpen, isPending]);
 
   const openAdd = () => { setEditingItem(null); setForm(emptyForm); setError(''); setModalOpen(true); };
   const openEdit = (item: PetugasRow) => {
@@ -139,10 +148,16 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
       />
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={() => setModalOpen(false)}>
+        <div
+          className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="petugas-edit-title"
+        >
           <div className="bg-white rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-app">
-              <h3 className="font-display text-lg font-semibold text-navy">{editingItem ? 'Edit Petugas' : 'Tambah Petugas'}</h3>
+              <h3 id="petugas-edit-title" className="font-display text-lg font-semibold text-navy">{editingItem ? 'Edit Petugas' : 'Tambah Petugas'}</h3>
               <button onClick={() => setModalOpen(false)} aria-label="Tutup" className="p-1 rounded-md hover:bg-app"><X size={18} /></button>
             </div>
             <form onSubmit={submit} className="px-5 py-4 space-y-4">

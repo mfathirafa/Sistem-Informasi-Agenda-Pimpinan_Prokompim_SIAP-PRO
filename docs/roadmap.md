@@ -42,6 +42,122 @@
 
 ## Changelog
 
+### 4 Agustus 2026 — Sprint21: Server-Side Pagination + Filter Worksheet
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Server-side pagination Worksheet | ✅ Selesai | Tabel kegiatan hanya memuat 20 baris/halaman (`PAGE_SIZE = 20`, konsisten Activity Log) via Prisma `skip`/`take` + `count`. Pindah halaman → query halaman berikutnya ke server. Reuse komponen `Pagination` + bar info "Menampilkan X–Y dari Z kegiatan" |
+| Filter + search sinkron URL (searchParams) | ✅ Selesai | Semua 8 filter pindah dari client state → URL `searchParams`. Ubah filter → reset ke halaman 1; pindah halaman → filter tetap; refresh browser → state tetap. Search text input pakai pola `defaultValue` + Enter/Blur (sama dengan Activity Log) |
+| Export mengikuti filter aktif | ✅ Selesai | Export XLSX memanggil server action `getKegiatanExport(filters)` — ambil SEMUA baris hasil filter (bukan hanya halaman aktif). Client hanya memegang 1 halaman |
+| Sinkronisasi CRUD via `router.refresh()` | ✅ Selesai | Optimistic update `setItems()` dihapus (client tak lagi pegang seluruh dataset) → setelah create/update/delete, `router.refresh()` menarik ulang data + total dari server. Halaman out-of-range di-clamp ke `safePage` |
+
+**Decisions:**
+- **Filter harus ikut pindah ke server** — kontradiksi inheren jika filter tetap client: client hanya punya 20 baris/halaman, search akan "berjalan" hanya di halaman aktif (fungsional salah). Opsi 2 dipilih user: server-side pagination + server-side filter, agar pagination/search/filter selalu sinkron.
+- **`buildKegiatanWhere()` + `mapKegiatanToRow()` + `kegiatanInclude` di `lib/queries/kegiatan.ts`** — dipakai 3 tempat nyata (page findMany, page count, export action), bukan abstraksi sekali pakai. Satu sumber kebenaran: hasil filter tabel == hasil export. `buildKegiatanWhere` menggabungkan window 3 bulan + filter bulan (`YYYY-MM`) jadi rentang tanggal tunggal.
+- **Search pakai `contains` + `mode: 'insensitive'`** (Postgres ILIKE) menggantikan `.toLowerCase().includes()` client — perilaku case-insensitive substring identik.
+- **`router.replace()` + `params.delete('page')`** — filter berubah → URL bersih tanpa `page`, browser history tidak penuh oleh debounce navigasi.
+- **Bulan options dihitung server-side** dari seluruh data window (query `select: { tanggal: true }`), bukan dari halaman aktif — dropdown bulan tetap lengkap.
+- **`safePage = Math.min(page, totalPages)`** — hapus/delete item terakhir di halaman terakhir → halaman di-clamp, tidak ada tampilan kosong.
+- **Halaman out-of-range tidak redirect** — clamp saja (pola sama PetugasPicker). URL `page=3` tetap di URL sampai interaksi berikutnya mengoreksi; UI selalu menampilkan halaman valid.
+- Zero schema change, zero KegiatanModal/PetugasPicker/Detail/Dashboard change.
+
+**Files (4 code + 2 docs):**
+- `src/lib/queries/kegiatan.ts` — MODIFIED: + `kegiatanInclude`, `buildKegiatanWhere()`, `mapKegiatanToRow()`, `type KegiatanFilter`
+- `src/app/actions/kegiatan.ts` — MODIFIED: + `getKegiatanExport(filters)` server action
+- `src/app/(protected)/worksheet/page.tsx` — MODIFIED: read searchParams, `findMany(skip,take) + count`, bulanOptions server-side, clamp safePage
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: filter via `useSearchParams` + `router.replace`, hapus `filtered` useMemo + `items` state + optimistic update, + `<Pagination>` + info bar, export via server action, table dim `opacity-50` saat isPending
+- `docs/roadmap.md`, `docs/decisions.md` — MODIFIED
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean ✅
+- `npm run lint` — "No ESLint warnings or errors" ✅
+- `npm run build` — ✓ 14/14 pages ✅ (DYNAMIC_SERVER_USAGE pre-existing)
+
+### 3 Agustus 2026 — Sprint20: PetugasPicker (Multi-Select Upgrade)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| PetugasPicker reusable | ✅ Selesai | Komponen field ringkas + picker modal untuk pemilihan petugas. Gantikan checkbox inline groups. Field: chip max 2 + "+N", seluruh area klik. Picker: search nama + jabatan (highlight Tailwind), list 10/halaman dengan pagination (sticky di bawah list), counter live, footer sticky tanpa tombol Batal (state langsung commit). Reusable tanpa dependency baru |
+| Tabel petugas ringkas | ✅ Selesai | Format "Nama A, Nama B +N" di sel tabel worksheet (sebelumnya raw `string[]` tanpa separator) |
+
+**Decisions:**
+- **Direct commit, bukan working copy** — perubahan selection langsung update `form.petugasXxxIds` via `onChange`. Tombol "Selesai" hanya menutup picker (bukan commit). Esc/backdrop = tutup = sama saja. Lebih sederhana, menghilangkan mental model "belum tersimpan".
+- **Single scroll, bukan nested** — field di form = satu baris (truncate + `+N`); list di modal = scroll `max-h-[40vh]` + pagination 10/halaman. Tidak ada field yang scroll.
+- **Pagination di picker** — reuse komponen `Pagination` (konsisten halaman lain). `PAGE_SIZE = 10`. Urutan di bawah list: bar info "Menampilkan X–Y dari Z petugas" (tanpa "Halaman A dari B" — kontrol pagination sudah menunjukkan halaman aktif, info tak redundan), lalu kontrol halaman, baru footer counter + "Selesai" (hasil review UX user: baca daftar → langsung temukan navigasi → aksi penutup paling bawah). Bar otomatis disembunyikan jika hasil hanya 1 halaman. Ganti keyword search → reset ke halaman 1; centang/hapus petugas → halaman tetap. Label "hasil" saat sedang search, "petugas" saat tidak. Selection dipertahankan lintas halaman (`selected` state global, terpisah dari `page`). Pindah halaman → list `scrollTo(0,0)` + fokus kembali ke kolom search (keyword tetap bertahan).
+- **Highlight Tailwind, bukan `<mark>`** — `<span className="bg-yellow-200 rounded-sm">` konsisten cross-browser.
+- **Tanpa Batal, tanpa "Pilih Semua", tanpa "Tampilkan Terpilih"** — sesederhana mungkin. Alur: buka → cari → centang → selesai. Fitur yang tidak terpakai tidak dibuat.
+- **Chip `max-w-[140px]` + truncate** — nama panjang tetap terbaca semaksimal mungkin, bukan dipotong 1 kata.
+- **Escape capture-phase** — picker mencegah propagasi Escape ke parent modal (kegiatan-modal) supaya hanya picker yang tertutup.
+- **+N di tabel worksheet** — fix bug display sebelumnya (React render `string[]` tanpa separator → "AndiBudi" menjadi "Andi, Budi +1").
+- **`type="button"` di Pagination + header close** — Final review menemukan tombol-tanpa-type di Pagination dan header × picker berada di dalam DOM `<form>` kegiatan-modal → default `submit` akan submit form saat user hanya ingin navigasi halaman. Fix: `type="button"` di shared Pagination (root cause, berlaku untuk semua caller masa depan) + picker header close. Chip remove sudah punya `type="button"`, ditambahkan `disabled={disabled}` saat saving agar konsisten.
+- Zero schema/action/business logic change. Data flow tetap `string[]`.
+
+**Files (3 code + 2 docs):**
+- `src/components/petugas-picker.tsx` — NEW: komponen reusable
+- `src/app/(protected)/worksheet/kegiatan-modal.tsx` — MODIFIED: fieldset checkbox → 2× PetugasPicker
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: `petugasSummary()` helper, format sel tabel
+- `docs/roadmap.md`, `docs/decisions.md` — MODIFIED
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean ✅
+- `npm run lint` — "No ESLint warnings or errors" ✅
+- `npm run build` — ✓ 14/14 pages ✅
+
+### 3 Agustus 2026 — Sprint19B: Accessibility + UX Hardening
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| A: Modal Accessibility | ✅ Selesai | `role="dialog"` + `aria-modal="true"` + `aria-labelledby` + Escape key di 5 modal: kegiatan, master-petugas, master-leading-sector, users, activity-log DetailModal. Escape di-block saat `saving`/`isPending` agar form tidak tertutup di tengah submit |
+| A: aria-label lengkap | ✅ Selesai | Close button DetailModal (`&times;`) + tombol edit dokumen di `detail-client.tsx` (`title` → `aria-label`) |
+| B: Reusable Pagination | ✅ Selesai | Ekstrak dari `activity-log-client.tsx` ke `src/components/pagination.tsx` — API `{ page, totalPages, onPageChange }`, presentational murni, tambah `aria-label` + `aria-current` + wrapper `<nav>`. Behaviour Activity Log tidak berubah |
+| C: Multi Select Petugas | ✅ Selesai | `<select multiple size={3}>` → checkbox groups (`<fieldset>`/`<legend>` + `<input type="checkbox">`) untuk Protokol & Liputan di kegiatan modal. Data flow tetap `string[]` — zero schema/action change |
+
+**Decisions:**
+- **Accessibility tanpa abstraction** — tambahkan atribut aksesibilitas inline di 5 modal (bukan reusable wrapper). Hanya 5 modal dengan konten berbeda; ConfirmDialog sudah jadi referensi pola sejak Sprint18.
+- **Escape key di-block saat loading** — `!saving`/`!isPending` agar user tidak kehilangan data form saat server action sedang berjalan (konsisten dengan ConfirmDialog yang block saat `loading`).
+- **Pagination presentational murni** — routing/searchParams handling tetap di parent. Komponen siap dipakai di worksheet jika data > 50 rows.
+- **Checkbox groups bukan searchable-select** — dataset kecil (~5-10 per kategori), checkbox langsung terlihat semua tanpa perlu komponen baru. ~~Upgrade ke searchable multi-select jika > 15 petugas per kategori.~~ **Sudah di-upgrade di Sprint20** → `PetugasPicker` reusable (field ringkas + picker modal + search + highlight).
+- Zero schema change, zero server action change, zero business logic change, zero visual redesign — murni UX/accessibility/reusability.
+
+**Files (7 code + 2 docs):**
+- `src/components/pagination.tsx` — NEW: reusable pagination (Item B)
+- `src/app/(protected)/worksheet/kegiatan-modal.tsx` — MODIFIED: Escape + dialog attrs + checkbox groups (Item A + C)
+- `src/app/(protected)/master-petugas/master-petugas-client.tsx` — MODIFIED: Escape + dialog attrs (Item A)
+- `src/app/(protected)/master-leading-sector/master-leading-sector-client.tsx` — MODIFIED: Escape + dialog attrs (Item A)
+- `src/app/(protected)/users/users-client.tsx` — MODIFIED: Escape + dialog attrs (Item A)
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: DetailModal attrs + Escape + hapus Pagination lokal + pakai shared (Item A + B)
+- `src/app/(protected)/worksheet/[id]/detail-client.tsx` — MODIFIED: `title` → `aria-label` (Item A)
+- `docs/roadmap.md`, `docs/decisions.md` — MODIFIED
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean ✅
+- `npm run lint` — "No ESLint warnings or errors" ✅
+- `npm run build` — ✓ 14/14 pages, semua `ƒ` Dynamic (sama seperti sprint sebelumnya; `DYNAMIC_SERVER_USAGE` adalah warning pre-existing untuk route cookies/searchParams, bukan error build)
+
+### 3 Agustus 2026 — Sprint19A (Release Blocker): Hapus demo password + Fix Activity Log Leading Sector (display-layer)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Hapus demo password di Login | ✅ Selesai | Hapus 3 baris `Akun percobaan — Admin: admin/admin123 ...` dari `login/page.tsx` — password nyata tidak lagi terekspos |
+| Fix Activity Log Leading Sector (display-layer only) | ✅ Selesai | `formatFieldValue()` generic di `activity-log-client.tsx`: resolve `leadingSectorId` (string polos log lama → lookup nama via `sectorMap`; objek `{id,nama}` → `.nama`), objek/array `{id,nama}` (petugas) → nama. Backward compatible log lama & baru |
+| Filter metadata keys | ✅ Selesai | `id`/`createdAt`/`updatedAt` (raw prisma object di snapshot DELETE) tidak lagi tampil di modal |
+| Regression test Activity Log | ✅ Selesai | Audit semua action: HANYA `leadingSectorId` yang simpan raw CUID; petugas sudah `[{id,nama}]`; DOKUMEN/PETUGAS/LEADING_SECTOR/USER bersih. Snapshot format TIDAK diubah |
+
+**Decisions:**
+- **Fix di display-layer saja, snapshot TIDAK diubah** — sesuai prinsip "jangan ubah format data jika display-layer cukup". Semua bug #8 (log CREATE lama) & #9 (log UPDATE/DELETE) teratasi: `leadingSectorId` string → lookup live table; `[{id,nama}]` → render nama. Risiko regression minimal menjelang rilis, zero schema/arsitektur change.
+- **Formatter generic, bukan hardcode** — pola objek/array dengan `nama` ditangani generik, `leadingSectorId` satu-satunya key yang butuh map lookup (string polos tak bisa diidentifikasi tipe tanpa key).
+- Trade-off: log lama yang mereferensikan leading sector yang SUDAH DIHAPUS fallback ke raw CUID (nama tak recoverable). Kasus jarang — schema pakai `Restrict` untuk delete sektor yang masih dipakai.
+
+**Files:**
+- `src/app/login/page.tsx` — MODIFIED: hapus div demo password
+- `src/app/(protected)/activity-log/page.tsx` — MODIFIED: + query `leadingSector.findMany`, pass `leadingSectors` prop
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: `formatFieldValue()` + `sectorMap` (useMemo) + `META_KEYS` filter, hapus `displayValue`
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean
+- `npm run lint` — "No ESLint warnings or errors"
+- `npm run build` — ✓ 14/14 pages (route `/activity-log` & `/login` render `ƒ` Dynamic seperti sebelumnya)
+
 ### 3 Agustus 2026 — Sprint18 (R8): Polish & Hardening (tech debt cleanup)
 
 | Fitur | Status | Catatan |

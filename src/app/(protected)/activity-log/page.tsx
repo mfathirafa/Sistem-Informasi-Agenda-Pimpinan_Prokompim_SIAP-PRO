@@ -33,7 +33,7 @@ export default async function ActivityLogPage({ searchParams }: Props) {
         if (userId) where.userId = userId;
         if (search) where.changes = { string_contains: search };
 
-        const [logs, total, users] = await Promise.all([
+        const [logs, total, users, leadingSectors] = await Promise.all([
             prisma.activityLog.findMany({
                 where,
                 include: { user: { select: { id: true, nama: true } } },
@@ -43,6 +43,7 @@ export default async function ActivityLogPage({ searchParams }: Props) {
             }),
             prisma.activityLog.count({ where }),
             prisma.user.findMany({ select: { id: true, nama: true }, orderBy: { nama: 'asc' } }),
+            prisma.leadingSector.findMany({ select: { id: true, nama: true }, orderBy: { nama: 'asc' } }),
         ]);
 
         return (
@@ -57,6 +58,7 @@ export default async function ActivityLogPage({ searchParams }: Props) {
                 pageSize={PAGE_SIZE}
                 filters={{ entity, action, userId, search }}
                 users={users}
+                leadingSectors={leadingSectors}
             />
         );
     } catch (error) {

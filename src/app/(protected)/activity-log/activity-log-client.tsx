@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useMemo, useEffect, useTransition } from "react";
 import { getEntityName } from "@/lib/activity-log";
+import Pagination from "@/components/pagination";
 
 // -- Label Maps --
 
@@ -73,6 +74,7 @@ type Props = {
   pageSize: number;
   filters: { entity?: string; action?: string; userId?: string; search?: string };
   users: { id: string; nama: string }[];
+  leadingSectors: { id: string; nama: string }[];
 };
 
 // ── Helpers ──
@@ -85,25 +87,72 @@ function formatDate(iso: string) {
   });
 }
 
-function displayValue(val: unknown): string {
+// Key metadata (id/timestamps) tidak relevan untuk user — filter dari tampilan.
+const META_KEYS = new Set(['id', 'createdAt', 'updatedAt']);
+
+type SectorMap = Record<string, string>;
+
+// Formatter generic untuk nilai snapshot. Menyelesaikan relasi (leadingSector,
+// petugas) menjadi nama yang bisa dibaca — backward compatible untuk log lama
+// (leadingSectorId string polos) maupun log baru (objek/array {id, nama}).
+function formatFieldValue(key: string, val: unknown, sectorMap: SectorMap): string {
   if (val === null || val === undefined) return '-';
+
+  // FK relasi yang disimpan sebagai string polos (log lama) → lookup nama.
+  if (key === 'leadingSectorId') {
+    if (typeof val === 'string') return sectorMap[val] ?? val;
+    if (typeof val === 'object' && val !== null && 'nama' in val) {
+      return String((val as { nama: string }).nama);
+    }
+    return String(val);
+  }
+
+  // Objek relasi yang sudah di-enrich {id, nama} → tampilkan nama.
+  if (typeof val === 'object' && !Array.isArray(val) && 'nama' in val) {
+    return String((val as { nama: string }).nama);
+  }
+
+  // Array relasi [{id, nama}] (petugas) → gabung nama.
+  if (Array.isArray(val)) {
+    return val
+      .map((v) => (typeof v === 'object' && v !== null && 'nama' in v ? String((v as { nama: string }).nama) : String(v)))
+      .join(', ');
+  }
+
   if (typeof val === 'object') return JSON.stringify(val);
   return String(val);
 }
 
 // ── Detail Modal ──
 
-function DetailModal({ log, onClose }: { log: LogItem; onClose: () => void }) {
+function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () => void; sectorMap: SectorMap }) {
   const changes = log.changes;
   const before = changes?.before as Record<string, unknown> | undefined;
   const after = changes?.after as Record<string, unknown> | undefined;
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  const visibleEntries = (obj: Record<string, unknown>) =>
+    Object.entries(obj).filter(([key]) => !META_KEYS.has(key));
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="activity-log-detail-title"
+    >
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Detail Perubahan</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+          <h2 id="activity-log-detail-title" className="text-lg font-semibold">Detail Perubahan</h2>
+          <button onClick={onClose} aria-label="Tutup" className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
         <div className="p-4 space-y-3">
           <div className="grid grid-cols-2 gap-2 text-sm text-gray-500">
@@ -117,10 +166,10 @@ function DetailModal({ log, onClose }: { log: LogItem; onClose: () => void }) {
             <div>
               <h3 className="font-semibold text-sm text-gray-700 mb-2">Data setelah dibuat:</h3>
               <div className="bg-gray-50 rounded p-3 space-y-1 text-sm">
-                {Object.entries(after).map(([key, val]) => (
+                {visibleEntries(after).map(([key, val]) => (
                   <div key={key} className="grid grid-cols-3 gap-2">
                     <span className="text-gray-500">{FIELD_LABEL[key] || key}:</span>
-                    <span className="col-span-2">{displayValue(val)}</span>
+                    <span className="col-span-2">{formatFieldValue(key, val, sectorMap)}</span>
                   </div>
                 ))}
               </div>
@@ -135,8 +184,8 @@ function DetailModal({ log, onClose }: { log: LogItem; onClose: () => void }) {
                   <div key={key} className="border-b border-gray-200 pb-2 last:border-0">
                     <div className="font-medium text-gray-600 mb-1">{FIELD_LABEL[key] || key}</div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-red-50 p-1.5 rounded"><span className="text-red-500 text-xs">Before:</span> {displayValue(before[key])}</div>
-                      <div className="bg-green-50 p-1.5 rounded"><span className="text-green-600 text-xs">After:</span> {displayValue(after[key])}</div>
+                      <div className="bg-red-50 p-1.5 rounded"><span className="text-red-500 text-xs">Before:</span> {formatFieldValue(key, before[key], sectorMap)}</div>
+                      <div className="bg-green-50 p-1.5 rounded"><span className="text-green-600 text-xs">After:</span> {formatFieldValue(key, after[key], sectorMap)}</div>
                     </div>
                   </div>
                 ))}
@@ -148,10 +197,10 @@ function DetailModal({ log, onClose }: { log: LogItem; onClose: () => void }) {
             <div>
               <h3 className="font-semibold text-sm text-gray-700 mb-2">Data sebelum dihapus:</h3>
               <div className="bg-gray-50 rounded p-3 space-y-1 text-sm">
-                {Object.entries(before).map(([key, val]) => (
+                {visibleEntries(before).map(([key, val]) => (
                   <div key={key} className="grid grid-cols-3 gap-2">
                     <span className="text-gray-500">{FIELD_LABEL[key] || key}:</span>
-                    <span className="col-span-2">{displayValue(val)}</span>
+                    <span className="col-span-2">{formatFieldValue(key, val, sectorMap)}</span>
                   </div>
                 ))}
               </div>
@@ -163,69 +212,19 @@ function DetailModal({ log, onClose }: { log: LogItem; onClose: () => void }) {
   );
 }
 
-// ── Pagination ──
-
-function Pagination({ page, totalPages, searchParams }: { page: number; totalPages: number; searchParams: URLSearchParams }) {
-  const router = useRouter();
-
-  const go = (p: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', String(p));
-    router.push(`/activity-log?${params.toString()}`);
-  };
-
-  if (totalPages <= 1) return null;
-
-  const pages: (number | '...')[] = [];
-  const windowStart = Math.max(1, page - 2);
-  const windowEnd = Math.min(totalPages, page + 2);
-
-  if (windowStart > 1) pages.push(1);
-  if (windowStart > 2) pages.push('...');
-  for (let i = windowStart; i <= windowEnd; i++) pages.push(i);
-  if (windowEnd < totalPages - 1) pages.push('...');
-  if (windowEnd < totalPages) pages.push(totalPages);
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <button
-        onClick={() => go(page - 1)}
-        disabled={page <= 1}
-        className="px-2.5 py-1 text-sm rounded border disabled:opacity-30 hover:bg-gray-100"
-      >
-        &laquo; Prev
-      </button>
-      {pages.map((p, i) =>
-        p === '...' ? (
-          <span key={`e${i}`} className="px-1 text-gray-400">...</span>
-        ) : (
-          <button
-            key={p}
-            onClick={() => go(p)}
-            className={`px-2.5 py-1 text-sm rounded ${p === page ? 'bg-blue-600 text-white' : 'border hover:bg-gray-100'}`}
-          >
-            {p}
-          </button>
-        )
-      )}
-      <button
-        onClick={() => go(page + 1)}
-        disabled={page >= totalPages}
-        className="px-2.5 py-1 text-sm rounded border disabled:opacity-30 hover:bg-gray-100"
-      >
-        Next &raquo;
-      </button>
-    </div>
-  );
-}
-
 // ── Main Component ──
 
-export default function ActivityLogClient({ logs, total, page, pageSize, filters, users }: Props) {
+export default function ActivityLogClient({ logs, total, page, pageSize, filters, users, leadingSectors }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [detail, setDetail] = useState<LogItem | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const sectorMap = useMemo(() => {
+    const m: SectorMap = {};
+    for (const s of leadingSectors) m[s.id] = s.nama;
+    return m;
+  }, [leadingSectors]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -353,12 +352,20 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-500">{total} data</span>
-          <Pagination page={page} totalPages={totalPages} searchParams={searchParams} />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={(p) => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('page', String(p));
+              router.push(`/activity-log?${params.toString()}`);
+            }}
+          />
         </div>
       )}
 
       {/* Detail Modal */}
-      {detail && <DetailModal log={detail} onClose={() => setDetail(null)} />}
+      {detail && <DetailModal log={detail} onClose={() => setDetail(null)} sectorMap={sectorMap} />}
     </div>
   );
 }

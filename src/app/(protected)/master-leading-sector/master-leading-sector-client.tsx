@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Trash2, Plus, Pencil, X } from 'lucide-react';
 import { createLeadingSector, updateLeadingSector, deleteLeadingSector } from '@/app/actions/leading-sector';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -17,6 +17,15 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
   const [editingItem, setEditingItem] = useState<LeadingSectorRow | null>(null);
   const [editNama, setEditNama] = useState('');
   const [editError, setEditError] = useState('');
+
+  useEffect(() => {
+    if (!editingItem) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending) setEditingItem(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [editingItem, isPending]);
 
   const openEdit = (item: LeadingSectorRow) => {
     setEditingItem(item);
@@ -135,10 +144,16 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
       />
 
       {editingItem && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={() => setEditingItem(null)}>
+        <div
+          className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setEditingItem(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sektor-edit-title"
+        >
           <div className="bg-white rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-app">
-              <h3 className="font-display text-lg font-semibold text-navy">Edit Leading Sector</h3>
+              <h3 id="sektor-edit-title" className="font-display text-lg font-semibold text-navy">Edit Leading Sector</h3>
               <button onClick={() => setEditingItem(null)} aria-label="Tutup" className="p-1 rounded-md hover:bg-app">
                 <X size={18} />
               </button>  

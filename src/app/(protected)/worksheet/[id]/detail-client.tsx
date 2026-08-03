@@ -297,7 +297,7 @@ export default function DetailClient({
                       <button
                         onClick={() => handleEdit(d)}
                         className="p-1 text-muted hover:text-navy rounded"
-                        title="Edit dokumen"
+                        aria-label="Edit dokumen"
                       >
                         <Pencil size={14} />
                       </button>

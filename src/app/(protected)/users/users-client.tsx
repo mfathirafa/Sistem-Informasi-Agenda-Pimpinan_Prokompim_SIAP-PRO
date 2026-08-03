@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Trash2, Pencil, X } from 'lucide-react';
 import { createUser, updateUser, deleteUser } from '@/app/actions/users';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -18,6 +18,15 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
+
+  useEffect(() => {
+    if (!editingUser) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending) setEditingUser(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [editingUser, isPending]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,10 +150,16 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
       />
 
       {editingUser && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50" onClick={() => setEditingUser(null)}>
+        <div
+          className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setEditingUser(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="user-edit-title"
+        >
           <div className="bg-white rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-app">
-              <h3 className="font-display text-lg font-semibold text-navy">Edit Pengguna</h3>
+              <h3 id="user-edit-title" className="font-display text-lg font-semibold text-navy">Edit Pengguna</h3>
               <button onClick={() => setEditingUser(null)} aria-label="Tutup" className="p-1 rounded-md hover:bg-app"><X size={18} /></button>
             </div>
             <form onSubmit={submitEdit} className="px-5 py-4 space-y-4">
