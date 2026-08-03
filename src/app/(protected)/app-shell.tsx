@@ -29,10 +29,10 @@ export default function AppShell({
   const navItems = [
     { href: '/dashboard', label: 'Dasbor', icon: <LayoutDashboard size={16} /> },
     { href: '/kalender', label: 'Kalender', icon: <Calendar size={16} /> },
-    { href: '/worksheet', label: 'Worksheet Kegiatan', icon: <Table2 size={16} /> },
+    { href: '/worksheet', label: 'Worksheet', icon: <Table2 size={16} /> },
     { href: '/laporan', label: 'Laporan', icon: <FileText size={16} />},
-    { href: '/master-petugas', label: 'Master Petugas', icon: <Users size={16} /> },
-    { href: '/master-leading-sector', label: 'Master Leading Sector', icon: <Building2 size={16} /> },
+    { href: '/master-petugas', label: 'Petugas', icon: <Users size={16} /> },
+    { href: '/master-leading-sector', label: 'Leading Sector', icon: <Building2 size={16} /> },
   ];
   if (user.role === 'ADMIN') {
     navItems.push({ href: '/users', label: 'Kelola Pengguna', icon: <UserCog size={16} /> });
@@ -67,7 +67,7 @@ export default function AppShell({
             </button>
           </div>
         </div>
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-white/10 overflow-x-auto">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-wrap gap-x-1 gap-y-0.5 border-t border-white/10">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (

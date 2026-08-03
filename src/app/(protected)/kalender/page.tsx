@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMonthGrid } from "@/lib/kalender";
+import KalenderClient from './kalender-client';
 import {
     STATUS_KEGIATAN_OPTIONS,
     STATUS_KEGIATAN_LABEL,
@@ -90,6 +91,7 @@ export default async function KalenderPage({
                     </div>
                 </div>
 
+                <KalenderClient events={kegiatan}>
                 <div className="bg-white rounded-2xl border border-app shadow-sm overflow-hidden">
                     <div className="grid grid-cols-7 border-b border-app">
                         {NAMA_HARI.map((h) => (
@@ -127,7 +129,18 @@ export default async function KalenderPage({
                                                 isToday ? 'text-navy font-semibold' : 'text-muted'
                                            }`} 
                                         >
-                                            <span>{tanggal.getDate()}</span>
+                                            {list.length > 0 ? (
+                                                <button
+                                                    type="button"
+                                                    data-open-tanggal={key}
+                                                    aria-label={`Lihat agenda tanggal ${tanggal.getDate()}`}
+                                                    className="hover:underline underline-offset-2"
+                                                >
+                                                    {tanggal.getDate()}
+                                                </button>
+                                            ) : (
+                                                <span>{tanggal.getDate()}</span>
+                                            )}
                                             <span className="sm:hidden flex items-center gap-1">
                                                 {list.slice(0, 3).map((k) => (
                                                     <span
@@ -152,7 +165,13 @@ export default async function KalenderPage({
                                                     </Link>
                                                 ))}
                                                 {list.length > 3 && (
-                                                    <span className="text-[11px] text-muted pl-1">+{list.length - 3} lagi</span>
+                                                    <button
+                                                        type="button"
+                                                        data-open-tanggal={key}
+                                                        className="text-[11px] text-navy underline decoration-dotted underline-offset-2 pl-1 hover:text-gold"
+                                                    >
+                                                        +{list.length - 3} lagi
+                                                    </button>
                                                 )}
                                         </div>
                                     </div>
@@ -161,6 +180,7 @@ export default async function KalenderPage({
                         </div>
                     ))}
                 </div>
+                </KalenderClient>
 
                 <div className="flex flex-wrap gap-3 text-xs text-muted">
                     {STATUS_KEGIATAN_OPTIONS.map((s) => (

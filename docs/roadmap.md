@@ -42,6 +42,30 @@
 
 ## Changelog
 
+### 4 Agustus 2026 — Sprint22: Pre-Rilis UX — Navbar Wrap + Popover Agenda Kalender
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Navbar tanpa scroll horizontal | ✅ Selesai | `overflow-x-auto` → `flex-wrap` + `gap-y` (nav membungkus ke baris 2 bila penuh, zero JS). Label dipendekkan: "Worksheet Kegiatan"→"Worksheet", "Master Petugas"→"Petugas", "Master Leading Sector"→"Leading Sector". Struktur/arsitektur navbar tidak berubah |
+| Kalender: popover agenda per hari (gaya Google Calendar) | ✅ Selesai | Klik angka tanggal (hari ada kegiatan) atau "+N lagi" → popover floating dekat sel menampilkan SEMUA agenda hari itu (urut waktu lalu nama, badge status), tiap agenda `<Link>` ke `/worksheet/[id]`. Tutup: klik luar/Escape/klik tanggal lain (pindah hari). Mobile: tap tanggal membuka agenda. Posisi popover di-clamp agar tidak keluar viewport |
+
+**Decisions:**
+- **Revisi keputusan kalender** ("Server Component murni" → "server-fetch + client interaktivitas popover", tetap tanpa library). Popover butuh state + event + posisi layar → mustahil tanpa client component. `page.tsx` tetap server (query + parseBulan + render grid + error UI); `kalender-client.tsx` HANYA interaktivitas popover via event delegation pada trigger `data-open-tanggal`.
+- **Chip 1–3 tidak diubah** — tetap shortcut langsung ke Detail Worksheet. Popover hanya untuk melihat agenda lengkap hari (+ jalur mobile).
+- **`flex-wrap` dipilih atas hamburger/sidebar** — tidak mengubah arsitektur, semua item selalu terlihat, zero JS. Harga: +1 baris tinggi hanya saat overflow.
+- **Branding** tetap **SIAP-PRO** (hyphen) + domain `siappro`; pembersihan nama lama (SIMAKP) di dokumentasi ditunda.
+
+**Files (2 code + 1 new + 2 docs):**
+- `src/app/(protected)/app-shell.tsx` — MODIFIED: label navbar pendek + `flex-wrap`
+- `src/app/(protected)/kalender/page.tsx` — MODIFIED: angka tanggal & "+N lagi" jadi trigger `data-open-tanggal`, grid dibungkus `KalenderClient`
+- `src/app/(protected)/kalender/kalender-client.tsx` — NEW: popover agenda per hari (delegasi klik, clamp posisi, tutup luar/Escape, sortir waktu)
+- `docs/roadmap.md`, `docs/decisions.md` — MODIFIED
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean ✅
+- `npm run lint` — "No ESLint warnings or errors" ✅
+- `npm run build` — ✓ 14/14 pages ✅ (DYNAMIC_SERVER_USAGE pre-existing)
+
 ### 4 Agustus 2026 — Sprint21: Server-Side Pagination + Filter Worksheet
 
 | Fitur | Status | Catatan |
