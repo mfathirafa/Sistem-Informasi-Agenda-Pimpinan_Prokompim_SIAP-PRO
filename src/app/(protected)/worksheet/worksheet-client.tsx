@@ -63,7 +63,7 @@ export default function WorksheetClient({
   const filtered = useMemo(() => {
     return items
       .filter((k) => {
-        if (search && !`${k.namaKegiatan} ${k.tempat}`.toLowerCase().includes(search.toLowerCase())) return false;
+        if (search && !`${k.namaKegiatan} ${k.tempat} ${k.perihalSurat || ''}`.toLowerCase().includes(search.toLowerCase())) return false;
         if (filterStatus !== 'Semua' && k.statusSambutan !== filterStatus) return false;
         if (filterStatusKegiatan !== 'Semua' && k.statusKegiatan !== filterStatusKegiatan) return false;
         if (filterPejabat !== 'Semua' && k.pejabat !== filterPejabat) return false;
@@ -99,6 +99,9 @@ export default function WorksheetClient({
                     ...editingItem,
                     ...data,
                     waktu: data.waktu || null,
+                    perihalSurat: data.perihalSurat || null,
+                    picNama: data.picNama || null,
+                    picNoHp: data.picNoHp || null,
                     leadingSectorNama: findLeadingSector(data.leadingSectorId),
                     petugasProtokolIds: data.petugasProtokolIds,
                     petugasProtokolNama: findPetugasProtokol(data.petugasProtokolIds),
@@ -111,6 +114,7 @@ export default function WorksheetClient({
             )
           );
           setModalOpen(false);
+          if (res.warning) alert(res.warning);
         } else {
           alert(res.error || 'Gagal menyimpan.');
         }
@@ -123,6 +127,9 @@ export default function WorksheetClient({
               id: 'temp-' + Date.now(),
               ...data,
               waktu: data.waktu || null,
+              perihalSurat: data.perihalSurat || null,
+              picNama: data.picNama || null,
+              picNoHp: data.picNoHp || null,
               leadingSectorNama: findLeadingSector(data.leadingSectorId),
               petugasProtokolIds: data.petugasProtokolIds,
               petugasProtokolNama: findPetugasProtokol(data.petugasProtokolIds),
@@ -133,6 +140,7 @@ export default function WorksheetClient({
             },
           ]);
           setModalOpen(false);
+          if (res.warning) alert(res.warning);
         } else {
           alert(res.error || 'Gagal menyimpan.');
         }
@@ -153,8 +161,11 @@ export default function WorksheetClient({
     const header = [
       'Tanggal',
       'Nama Kegiatan',
+      'Perihal Surat',
       'Tempat',
       'Pejabat',
+      'PIC',
+      'No. HP PIC',
       'Leading Sector',
       'Status Sambutan',
       'Status Kegiatan',
@@ -168,8 +179,11 @@ export default function WorksheetClient({
     const rows = filtered.map((k) => [
       new Date(k.tanggal),
       k.namaKegiatan,
+      k.perihalSurat || '',
       k.tempat,
       k.pejabat,
+      k.picNama || '',
+      k.picNoHp || '',
       k.leadingSectorNama,
       k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
       STATUS_KEGIATAN_LABEL[k.statusKegiatan],
@@ -297,8 +311,11 @@ export default function WorksheetClient({
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                 <th className="px-4 py-3 font-medium">Tanggal</th>
                 <th className="px-4 py-3 font-medium">Kegiatan</th>
+                <th className="px-4 py-3 font-medium">Perihal Surat</th>
                 <th className="px-4 py-3 font-medium">Tempat</th>
                 <th className="px-4 py-3 font-medium">Pejabat</th>
+                <th className="px-4 py-3 font-medium">PIC</th>
+                <th className="px-4 py-3 font-medium">No. HP PIC</th>
                 <th className="px-4 py-3 font-medium">Leading Sector</th>
                 <th className="px-4 py-3 font-medium">Sambutan</th>
                 <th className="px-4 py-3 font-medium">Status Kegiatan</th>
@@ -313,7 +330,7 @@ export default function WorksheetClient({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 13 : 12} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 16 : 15} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -328,8 +345,11 @@ export default function WorksheetClient({
                       })}
                     </td>
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
+                    <td className="px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
                     <td className="px-4 py-3 text-muted">{k.tempat}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{k.pejabat}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{k.picNama || '-'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
                     <td className="px-4 py-3 text-muted">{k.leadingSectorNama}</td>
                     <td className="px-4 py-3">
                       <span

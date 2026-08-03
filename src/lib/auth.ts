@@ -12,10 +12,10 @@ export type SessionPayload = {
   id: string;
   username: string;
   nama: string;
-  role: 'ADMIN' | 'STAFF' | 'ATASAN';
+  role: 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN';
 };
 
-export type ActionResult = { ok: boolean; error?: string };
+export type ActionResult = { ok: boolean; error?: string; warning?: string };
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);

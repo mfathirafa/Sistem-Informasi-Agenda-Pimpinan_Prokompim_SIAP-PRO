@@ -8,7 +8,7 @@
 | 2026-07-22 | Prisma sebagai ORM | Single source of truth untuk schema. Semua perubahan database wajib melalui Prisma Migration, tidak pernah dari Supabase langsung |
 | 2026-07-22 | Tailwind CSS (bukan CSS-in-JS atau CSS Modules) | Konsisten dengan ekosistem Next.js, utility-first approach, dan mudah di-maintain untuk UI internal |
 | 2026-07-22 | bcryptjs (bukan bcrypt native) | `bcryptjs` tidak perlu native compilation, cocok untuk environment Vercel tanpa perlu postinstall hooks yang kompleks |
-| 2026-07-22 | Role-based access control (RBAC) dengan 3 role | ADMIN (manage users + semua akses), STAFF (manage kegiatan + master data), ATASAN (view only). Disesuaikan dengan hierarki organisasi protokol |
+| 2026-07-22 | Role-based access control (RBAC) dengan 3 role | ADMIN (manage users + semua akses), STAFF (manage kegiatan + master data), KEPALA_BAGIAN (view only). Disesuaikan dengan hierarki organisasi protokol |
 | 2026-07-22 | Server Components sebagai default | Halaman-halaman utama adalah Server Components. Client Components hanya untuk bagian yang memerlukan interaktivitas (usePathname, useState, form events) |
 | 2026-07-22 | Optimistic UI update setelah Server Action | Client components langsung update state lokal setelah Server Action berhasil, tanpa menunggu revalidate/re-fetch dari server. Lebih responsif untuk aplikasi internal |
 | 2026-07-22 | Prisma singleton pattern di Vercel | `src/lib/prisma.ts` menyimpan instance di `globalThis` untuk menghindari pembukaan koneksi baru di setiap request selama development (hot reload) |
@@ -22,6 +22,9 @@
 | 2026-07-31 | No-op guard `updateUser` menyertakan `passwordChanged` | Reset password sendirian (nama & role tidak berubah) TETAP dieksekusi — guard hanya skip jika tidak ada perubahan sama sekali. Mencegah bug "reset password di-skip diam-diam" |
 | 2026-07-31 | Hash bcrypt di luar Prisma transaction | `hashPassword()` (~100ms) dijalankan sebelum `$transaction` agar koneksi DB tidak tertahan selama hashing |
 | 2026-07-31 | Input password user form → `type="password"` | Form tambah user (dan reset) tidak lagi plaintext. Disetujui user, kecil & dalam scope |
+| 2026-08-03 | Duplikat kegiatan = soft warning (bukan block/UNIQUE) | Deteksi kombinasi `tanggal + tempat + pejabat + perihalSurat` di server action (`cekDuplikat()`), data tetap disimpan, return `warning` di `ActionResult` (`lib/auth.ts` + `warning?: string`). Alasan: perihal surat adalah pembeda inti — acara yang sama boleh ada jika perihal berbeda; jika semua sama, cukup info agar user memeriksa ulang. Tanpa constraint DB agar tidak menghalangi workflow nyata |
+| 2026-08-03 | PIC sebagai field langsung di Kegiatan (`picNama`, `picNoHp`) | Bukan master table. Keputusan user: PIC cukup 2 field per kegiatan, tidak perlu entitas terpisah. Konsisten dengan prinsip YAGNI |
+| 2026-08-03 | Activity Log dibuka untuk STAFF (read-only) | Guard `activity-log/page.tsx` jadi `ADMIN \|\| STAFF`; nav sidebar sama. Halaman sudah read-only dari awal sehingga tidak ada tambahan UI. Edit permission tidak berubah (`canEditRole` tetap `ADMIN \|\| STAFF`) |
 
 ## Decisions yang Ditunda
 

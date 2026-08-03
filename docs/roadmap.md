@@ -42,6 +42,88 @@
 
 ## Changelog
 
+### 3 Agustus 2026 — Sprint17 (R7): Perihal Surat + PIC + Activity Log STAFF
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| R1: Perihal Surat | ✅ Selesai | Field `perihalSurat String?` di Kegiatan + soft duplicate warning (data tetap disimpan) |
+| R2: PIC | ✅ Selesai | Field `picNama String?` + `picNoHp String?` langsung di Kegiatan (bukan master table) |
+| R3: Activity Log untuk STAFF | ✅ Selesai | STAFF dapat membuka halaman Activity Log read-only (guard page + sidebar nav) |
+| R4: Presence notification | ⏸️ Ditunda | Tidak diimplementasikan (edit-session/locking di luar scope Sprint17) |
+
+**Decisions:**
+- **Duplikat = soft warning, bukan block & bukan UNIQUE constraint.** Deteksi saat create/update: kombinasi `tanggal + tempat + pejabat + perihalSurat` sama persis → data TETAP disimpan, return `{ ok: true, warning: '...' }` ke UI. `ActionResult` di `lib/auth.ts` ditambah `warning?: string` (opsional, tidak merusak caller existing).
+- **PIC sebagai field langsung di Kegiatan** (`picNama`, `picNoHp`) — bukan master table. Konsisten dengan keputusan user. Tidak ada FK.
+- **`cekDuplikat()` helper** di `actions/kegiatan.ts` — `findFirst` dengan date range (start-of-day s/d end-of-day) + exclude self saat update. Lewati pengecekan jika `perihalSurat` kosong.
+- **Semua field nullable** → data lama aman tanpa backfill. Validasi wajib/opsional ditangani di form/server action.
+- **R3 minimal diff:** hanya guard `activity-log/page.tsx` + nav `app-shell.tsx`. Halaman Activity Log sudah read-only dari awal (tanpa tombol delete/edit) → STAFF tidak butuh perubahan UI.
+- **Pencarian worksheet** ikut mencakup `perihalSurat` (search tambahan kecil, konsisten).
+
+**Files (11 code):**
+- `prisma/schema.prisma` — MODIFIED: `perihalSurat`, `picNama`, `picNoHp` di model Kegiatan
+- `prisma/migrations/20260803120849_add_perihal_surat_and_pic/migration.sql` — NEW
+- `src/lib/auth.ts` — MODIFIED: `ActionResult` + `warning?: string`
+- `src/app/actions/kegiatan.ts` — MODIFIED: KegiatanInput + `cekDuplikat()` + warning di create/update
+- `src/lib/worksheet.ts` — MODIFIED: KegiatanRow + 3 field baru
+- `src/app/(protected)/worksheet/page.tsx` — MODIFIED: map data baru
+- `src/app/(protected)/worksheet/kegiatan-modal.tsx` — MODIFIED: input Perihal Surat + Nama PIC + No. HP PIC
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: 3 kolom tabel + 3 kolom export + search perihal + optimisic update + alert warning
+- `src/app/(protected)/worksheet/[id]/page.tsx` + `detail-client.tsx` — MODIFIED: pass & tampilkan Perihal/PIC
+- `src/app/(protected)/laporan/page.tsx` + `laporan-client.tsx` — MODIFIED: map data + kolom tabel + export
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: FIELD_LABEL perihalSurat/picNama/picNoHp
+- `src/app/(protected)/activity-log/page.tsx` — MODIFIED: guard `ADMIN || STAFF`
+- `src/app/(protected)/app-shell.tsx` — MODIFIED: nav Activity Log untuk ADMIN + STAFF
+- `prisma/seed.ts` — MODIFIED: perihalSurat + PIC di 4 kegiatan
+
+**Verifikasi:**
+- `npx prisma migrate dev` — Already in sync (migration `20260803120849_add_perihal_surat_and_pic` sudah diterapkan) ✅
+- `npx tsc --noEmit` — bersih ✅
+- `npm run build` — compiled successfully, 14/14 pages ✅
+- `npm run lint` — ⚠️ pre-existing error konfigurasi ESLint (circular structure JSON, `eslint.config.mjs` + `next lint` incompatible, `eslint ^10` + `eslint-config-next ^16`). Bukan akibat Sprint17 — terjadi sebelum perubahan. Build tetap sukses (lint bukan gate build di proyek ini).
+
+### 3 Agustus 2026 — Sprint16 (R6): Rename Role ATASAN → KEPALA_BAGIAN
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Rename enum Role | ✅ Selesai | `ATASAN` → `KEPALA_BAGIAN` di schema + 7 code files + docs |
+
+**Decisions:**
+- Migration manual `ALTER TYPE "Role" RENAME VALUE 'ATASAN' TO 'KEPALA_BAGIAN'` (BEGIN/COMMIT). Prisma `--create-only` menghasilkan rebuild enum (`CREATE TYPE "Role_new"` + cast + `DROP TYPE "Role_old"`) yang GAGAL jika ada user dengan role ATASAN — enum value yang sedang dipakai tidak bisa di-drop. `RENAME VALUE` (PG10+) aman: mengubah label value in-place tanpa rebuild.
+- `canEditRole()` (`ADMIN || STAFF`) TIDAK berubah — KEPALA_BAGIAN tetap view-only.
+- Backward compat: username `atasan` / password `atasan123` tetap — hanya nilai enum diubah.
+- JWT lama dengan `role: 'ATASAN'` tidak match setelah deploy → user harus re-login (max 7 hari). Dampak minimal karena ATASAN cuma view-only.
+- Permission final: ADMIN (semua akses + kelola user + activity log); STAFF (worksheet/dashboard/master data); KEPALA_BAGIAN (sama seperti STAFF, tanpa kelola user). Tidak ada perubahan dari sisi canEditRole.
+
+**Files:**
+- `prisma/schema.prisma` — MODIFIED: `Role.KEPALA_BAGIAN`
+- `prisma/migrations/20260803090212_rename_role_atasan_to_kepala_bagian/migration.sql` — NEW: `ALTER TYPE "Role" RENAME VALUE`
+- `src/lib/auth.ts` — MODIFIED: `SessionPayload.role` union type
+- `src/app/actions/users.ts` — MODIFIED: `CreateUserInput` / `UpdateUserInput` role union
+- `src/app/(protected)/users/users-client.tsx` — MODIFIED: ROLE_LABELS, state, select, option
+- `src/app/(protected)/app-shell.tsx` — MODIFIED: ROLE_LABELS
+- `prisma/seed.ts` — MODIFIED: `role: Role.KEPALA_BAGIAN`
+- `src/app/login/page.tsx` — MODIFIED: label akun percobaan
+- `docs/architecture.md`, `docs/decisions.md`, `docs/roadmap.md` — MODIFIED: referensi ATASAN → KEPALA_BAGIAN
+
+**Verifikasi:**
+- `npx prisma migrate dev` — migration applied ✅
+- `npx tsc --noEmit` — bersih ✅
+- `npm run build` — compiled successfully, 14/14 pages ✅
+- Grep `ATASAN` di `src/` — tidak ada (hanya migration historis 20260717021729 yang mempertahankan nilai lama di CREATE TYPE)
+
+### 2 Agustus 2026 — Sprint15: Rebranding SIAP-PRO + Enum KEGIATAN & TIDAK_DIRILIS
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| R1: Branding SIAP-PRO | ✅ Selesai | Nama aplikasi di UI → "SIAP-PRO" (Sistem Informasi Agenda Pimpinan Prokompim) |
+| R2: JenisPenugasan KEGIATAN | ✅ Selesai | Enum `JenisPenugasan` tambah value `KEGIATAN` (3 value: LEMBUR / SPPD / KEGIATAN) |
+| R3: StatusPublikasi TIDAK_DIRILIS | ✅ Selesai | Enum `StatusPublikasi` tambah value `TIDAK_DIRILIS` (3 value: BELUM_DIRILIS / TIDAK_DIRILIS / DIRILIS) |
+
+**Verifikasi:**
+- `npx prisma migrate dev` — berhasil ✅
+- `npx tsc --noEmit` — bersih ✅
+- `npm run build` — berhasil ✅
+
 ### 31 Juli 2026 — Sesi 14: Kelengkapan CRUD Admin 🚧 SEDANG BERJALAN
 
 > Status: File 1-2 selesai & verified, File 3 bug fix disiapkan (belum diterapkan), File 4-5 belum, verifikasi tsc/build belum dijalankan. Lanjut di Sesi 15.
@@ -68,7 +150,7 @@
 - `src/app/(protected)/users/users-client.tsx` — 📌 belum (tombol Edit + modal + type=password)
 - `src/app/(protected)/activity-log/activity-log-client.tsx` — 📌 belum (FIELD_LABEL password)
 
-**Verifikasi:** belum dijalankan — `npx tsc --noEmit`, `npm run build`, skenario manual (rename, rename duplikat, no-op, reset password saja, log masker, demote admin terakhir, akses STAFF/ATASAN). Lihat `memory/session-sesi14.md`.
+**Verifikasi:** belum dijalankan — `npx tsc --noEmit`, `npm run build`, skenario manual (rename, rename duplikat, no-op, reset password saja, log masker, demote admin terakhir, akses STAFF/KEPALA_BAGIAN). Lihat `memory/session-sesi14.md`.
 
 ### 31 Juli 2026 — Sesi 13: Kalender Kegiatan
 

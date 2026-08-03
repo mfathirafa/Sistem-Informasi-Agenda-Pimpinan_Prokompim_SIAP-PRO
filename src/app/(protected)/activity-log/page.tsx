@@ -13,7 +13,7 @@ type Props = {
 export default async function ActivityLogPage({ searchParams }: Props) {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'ADMIN') redirect('/dashboard');
+        if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) redirect('/dashboard');
 
         const params = await searchParams;
         const rawPage = Number(params.page);

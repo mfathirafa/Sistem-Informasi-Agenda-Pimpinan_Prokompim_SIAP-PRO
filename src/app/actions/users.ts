@@ -9,7 +9,7 @@ export type CreateUserInput = {
   username: string;
   password: string;
   nama: string;
-  role: 'ADMIN' | 'STAFF' | 'ATASAN';
+  role: 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN';
 };
 
 export async function createUser(data: CreateUserInput): Promise<ActionResult> {
@@ -61,7 +61,7 @@ const PASSWORD_MASK = '********';
 
 export type UpdateUserInput = {
   nama: string;
-  role: 'ADMIN' | 'STAFF' | 'ATASAN';
+  role: 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN';
   password?: string;
 };
 

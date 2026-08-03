@@ -61,7 +61,7 @@ src/app/
 
 ```
 User
-  - id, username (unique), password, nama, role (ADMIN | STAFF | ATASAN)
+  - id, username (unique), password, nama, role (ADMIN | STAFF | KEPALA_BAGIAN)
 
 Petugas
   - id, nama, jabatan?, noHp?, statusAktif

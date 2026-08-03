@@ -16,6 +16,9 @@ export type KegiatanInput = {
   waktu?: string;
   tempat: string;
   pejabat: string;
+  perihalSurat?: string;
+  picNama?: string;
+  picNoHp?: string;
   leadingSectorId: string;
   statusSambutan: 'SUDAH' | 'BELUM';
   statusKegiatan: StatusKegiatanValue;
@@ -26,6 +29,35 @@ export type KegiatanInput = {
   jenisPenugasan: JenisPenugasanValue;
   statusPublikasi: StatusPublikasiValue;
 };
+
+/**
+ * Deteksi kemungkinan data duplikat (soft warning, tidak memblokir simpan).
+ * Duplikat = kombinasi tanggal + tempat + pejabat + perihalSurat sama persis.
+ */
+async function cekDuplikat(
+  tanggal: string,
+  tempat: string,
+  pejabat: string,
+  perihalSurat: string | undefined,
+  excludeId?: string,
+): Promise<boolean> {
+  if (!perihalSurat?.trim()) return false; // tanpa perihal, lewati pengecekan
+  const start = new Date(tanggal);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(tanggal);
+  end.setHours(23, 59, 59, 999);
+  const dup = await prisma.kegiatan.findFirst({
+    where: {
+      tanggal: { gte: start, lte: end },
+      tempat,
+      pejabat,
+      perihalSurat,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    select: { id: true, namaKegiatan: true },
+  });
+  return Boolean(dup);
+}
 
 export async function createKegiatan(data: KegiatanInput): Promise<ActionResult> {
   const user = await getCurrentUser();
@@ -65,6 +97,8 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
         return { ok: false, error: 'Petugas Liputan tidak valid.'};
       }
     }
+    const duplikat = await cekDuplikat(data.tanggal, data.tempat, data.pejabat, data.perihalSurat);
+
     await prisma.$transaction(async (tx) => {
       const created = await tx.kegiatan.create({
         data: {
@@ -91,7 +125,9 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
     });
     revalidatePath('/worksheet');
     revalidatePath('/dashboard');
-    return { ok: true };
+    return duplikat
+      ? { ok: true, warning: 'Kegiatan dengan perihal, tanggal, tempat, dan pejabat yang sama sudah ada. Periksa kembali apakah ini benar-benar kegiatan baru.' }
+      : { ok: true };
   } catch {
     return { ok: false, error: 'Gagal menyimpan kegiatan.' };
   }
@@ -210,6 +246,8 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   // -- no-op guard ---
   if (!hasDiff) return { ok: true };
 
+  const duplikat = await cekDuplikat(data.tanggal, data.tempat, data.pejabat, data.perihalSurat, id);
+
   await prisma.$transaction(async (tx) => {
     await tx.kegiatan.update({
       where: { id },
@@ -235,7 +273,9 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   });
   revalidatePath('/worksheet');
   revalidatePath('/dashboard');
-  return { ok: true };
+  return duplikat
+    ? { ok: true, warning: 'Kegiatan dengan perihal, tanggal, tempat, dan pejabat yang sama sudah ada. Periksa kembali apakah ini benar-benar kegiatan baru.' }
+    : { ok: true };
   } catch {
     return { ok: false, error: 'Gagal memperbarui kegiatan.' };
   }

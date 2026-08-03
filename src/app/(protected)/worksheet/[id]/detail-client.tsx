@@ -23,6 +23,9 @@ type KegiatanDetail = {
   waktu: string | null;
   tempat: string;
   pejabat: string;
+  perihalSurat: string | null;
+  picNama: string | null;
+  picNoHp: string | null;
   leadingSectorNama: string;
   jenisPenugasan: JenisPenugasanValue;
   statusPublikasi: StatusPublikasiValue;
@@ -133,6 +136,18 @@ export default function DetailClient({
           <div>
             <dt className="text-muted">Pejabat</dt>
             <dd className="font-medium">{kegiatan.pejabat}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Perihal Surat</dt>
+            <dd className="font-medium">{kegiatan.perihalSurat || '-'}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Nama PIC</dt>
+            <dd className="font-medium">{kegiatan.picNama || '-'}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">No. HP PIC</dt>
+            <dd className="font-medium">{kegiatan.picNoHp || '-'}</dd>
           </div>
           <div>
             <dt className="text-muted">Leading Sector</dt>

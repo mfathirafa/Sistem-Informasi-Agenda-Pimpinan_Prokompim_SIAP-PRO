@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { Trash2, Pencil, X } from 'lucide-react';
 import { createUser, updateUser, deleteUser } from '@/app/actions/users';
 
-const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', ATASAN: 'Pimpinan' };
+const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', KEPALA_BAGIAN: 'Kepala Bagian' };
 type UserRow = { id: string; username: string; nama: string; role: string };
 
 export default function UsersClient({ users: initialUsers, currentUserId }: { users: UserRow[]; currentUserId: string }) {
@@ -13,7 +13,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
-  const [editForm, setEditForm] = useState({ nama: '', role: 'STAFF' as 'ADMIN' | 'STAFF' | 'ATASAN', password: '' });
+  const [editForm, setEditForm] = useState({ nama: '', role: 'STAFF' as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '' });
   const [editError, setEditError] = useState('');
 
   const submit = (e: React.FormEvent) => {
@@ -21,7 +21,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
     if (!form.username.trim() || !form.password.trim() || !form.nama.trim()) { setError('Semua kolom wajib diisi'); return; }
     setError('');
     startTransition(async () => {
-      const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: form.role as 'ADMIN' | 'STAFF' | 'ATASAN' });
+      const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: form.role as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN' });
       if (res.ok) {
         setUsers((prev) => [...prev, { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: form.role }]);
         setForm({ username: '', password: '', nama: '', role: 'STAFF' });
@@ -31,7 +31,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
 
   const openEdit = (u: UserRow) => {
     setEditingUser(u);
-    setEditForm({ nama: u.nama, role: u.role as 'ADMIN' | 'STAFF' | 'ATASAN', password: '' });
+    setEditForm({ nama: u.nama, role: u.role as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '' });
     setEditError('');
   };
 
@@ -106,7 +106,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
           <input placeholder="Kata sandi" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
           <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm">
             <option value="STAFF">Staf Protokom</option>
-            <option value="ATASAN">Pimpinan</option>
+            <option value="KEPALA_BAGIAN">Kepala Bagian</option>
             <option value="ADMIN">Admin</option>
           </select>
           {error && <p className="text-xs text-red-600">{error}</p>}
@@ -128,9 +128,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Peran</label>
-                <select value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value as 'ADMIN' | 'STAFF' | 'ATASAN' }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm">
+                <select value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN' }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm">
                   <option value="STAFF">Staf Protokom</option>
-                  <option value="ATASAN">Pimpinan</option>
+                  <option value="KEPALA_BAGIAN">Kepala Bagian</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>

@@ -12,7 +12,7 @@ import type { SessionPayload } from '@/lib/auth';
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
   STAFF: 'Staf Protokom',
-  ATASAN: 'Pimpinan',
+  KEPALA_BAGIAN: 'Kepala Bagian',
 };
 
 export default function AppShell({
@@ -36,6 +36,8 @@ export default function AppShell({
   ];
   if (user.role === 'ADMIN') {
     navItems.push({ href: '/users', label: 'Kelola Pengguna', icon: <UserCog size={16} /> });
+  }
+  if (user.role === 'ADMIN' || user.role === 'STAFF') {
     navItems.push({ href: '/activity-log', label: 'Activity Log', icon: <History size={16} /> });
   }
 

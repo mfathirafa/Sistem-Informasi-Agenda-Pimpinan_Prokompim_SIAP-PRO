@@ -44,6 +44,9 @@ export default function KegiatanModal({
           waktu: item.waktu || '',
           tempat: item.tempat,
           pejabat: item.pejabat,
+          perihalSurat: item.perihalSurat || '',
+          picNama: item.picNama || '',
+          picNoHp: item.picNoHp || '',
           leadingSectorId: item.leadingSectorId,
           statusSambutan: item.statusSambutan,
           statusKegiatan: item.statusKegiatan,
@@ -60,6 +63,9 @@ export default function KegiatanModal({
           waktu: '',
           tempat: '',
           pejabat: 'Bupati',
+          perihalSurat: '',
+          picNama: '',
+          picNoHp: '',
           leadingSectorId: leadingSectorOptions[0]?.id || '',
           statusSambutan: 'BELUM',
           statusKegiatan: 'ACARA_MASUK',
@@ -164,6 +170,15 @@ export default function KegiatanModal({
             />
             {errors.tempat && <p className="text-xs text-red-600 mt-1">{errors.tempat}</p>}
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Perihal Surat</label>
+            <input
+              value={form.perihalSurat}
+              onChange={(e) => update('perihalSurat', e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+              placeholder="cth. Undangan Rapat Koordinasi..."
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1.5">Pejabat</label>
@@ -207,6 +222,26 @@ export default function KegiatanModal({
                 <option value="BELUM">Belum</option>
                 <option value="SUDAH">Sudah</option>
               </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Nama PIC</label>
+              <input
+                value={form.picNama}
+                onChange={(e) => update('picNama', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                placeholder="cth. Budi Santoso"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">No. HP PIC</label>
+              <input
+                value={form.picNoHp}
+                onChange={(e) => update('picNoHp', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                placeholder="cth. 0812xxxx"
+              />
             </div>
           </div>
           <div>

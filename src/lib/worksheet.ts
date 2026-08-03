@@ -10,6 +10,9 @@ export type KegiatanRow = {
     waktu: string | null;
     tempat: string;
     pejabat: string;
+    perihalSurat: string | null;
+    picNama: string | null;
+    picNoHp: string | null;
     leadingSectorId: string;
     leadingSectorNama: string;
     statusSambutan: 'SUDAH' | 'BELUM';

@@ -16,6 +16,9 @@ type KegiatanItem = {
     waktu: string | null;
     tempat: string;
     pejabat: string;
+    perihalSurat: string | null;
+    picNama: string | null;
+    picNoHp: string | null;
     leadingSectorNama: string;
     statusSambutan: string;
     statusKegiatan: StatusKegiatan;
@@ -64,16 +67,19 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
     const exportXlsx = () => {
         const header = [
-            'Tanggal', 'Nama Kegiatan', 'Waktu', 'Tempat', 'Pejabat',
-            'Leading Sector', 'Status Sambutan', 'Status Kegiatan',
+            'Tanggal', 'Nama Kegiatan', 'Perihal Surat', 'Waktu', 'Tempat', 'Pejabat',
+            'PIC', 'No. HP PIC', 'Leading Sector', 'Status Sambutan', 'Status Kegiatan',
             'Petugas Protokol', 'Petugas Liputan', 'Jenis Penugasan', 'Status Publikasi',
         ];
         const rows = data.map((k) => [
             formatTanggal(k.tanggal),
             k.namaKegiatan,
+            k.perihalSurat || '',
             k.waktu || '',
             k.tempat,
             k.pejabat,
+            k.picNama || '',
+            k.picNoHp || '',
             k.leadingSectorNama,
             k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
             STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan,
@@ -160,9 +166,12 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                         <tr>
                             <th className="text-left p-2.5 font-medium text-gray-600">Tanggal</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Kegiatan</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Perihal Surat</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden sm:table-cell">Waktu</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Tempat</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Pejabat</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">PIC</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">No. HP PIC</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Sector</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Status</th>
                         </tr>
@@ -172,9 +181,12 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                             <tr key={k.id} className="border-b hover:bg-gray-50">
                                 <td className="p-2.5 whitespace-nowrap">{formatTanggal(k.tanggal)}</td>
                                 <td className="p-2.5 font-medium">{k.namaKegiatan}</td>
+                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden sm:table-cell">{k.waktu || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[200px] truncate">{k.tempat}</td>
                                 <td className="p-2.5">{k.pejabat}</td>
+                                <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.picNama || '-'}</td>
+                                <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.picNoHp || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.leadingSectorNama}</td>
                                 <td className="p-2.5">
                                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusCellClass(k.statusKegiatan)}`}> 
@@ -184,7 +196,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                             </tr>
                         ))}
                         {data.length === 0 && (
-                            <tr><td colSpan={7} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
+                            <tr><td colSpan={10} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
                         )}
                     </tbody>
                 </table>
