@@ -15,7 +15,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "backfill:dokumen": "tsx scripts/backfill-dokumen.ts"
+    "backfill:dokumen": "tsx scripts/backfill-dokumen.ts",
+    "db:clear": "tsx scripts/clear-dummy-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

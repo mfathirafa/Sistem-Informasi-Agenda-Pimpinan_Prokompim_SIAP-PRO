@@ -42,6 +42,33 @@
 
 ## Changelog
 
+### 4 Agustus 2026 — Sprint23: Kategori Petugas jadi field wajib (fix bug default PROTOKOL)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Kategori wajib di Tambah/Edit Petugas | ✅ Selesai | Field `kategori` (enum `KategoriPetugas`: PROTOKOL/LIPUTAN) yang ADA di schema tapi tidak diekspos form/action → semua petugas baru diam-diam `@default(PROTOKOL)`. Kini jadi field wajib + validasi server. Kolom Kategori + chip di tabel. **Zero schema change, zero migration.** |
+| Shared constants `kategori-petugas.ts` | ✅ Selesai | `KATEGORI_PETUGAS_OPTIONS` + `KATEGORI_PETUGAS_LABEL` — single source of truth, pola sama `status-kegiatan.ts`. Client tidak bikin label lokal |
+
+**Decisions:**
+- **Opsi B dipilih user** — expose field existing, bukan expand enum. `kategori` tetap 2 nilai (PROTOKOL/LIPUTAN), mapping 1:1 ke pool `petugasProtokolIds`/`petugasLiputanIds` di Worksheet. Expand ke TU/AJUDAN/KABAG ditolak — nilai tambahan jadi dead value tanpa consumer.
+- **Semua pegawai masuk Master Petugas** — `jabatan` free text menyimpan jabatan resmi sesuai data kepegawaian (Kabag, Ajudan, Staff TU, dll); `kategori` menentukan muncul di dropdown Protokol atau Liputan.
+- **Jabatan placeholder netral** — "Masukkan jabatan sesuai data kepegawaian" (bukan "cth. Staf Protokol").
+- **Data dummy dibersihkan** — `scripts/clear-dummy-data.ts` (`npm run db:clear`): 6 tabel dikosongkan, **tabel `users` TIDAK disentuh** (5 akun tersisa).
+
+**Files:**
+- `src/lib/constants/kategori-petugas.ts` — NEW: shared constants
+- `src/app/actions/petugas.ts` — MODIFIED: `kategori` di `PetugasInput` + validasi di create/update
+- `src/app/(protected)/master-petugas/master-petugas-client.tsx` — MODIFIED: import type + kategori di PetugasRow/emptyForm/openEdit + kolom Kategori + chip + select kategori di form modal + placeholder jabatan
+- `scripts/clear-dummy-data.ts` — NEW (sebelumnya): hapus dummy data, users tetap
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean ✅
+- `npm run build` — ✓ 14/14 pages ✅ (DYNAMIC_SERVER_USAGE pre-existing)
+
+**Remaining:**
+- Perbaiki kategori petugas yang sudah terlanjur default PROTOKOL lewat fitur Edit Petugas
+- Input 21 pegawai asli Prokompim ke Master Petugas
+
 ### 4 Agustus 2026 — Sprint22: Pre-Rilis UX — Navbar Wrap + Popover Agenda Kalender
 
 | Fitur | Status | Catatan |

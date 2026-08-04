@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { KategoriPetugas } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
@@ -10,12 +11,14 @@ export type PetugasInput = {
   jabatan?: string;
   noHp?: string;
   statusAktif: boolean;
+  kategori: KategoriPetugas;
 };
 
 export async function createPetugas(data: PetugasInput): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
   if (!data.nama.trim()) return { ok: false, error: 'Nama wajib diisi.' };
+  if (!Object.values(KategoriPetugas).includes(data.kategori)) return { ok: false, error: 'Kategori tidak valid.' };
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -40,6 +43,7 @@ export async function updatePetugas(id: string, data: PetugasInput): Promise<Act
   const user = await getCurrentUser();
   if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
   if (!data.nama.trim()) return { ok: false, error: 'Nama wajib diisi.' };
+  if (!Object.values(KategoriPetugas).includes(data.kategori)) return { ok: false, error: 'Kategori tidak valid.' };
 
   try {
     const existing = await prisma.petugas.findUnique({ where: { id } });

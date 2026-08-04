@@ -3,6 +3,8 @@
 import { useState, useEffect, useTransition } from 'react';
 import { Trash2, Plus, X } from 'lucide-react';
 import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '@/app/actions/petugas';
+import { KategoriPetugas } from '@prisma/client';
+import { KATEGORI_PETUGAS_OPTIONS, KATEGORI_PETUGAS_LABEL } from '@/lib/constants/kategori-petugas';
 import ConfirmDialog from '@/components/confirm-dialog';
 
 export type PetugasRow = {
@@ -11,9 +13,10 @@ export type PetugasRow = {
   jabatan: string | null;
   noHp: string | null;
   statusAktif: boolean;
+  kategori: KategoriPetugas;
 };
 
-const emptyForm: PetugasInput = { nama: '', jabatan: '', noHp: '', statusAktif: true };
+const emptyForm: PetugasInput = { nama: '', jabatan: '', noHp: '', statusAktif: true, kategori: 'PROTOKOL' };
 
 export default function MasterPetugasClient({ initialData, canEdit }: { initialData: PetugasRow[]; canEdit: boolean }) {
   const [items, setItems] = useState<PetugasRow[]>(initialData);
@@ -37,7 +40,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const openAdd = () => { setEditingItem(null); setForm(emptyForm); setError(''); setModalOpen(true); };
   const openEdit = (item: PetugasRow) => {
     setEditingItem(item);
-    setForm({ nama: item.nama, jabatan: item.jabatan || '', noHp: item.noHp || '', statusAktif: item.statusAktif });
+    setForm({ nama: item.nama, jabatan: item.jabatan || '', noHp: item.noHp || '', statusAktif: item.statusAktif, kategori: item.kategori });
     setError('');
     setModalOpen(true);
   };
@@ -99,6 +102,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
               <th className="px-4 py-3 font-medium">Nama</th>
               <th className="px-4 py-3 font-medium">Jabatan</th>
+              <th className="px-4 py-3 font-medium">Kategori</th>
               <th className="px-4 py-3 font-medium">Nomor HP</th>
               <th className="px-4 py-3 font-medium">Status</th>
               {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
@@ -106,11 +110,14 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
           </thead>
           <tbody>
             {items.length === 0 ? (
-              <tr><td colSpan={canEdit ? 5 : 4} className="px-4 py-10 text-center text-muted">Belum ada data petugas.</td></tr>
+              <tr><td colSpan={canEdit ? 6 : 5} className="px-4 py-10 text-center text-muted">Belum ada data petugas.</td></tr>
             ) : items.map((p) => (
               <tr key={p.id} className="border-t border-app hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium">{p.nama}</td>
                 <td className="px-4 py-3 text-muted">{p.jabatan || '-'}</td>
+                <td className="px-4 py-3">
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-app text-navy">{KATEGORI_PETUGAS_LABEL[p.kategori]}</span>
+                </td>
                 <td className="px-4 py-3 text-muted font-mono text-xs">{p.noHp || '-'}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.statusAktif ? 'badge-sudah' : 'badge-belum'}`}>
@@ -167,7 +174,19 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Jabatan</label>
-                <input value={form.jabatan} onChange={(e) => setForm((f) => ({ ...f, jabatan: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="cth. Staf Protokol" />
+                <input value={form.jabatan} onChange={(e) => setForm((f) => ({ ...f, jabatan: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="Masukkan jabatan sesuai data kepegawaian" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Kategori</label>
+                <select 
+                  value={form.kategori}
+                  onChange={(e) => setForm((f) => ({ ...f, kategori: e.target.value as KategoriPetugas }))}
+                  className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                >
+                  {KATEGORI_PETUGAS_OPTIONS.map((k) => (
+                    <option key={k} value={k}>{KATEGORI_PETUGAS_LABEL[k]}</option>
+                  ))}  
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Nomor HP</label>
