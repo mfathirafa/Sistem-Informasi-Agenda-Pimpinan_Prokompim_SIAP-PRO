@@ -174,7 +174,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">No. HP PIC</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Sector</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Status</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Petugas Protokol</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Petugas Protokol</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Petugas Liputan</th>
                         </tr>
                     </thead>
@@ -195,7 +195,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
                                     </span>
                                 </td>
-                                <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{k.petugasProtokolNama.join(', ') || '-'}</td>
+                                <td className="p-2.5 text-gray-500">{k.petugasProtokolNama.join(', ') || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{k.petugasLiputanNama.join(', ') || '-'}</td>
                             </tr>
                         ))}
