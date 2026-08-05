@@ -174,6 +174,8 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">No. HP PIC</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Sector</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Status</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Petugas Protokol</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Petugas Liputan</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,10 +195,12 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
                                     </span>
                                 </td>
+                                <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{k.petugasProtokolNama.join(', ') || '-'}</td>
+                                <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{k.petugasLiputanNama.join(', ') || '-'}</td>
                             </tr>
                         ))}
                         {data.length === 0 && (
-                            <tr><td colSpan={10} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
+                            <tr><td colSpan={12} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -210,7 +214,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     table { page-break-after: auto; }
                     tr { page-break-inside: avoid; }
                     .overflow-x-auto { overflow: visible !important; }
-                    table th.hidden, table td.hidden { display: table-cell !important; }
+                    table th, table td { display: table-cell !important; }
                 }
             `}</style>
         </div>
