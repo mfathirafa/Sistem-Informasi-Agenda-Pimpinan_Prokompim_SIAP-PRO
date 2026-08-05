@@ -10,6 +10,17 @@
 - Vercel
 - Server Actions
 
+---
+
+## Konteks Project
+
+- Master Petugas menggunakan **kategori wajib** (`PROTOKOL` / `LIPUTAN`) — penentu petugas muncul di pool Worksheet (Protokol/Liputan).
+- Data petugas menggunakan **jabatan resmi kepegawaian** (free text sesuai data kepegawaian), bukan jabatan struktural aplikasi.
+- Petugas yang tampil di Worksheet **hanya berdasarkan kategori** (Protokol/Liputan), bukan semua petugas.
+- **Sprint24** merupakan hasil review UAT klien — fokus pada **penyempurnaan UX/UI dan workflow**, bukan penambahan fitur baru besar-besaran.
+
+---
+
 ## Coding Rules
 
 - Jangan gunakan `any`.
@@ -105,6 +116,8 @@ Sebagai gantinya:
 4. Jika perubahan besar:
    - tampilkan FULL FILE
 5. Tunggu saya mengedit manual sebelum lanjut.
+
+**Pengecualian: Dokumentasi `.md`** — File `.md` di `docs/`, `CLAUDE.md`, dan `README.md` boleh diedit secara otomatis (langsung pakai Edit) tanpa perlu menampilkan OLD/NEW, karena dokumen ini hanya berisi catatan dan bukan kode aplikasi.
 
 ---
 

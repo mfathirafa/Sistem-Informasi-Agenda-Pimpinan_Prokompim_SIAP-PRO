@@ -87,7 +87,8 @@ enum KategoriPetugas {
 
 model Petugas {
   id          String          @id @default(cuid())
-  nama        String
+  nama        String          
+  nip         String?
   jabatan     String?
   noHp        String?
   kategori    KategoriPetugas @default(PROTOKOL)
@@ -101,7 +102,8 @@ model Petugas {
 
 model LeadingSector {
   id        String     @id @default(cuid())
-  nama      String     @unique
+  nama      String     @unique      
+  kategori  String?
   createdAt DateTime   @default(now())
   kegiatan  Kegiatan[]
 
@@ -115,6 +117,7 @@ model Kegiatan {
   waktu           String?
   tempat          String
   pejabat         String
+  nomorSurat      String?
   leadingSectorId String
   leadingSector   LeadingSector     @relation(fields: [leadingSectorId], references: [id])
   statusSambutan  StatusSambutan    @default(BELUM)

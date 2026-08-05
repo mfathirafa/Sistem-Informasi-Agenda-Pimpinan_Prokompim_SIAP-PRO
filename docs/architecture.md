@@ -35,14 +35,20 @@ src/app/
         app-shell.tsx     ← Layout shell: nav + header (Client Component — uses usePathname)
         dashboard/
           page.tsx        ← Server Component (data fetching di server)
-          dashboard-charts.tsx  ← Client Component (recharts, interaktif)
+          dashboard-stats.tsx  ← Client Component (recharts: distribusi status, progress dokumen, top petugas/sektor)
         worksheet/
-          page.tsx        ← Server Component
-          worksheet-client.tsx  ← Client Component (table, filter, search)
-          kegiatan-modal.tsx    ← Client Component (form modal)
+          page.tsx        ← Server Component (query + searchParams filter + pagination server-side)
+          worksheet-client.tsx  ← Client Component (table, filter, search, pagination)
+          kegiatan-modal.tsx    ← Client Component (form modal + PetugasPicker)
           [id]/
             page.tsx            ← Server Component (detail kegiatan)
-            detail-client.tsx   ← Client Component (read-only detail view + progress dokumen)
+            detail-client.tsx   ← Client Component (detail + inline edit dokumen)
+        kalender/
+          page.tsx        ← Server Component (grid bulanan via lib/kalender.ts)
+          kalender-client.tsx   ← Client Component (popover agenda per hari)
+        laporan/
+          page.tsx        ← Server Component (query date range)
+          laporan-client.tsx    ← Client Component (filter, export XLSX, print)
         master-petugas/
           page.tsx        ← Server Component
           master-petugas-client.tsx  ← Client Component
@@ -52,6 +58,9 @@ src/app/
         users/
           page.tsx        ← Server Component (role check ADMIN)
           users-client.tsx      ← Client Component
+        activity-log/
+          page.tsx        ← Server Component (guard ADMIN || STAFF)
+          activity-log-client.tsx  ← Client Component (filter, pagination, detail modal)
   login/
     page.tsx              ← Server Component (redirect jika sudah login)
     login-form.tsx        ← Client Component (form dengan useActionState)
@@ -62,22 +71,30 @@ src/app/
 ```
 User
   - id, username (unique), password, nama, role (ADMIN | STAFF | KEPALA_BAGIAN)
+  - activityLog: ActivityLog[]
 
 Petugas
-  - id, nama, jabatan?, noHp?, statusAktif
+  - id, nama, jabatan?, noHp?, kategori (PROTOKOL | LIPUTAN), statusAktif
+  - kegiatan: KegiatanPetugas[]
 
 LeadingSector
   - id, nama (unique)
+  - kegiatan: Kegiatan[]
 
 Kegiatan
   - id, namaKegiatan, tanggal, waktu?, tempat, pejabat
   - leadingSectorId → LeadingSector (FK)
-  - statusSambutan (SUDAH | BELUM)
-  - statusKegiatan (DRAFT | MENUNGGU_PERSETUJUAN | DISETUJUI | DILAKSANAKAN | MENUNGGU_DOKUMEN | SPJ_DIPROSES | SPJ_SELESAI)
-  - petugasProtokolId? → Petugas (FK)
-  - petugasLiputanId? → Petugas (FK)
+  - statusSambutan (SUDAH | BELUM), statusKegiatan (ACARA_MASUK → MENUNGGU_PENUGASAN → KEGIATAN_SELESAI → SPJ_SELESAI)
+  - statusPublikasi (BELUM_DIRILIS | TIDAK_DIRILIS | DIRILIS)
+  - jenisPenugasan (LEMBUR | SPPD | KEGIATAN)
+  - perihalSurat?, picNama?, picNoHp?
   - linkUpload?, catatan?
-  - 1:N → Dokumen
+  - dokumen: Dokumen[], petugas: KegiatanPetugas[]
+
+KegiatanPetugas (junction table)
+  - kegiatanId → Kegiatan (FK, onDelete: Cascade)
+  - petugasId → Petugas (FK, onDelete: Cascade)
+  - @@id([kegiatanId, petugasId])
 
 Dokumen
   - id, kegiatanId → Kegiatan (FK, onDelete: Cascade)
@@ -85,6 +102,12 @@ Dokumen
   - status (BELUM_UPLOAD | SUDAH_UPLOAD | PERLU_REVISI)
   - link?, catatan?
   - @@unique([kegiatanId, jenis]) → Satu jenis dokumen per kegiatan
+
+ActivityLog
+  - id, entity (KEGIATAN | DOKUMEN | PETUGAS | LEADING_SECTOR | USER)
+  - entityId, action (CREATE | UPDATE | DELETE)
+  - userId → User (FK)
+  - changes (Json?), createdAt
 ```
 
 ## Authentication
@@ -118,20 +141,28 @@ src/
     page.tsx          ← Root redirect (ke /dashboard atau /login)
     layout.tsx        ← Root layout
     globals.css       ← Global styles (Tailwind)
-    actions/          ← Server Actions (CRUD)
+    actions/          ← Server Actions (CRUD: kegiatan, petugas, leading-sector, users, dokumen)
     login/            ← Login page
     (protected)/      ← Semua halaman yang butuh auth
       layout.tsx      ← Auth check
       app-shell.tsx   ← Nav shell
-      dashboard/      ← Dashboard
-      worksheet/      ← Worksheet kegiatan
+      dashboard/      ← Dashboard + dashboard-stats.tsx (recharts)
+      worksheet/      ← Worksheet kegiatan + kegiatan-modal + [id]/ detail
+      kalender/       ← Kalender kegiatan bulanan
+      laporan/        ← Laporan SPJ (export XLSX, cetak)
       master-petugas/
       master-leading-sector/
       users/
-  components/         ← Reusable components
+      activity-log/   ← Log riwayat perubahan (read-only)
+  components/         ← Reusable components (searchable-select, petugas-picker, pagination, confirm-dialog)
   lib/
     auth.ts           ← Auth helpers (JWT, session, password, canEditRole, ActionResult)
     prisma.ts         ← Prisma client singleton
+    workflow.ts       ← State machine transisi status kegiatan
+    worksheet.ts      ← Shared types (KegiatanRow) + query helpers
+    kalender.ts       ← Grid helper kalender (getMonthGrid)
+    format.ts         ← Date helpers (padDate, toDateInput, formatTanggal)
+    activity-log.ts   ← logActivity() helper + normalizeSnapshot + toJsonValue
     constants/        ← Status constants, labels, badge classes
-    queries/          ← Shared Prisma queries (e.g. kegiatan detail)
+    queries/          ← Shared Prisma queries (kegiatan detail)
 ```

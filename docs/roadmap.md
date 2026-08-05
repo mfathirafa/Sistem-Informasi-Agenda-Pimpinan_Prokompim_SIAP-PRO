@@ -42,7 +42,164 @@
 
 ## Changelog
 
-### 4 Agustus 2026 — Sprint23: Kategori Petugas jadi field wajib (fix bug default PROTOKOL)
+### 5 Agustus 2026 — Sprint24: Revisi UAT Klien — Penyempurnaan UX/UI & Workflow (PLANNED)
+
+> **Status: 🚧 In Progress** — Sprint24A (Foundation) selesai 5 Agustus 2026. **Sprint24B-1 (Dashboard) selesai; Sprint24B-2 (Leading Sector) sedang dikerjakan** — action layer ✅, UI (search/filter/pagination) belum.
+>
+> **Revisi scope 5 Agustus 2026 (per list revisi UAT klien + konfirmasi user):**
+> - **Semua rencana rename enum DIBATALKAN** — `ACARA_MASUK`, `KEGIATAN_SELESAI`, `SURAT_TUGAS`, `SURAT_UNDANGAN` tetap. `JenisDokumen` tidak disentuh. Status kegiatan tetap **4 enum**.
+> - Hanya perubahan **label tampilan**: "Menunggu Penugasan" → **"On Progress"**, "Kegiatan Selesai" → **"Selesai"** (constants), dan jenis tugas "Kegiatan" → **"Biasa"** (constants). Tanpa migration enum.
+> - **`nomorSurat` = opsional, unik jika diisi** (cek app-layer per tahun). Bukan wajib.
+> - **`picNama`**: field DB tetap (data aman), **disembunyikan di UI Worksheet** — hanya No. PIC yang tampil.
+> - **ALL CREW**: bukan lagi hanya di filter — jadi opsi di **PetugasPicker** (form kegiatan) untuk acara yang semua petugas ikut.
+
+#### Dashboard
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Hero banner "Selamat datang, {nama}" | ✅ Selesai | `existsSync(public/gedung-kpt.jpg)` → fallback gradient navy bila foto belum ada |
+| Status cards ringkas (4 kartu) | ✅ Selesai | Kegiatan Bulan Ini / Hari Ini / Total Sambutan (breakdown sudah+belum via `sub` ReactNode) / Dokumen Belum Upload |
+| Hapus PieChart Distribusi Status | ✅ Selesai | Dihapus dari dashboard-stats.tsx |
+| Hapus BarChart Petugas Aktif | ✅ Selesai | Dihapus; **Leading Sector Terbanyak DIPERTAHANKAN** (bermanfaat tracking sektor) |
+| Modern redesign layout dashboard | ✅ Selesai | Hero + 4 status cards + DashboardCharts + Kegiatan Terdekat + DashboardStats (Progress Dokumen + Leading Sector) + Perlu Perhatian |
+
+#### Kalender
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Popover agenda → bottom sheet / modal scrollable | 🚧 Planned | Popover saat ini menutupi data di bawahnya; bottom sheet lebih mobile-friendly. Rekomendasi: muncul di tengah, scrollable |
+| Detail tampil PIC (LS) + No. HP + Leading Sector | 🚧 Planned | Perjelas "PIC (LS)" = nama PIC diikuti leading sector-nya |
+| Semua link dokumen digabung jadi 1 label (7 jenis) | 🚧 Planned | Revisi UAT: detail jadwal tak lagi input link per-jenis terpisah, jadi satu daftar gabungan |
+| Status kegiatan di detail: Acara Masuk / On Progress / Selesai | 🚧 Planned | Hanya label display — enum tetap 4 (ACARA_MASUK, MENUNGGU_PENUGASAN, KEGIATAN_SELESAI, SPJ_SELESAI) |
+| ~~Rename JenisDokumen SURAT_TUGAS → NASKAH_PERINTAH~~ | ❌ Batal | Revisi scope 5 Agt: JenisDokumen tidak disentuh |
+| ~~Rename JenisDokumen SURAT_UNDANGAN → NASKAH_UNDANGAN~~ | ❌ Batal | Revisi scope 5 Agt: JenisDokumen tidak disentuh |
+| ~~Rename StatusKegiatan ACARA_MASUK → AGENDA_DITERIMA~~ | ❌ Batal | Revisi scope 5 Agt: hanya label display |
+| ~~Rename StatusKegiatan KEGIATAN_SELESAI → DILAKSANAKAN~~ | ❌ Batal | Revisi scope 5 Agt: hanya label display |
+| Fix bug: hari dengan >3 kegiatan ketutupan +N | 🚧 Planned | Semua agenda pindah ke popup, tidak menumpuk di sel tanggal |
+
+#### Worksheet
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Filter tahun di tabel | 🚧 Planned | Tambah param `tahun` ke `KegiatanFilter` + range query |
+| Filter bulan dengan nama (Januari s.d. Desember) | 🚧 Planned | `toLocaleDateString('id-ID')` — dropdown bulan lengkap |
+| Fix bug search input menyusut saat full layer | 🚧 Planned | Kemungkinan `min-w-0` di flex child |
+| Rename header: "Penugasan" → "Jenis Tugas", "Tanggal" → "Tanggal Pelaksanaan" | 🚧 Planned | Label lebih deskriptif |
+| Status kegiatan: "On Progress" / "Selesai" (label) | 🚧 Planned | Label display saja — enum tetap 4 |
+| Jenis tugas: Lembur / SPPD / Biasa | 🚧 Planned | Label `KEGIATAN` → "Biasa" (constants, bukan rename enum) |
+| Leading Sector pakai SearchableSelect + opsi "Tidak Dipilih" | 🚧 Planned | Data leading sector makin banyak (9 kategori) |
+| Tambah field **Nomor Surat** | 🚧 Planned | **Revisi**: opsional, unik jika diisi (cek app-layer per tahun). Kolom di samping kanan Perihal Surat. "Inti kegiatan" tapi tidak wajib |
+| Tambah field **Dresscode** | 🚧 Planned | String nullable |
+| Opsi "Tidak Dipilih" di filter: jenis tugas, status publikasi, leading sector, pejabat, status sambutan | 🚧 Planned | Opsi kosong di dropdown filter — cegah salah pilih |
+| `picNama`: field DB tetap, **disembunyikan di UI** | 🚧 Planned | Revisi UAT: tabel Worksheet hanya tampil No. PIC. Field tidak dihapus |
+| Search leading sector di worksheet; hapus filter PIC | 🚧 Planned | Kolom search, bukan dropdown |
+
+#### Laporan
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Sync dengan perubahan Worksheet (kolom, filter) | 🚧 Planned | |
+| Ganti nama "Laporan SPJ" (bukan hanya SPJ) | 🚧 Planned | Rekomendasi: "Laporan Kegiatan" |
+| Column picker (pilih kolom yang diextract) | 🚧 Planned | Rekomendasi: dropdown toggle + persist `localStorage` |
+| Default date range = 1 s.d. terakhir bulan berjalan | 🚧 Planned | |
+| Rename "Sector" → "Leading Sector" | 🚧 Planned | |
+| Revisi tampilan hasil & data | 🚧 Planned | |
+
+#### Petugas
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Disable backdrop close (hanya Batal/X) | 🚧 Planned | Cegah kehilangan data form |
+| Duplicate name → soft warning (bukan block) | 🚧 Planned | Pola sama `cekDuplikat()` kegiatan; ada kasus legitimate nama sama |
+| Kolom nomor (NIP / Nomor Induk) | 🚧 Planned | Dikonfirmasi user: tambah field `nip String?` di model Petugas — tampil di kolom tabel dan form |
+| Search | 🚧 Planned | Client-side (data kecil) |
+| Filter kategori | 🚧 Planned | Client-side |
+| Opsi "ALL CREW" di PetugasPicker | 🚧 Planned | Revisi scope 5 Agt: ALL CREW pindah dari filter → jadi opsi di PetugasPicker (form kegiatan) untuk acara yang semua petugas ikut. Bukan kategori petugas |
+
+#### Leading Sector
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Field **kategori** (9 kategori, nullable) | ✅ Selesai | Migration `ADD COLUMN` di Sprint24A ✅; constants `kategori-leading-sector.ts` ✅; create/update action + validasi server ✅. Existing data = NULL → tampil "Belum Dikategorikan" |
+| Search | 🚧 Planned | Client-side — di client file (Tahap 3) |
+| Filter kategori | 🚧 Planned | Client-side — di client file (Tahap 3) |
+| Pagination | 🚧 Planned | Reuse komponen `Pagination` — di client file (Tahap 3) |
+| Safe delete | 🚧 Planned | Action layer ✅ (pre-check `count()` → error spesifik); UI pesan error belum (Tahap 3). Implementasi aktual = **blokir hapus + error**, bukan soft nonaktif |
+
+#### Kelola Pengguna
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Simplify form (Nama Lengkap + Nama Pengguna + Kata Sandi) | 🚧 Planned | Role pindah ke edit-only |
+| Search | 🚧 Planned | Client-side |
+| Filter peran | 🚧 Planned | Client-side |
+| Pagination | 🚧 Planned | ⚠️ Rekomendasi: skip — data <20 user, search+filter sudah cukup (menunggu konfirmasi) |
+
+#### Activity Log
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Dampak rename enum (JenisDokumen/StatusKegiatan) | 🚧 Planned | Display-layer via shared constants — snapshot lama tetap terbaca, zero data migration |
+| FIELD_LABEL untuk field baru (nomorSurat, dresscode) | 🚧 Planned | |
+| FIELD_LABEL kategori petugas / leading sector | 🚧 Planned | |
+
+**Decisions (dikonfirmasi user, 5 Agustus 2026):**
+- **Arah Sprint24 = UAT refinement**, bukan fitur baru besar.
+- **Revisi scope 5 Agt: SEMUA rename enum DIBATALKAN** — `ACARA_MASUK`, `KEGIATAN_SELESAI`, `SURAT_TUGAS`, `SURAT_UNDANGAN`, `JenisDokumen` tetap. Hanya label display via shared constants.
+- **`nomorSurat` = opsional, unik jika diisi** (cek app-layer per tahun). Bukan wajib, tanpa `@@unique` global.
+- **`picNama`**: field DB **tetap**, **disembunyikan di UI** (Worksheet/Laporan/Detail hanya tampil No. PIC). Tidak dihapus, tidak di-rename.
+- **"Kolom nomor" petugas = NIP / Nomor Induk** — field `nip String?` baru di model Petugas.
+- **"ALL CREW" jadi opsi di PetugasPicker** (form kegiatan) — bukan hanya filter. Untuk acara yang semua petugas ikut. Bukan kategori petugas.
+- **Field baru (`nomorSurat`, `dresscode`, `kategori` leading sector, `nip`) semua nullable** — data existing aman tanpa backfill.
+- **9 kategori Leading Sector** (Forum Koordinasi Pimpinan Daerah, SKPD, Dinas, Instansi Vertikal, Badan, Rumah Sakit, Perumda, Camat, Lain-lain) — field `kategori String?` nullable, existing = "Belum Dikategorikan".
+- **Chart yang dihapus dari Dashboard: Pie Distribusi Status + Bar Petugas Aktif.** **Leading Sector Terbanyak DIPERTAHANKAN** (bermanfaat tracking sektor). Progress Dokumen + DashboardCharts (grafik 6 bulan) tetap.
+- **Carryover dari Sprint23** (data, bukan code): perbaiki kategori petugas yang sudah terlanjur `PROTOKOL` via Edit; input 21 pegawai asli Prokompim.
+
+### 5 Agustus 2026 — Sprint24A ✅ Selesai: Foundation & Migration
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Migration `sprint24a_add_fields` | ✅ Selesai | 4 kolom nullable: `nip` (Petugas), `kategori` (LeadingSector), `nomorSurat` + `dresscode` (Kegiatan). Tanpa backfill. Kesalahan awal `nip String` (wajib, gagal di 22 baris existing) → diperbaiki jadi `String?` |
+| Label "On Progress" / "Selesai" (status kegiatan) | ✅ Selesai | Hanya display constants (`status-kegiatan.ts`), enum tetap 4 |
+| Label "Biasa" (jenis tugas) | ✅ Selesai | Hanya display constants (`status-penugasan.ts`), enum tetap 3 |
+
+**Verifikasi:**
+- `npx tsc --noEmit` — clean ✅
+- `npm run build` — ✓ 14/14 pages ✅
+- `npm run dev` — berjalan, UI dicek manual ✅
+
+**Files:**
+- `prisma/schema.prisma` — MODIFIED: 4 kolom nullable (`nip String?`, `kategori String?`, `nomorSurat String?`, `dresscode String?`)
+- `prisma/migrations/<sprint24a_add_fields>/` — NEW
+- `src/lib/constants/status-kegiatan.ts` — MODIFIED: label `MENUNGGU_PENUGASAN` → "On Progress", `KEGIATAN_SELESAI` → "Selesai"
+- `src/lib/constants/status-penugasan.ts` — MODIFIED: label `KEGIATAN` → "Biasa"
+
+**Remaining:** Sprint24B-2 (Leading Sector) → 24C (Worksheet) → 24D (Kalender, Laporan, Petugas, Kelola Pengguna).
+
+### 5 Agustus 2026 — Sprint24B-1 ✅ Selesai: Dashboard (Revisi UAT)
+
+| Revisi | Status | Catatan |
+|--------|--------|---------|
+| Hero banner "Selamat datang, {nama}" | ✅ Selesai | `existsSync(public/gedung-kpt.jpg)` → fallback gradient navy bila foto belum ada |
+| 4 status cards | ✅ Selesai | Kegiatan Bulan Ini, Kegiatan Hari Ini, Total Sambutan (breakdown sudah/belum), Dokumen Belum Upload. `const stats: Stat[]` annotation wajib utk TS7053 `toneClass[s.tone]` |
+| Hapus Pie Distribusi Status + Bar Petugas Aktif | ✅ Selesai | `dashboard-stats.tsx` kini hanya Progress Dokumen + Leading Sector Terbanyak (retained) |
+| Bug fix | ✅ Selesai | `tone: 'succes'` → `'success'`; `text-xs` di luar className → masuk className; `'use client'` dipindah dari page.tsx (server) ke dashboard-stats.tsx |
+
+**Files:** `dashboard/page.tsx` (MODIFIED), `dashboard-stats.tsx` (MODIFIED), `dashboard-charts.tsx` (UNCHANGED).
+**Verifikasi:** tsc clean + user approve.
+
+### 5 Agustus 2026 — Sprint24B-2 🚧 In Progress: Leading Sector
+
+| Tahap | Status | Catatan |
+|-------|--------|---------|
+| 1. `kategori-leading-sector.ts` | ✅ Selesai | NEW: 9 opsi `as const` + `KategoriLeadingSectorValue` |
+| 2. `actions/leading-sector.ts` | 🚧 Diapply, 2 bug kecil belum difix | `kategori: string \| null` create/update + normalisasi ""→null + validasi server vs options + no-op guard +kategori + log +kategori + safe delete (pre-check `count()`) |
+| 3. `master-leading-sector-client.tsx` | ⏳ Belum | search + filter kategori + pagination (PAGE_SIZE 20) + kolom kategori + select kategori di form + pesan error safe delete |
+
+**Bug kecil menunggu fix (Tahap 2):** (1) `changes` CREATE: `kategori` di luar `after`; (2) `di${usageCount}` kehilangan spasi. Minor: komentar no-op guard + indentasi.
+**Verifikasi:** belum — jalankan setelah Tahap 3: `npx tsc --noEmit` + `npm run build`. Zero migration (field `kategori` sudah ada sejak Sprint24A).
+
+### 4 Agustus 2026 — Sprint23 ✅ Selesai: Kategori Petugas jadi field wajib (fix bug default PROTOKOL)
 
 | Fitur | Status | Catatan |
 |-------|--------|---------|
