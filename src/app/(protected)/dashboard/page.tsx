@@ -1,11 +1,16 @@
-import { CalendarDays, CheckCircle2, Clock, FileWarning, UserX } from 'lucide-react';
+import { CalendarDays, CheckCircle2, FileWarning } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { existsSync } from 'fs';
+import path from 'path';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/auth';
 import DashboardCharts from './dashboard-charts';
 import DashboardStats from './dashboard-stats';
 import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
 
   export default async function DashboardPage() {
     try {
+      const user = await getCurrentUser();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -22,26 +27,25 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
       const rangeStartDate = new Date(today.getFullYear(), today.getMonth() + rangeConfig.startOffset, 1);
       const currentYearStart = new Date(today.getFullYear(), 0, 1);
 
+      // Hero: pakai foto gedung KPT hanya jika file sudah ada di public/
+      const showHeroFoto = existsSync(path.join(process.cwd(), 'public', 'gedung-kpt.jpg'));
+
       const [
         bulanIniCount,
         hariIniCount,
         sudahCount,
         belumCount,
         dokumenBelumUploadCount,
-        belumAdaPetugasCount,
         upcoming,
         chartDataRaw,
-        statusDist, 
-        kegiatanWithDokumen,
-        topPetugasRaw,
         topSektorRaw,
+        kegiatanWithDokumen,
       ] = await Promise.all([
         prisma.kegiatan.count({ where: { tanggal: { gte: startOfMonth, lte: endOfMonth } } }),
         prisma.kegiatan.count({ where: { tanggal: { gte: today, lt: tomorrow } } }),
         prisma.kegiatan.count({ where: { statusSambutan: 'SUDAH' } }),
         prisma.kegiatan.count({ where: { statusSambutan: 'BELUM' } }),
         prisma.kegiatan.count({ where: { OR: [{ linkUpload: null }, { linkUpload: '' }] } }),
-        prisma.kegiatan.count({ where: { petugas: { none: {} } } }),
         prisma.kegiatan.findMany({
           where: { tanggal: { gte: today } },
           orderBy: { tanggal: 'asc' },
@@ -51,26 +55,15 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
           where: { tanggal: { gte: rangeStartDate } },
           select: { tanggal: true }
         }),
-        // --- NEW QUERIES ---
-        prisma.kegiatan.groupBy({
-          by: ['statusKegiatan'],
-          _count: true,
-        }),
-        prisma.kegiatan.findMany({
-          where: { tanggal: { gte: currentYearStart } },
-          select: { id: true, namaKegiatan: true, dokumen: { select: { status: true } } },
-        }),
-        prisma.kegiatanPetugas.groupBy({
-          by: ['petugasId'],
-          _count: true,
-          orderBy: { _count: { petugasId: 'desc' } },
-          take: 5,
-        }),
         prisma.kegiatan.groupBy({
           by: ['leadingSectorId'],
           _count: true,
           orderBy: { _count: { leadingSectorId: 'desc' } },
           take: 5,
+        }),
+                prisma.kegiatan.findMany({
+          where: { tanggal: { gte: currentYearStart } },
+          select: { id: true, namaKegiatan: true, dokumen: { select: { status: true } } },
         }),
       ]);
 
@@ -89,12 +82,6 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
       });
       const chartData = Object.values(chartMap);
 
-      // --- Status distribution ---
-      const statusDistData = statusDist.map((s) => ({
-        status: s.statusKegiatan,
-        count: s._count,
-      }));
-
       // --- Progress dokumen per kegiatan (tahun berjalan) ---
       let progressLengkap = 0;
       let progressBelum = 0;
@@ -107,19 +94,6 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
           progressBelum++;
           perluPerhatianList.push(k.namaKegiatan);
         }
-      });
-
-      // --- Top 5 Petugas ---
-      const topPetugasIds = topPetugasRaw.map((t) => t.petugasId);
-      const petugasNama = topPetugasIds.length > 0
-        ? await prisma.petugas.findMany({
-            where: { id: { in: topPetugasIds } },
-            select: { id: true, nama: true, kategori: true },
-        })
-        : [];
-      const topPetugasData = topPetugasRaw.map((t) => {
-        const p = petugasNama.find((x) => x.id === t.petugasId);
-        return { nama: p?.nama || '(dihapus)', count: t._count, kategori: p?.kategori || '' };
       });
 
       // --- Top 5 leading sector
@@ -135,35 +109,75 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
           return { nama: s?.nama || '(dihapus)', count: t._count};
         });
 
-      const stats = [
+        type Stat = {
+          label: string;
+          value: number;
+          icon: ReactNode;
+          tone: 'default' | 'success' | 'warning';
+          sub?: ReactNode;
+        };
+
+      const stats: Stat[] = [
         { label: 'Kegiatan bulan ini', value: bulanIniCount, icon: <CalendarDays size={18} />, tone: 'default' as const
   },
         { label: 'Kegiatan hari ini', value: hariIniCount, icon: <CalendarDays size={18} />, tone: 'default' as const },
-        { label: 'Sudah sambutan', value: sudahCount, icon: <CheckCircle2 size={18} />, tone: 'success' as const },
-        { label: 'Belum sambutan', value: belumCount, icon: <Clock size={18} />, tone: 'warning' as const },
-        { label: 'Dokumen belum upload', value: dokumenBelumUploadCount, icon: <FileWarning size={18} />, tone:
-  'warning' as const },
-        { label: 'Belum ada petugas', value: belumAdaPetugasCount, icon: <UserX size={18} />, tone: 'warning' as const
-  },
+        { 
+          label: 'Total Sambutan', 
+          value: sudahCount + belumCount, 
+          icon: <CheckCircle2 size={18} />, 
+          tone: 'success', 
+          sub: ( 
+            <div className='flex gap-4 mt-1 text-xs'>
+              <span>
+                <span className='text-green-600 font-semibold'>{sudahCount}</span> sudah </span>
+              <span>
+                <span className='text-amber-600 font-semibold'>{belumCount}</span> belum </span>
+            </div>
+           ), },
+        { label: 'Dokumen belum upload', value: dokumenBelumUploadCount, icon: <FileWarning size={18} />, tone: 'warning'},
       ];
 
       const toneClass = { default: 'bg-app text-navy', success: 'badge-sudah', warning: 'badge-belum' };
 
       return (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Hero Banner */}
+          <div className='relative overflow-hidden rounded-2xl bg-navy text-white shadow-sm'>
+            {showHeroFoto && (
+              <div className='absolute inset-0 opacity-40'
+              style={{
+                backgroundImage: "url('/gedung-kpt.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}></div>
+            )}
+            <div className='absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/30' />
+            <div className='relative p-6 sm:p-8'>
+              <p className='text-gold text-xs font-semibold uppercase tracking-wider'>Sistem Manajemen SPJ · Protokom</p>
+              <h1 className='font-display text-2xl sm:text-3xl font-semibold mt-1'>
+                Selamat datang, {user?.nama ?? 'Pengguna'}
+              </h1>
+              <p className='text-white/80 text-sm mt-2'>
+              Pantau agenda kegiatan, status sambutan, dan kelengkapan dokumen SPJ.
+              </p>
+            </div>
+          </div>
+
+          {/* --- Status cards --- */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
             {stats.map((s) => (
-              <div key={s.label} className="bg-white rounded-2xl border border-app p-5 flex items-center justify-between
-  shadow-sm">
+              <div key={s.label} className='bg-white rounded-2xl border border-app p-5 flex items-center justify-between shadow-sm'>
                 <div>
-                  <p className="text-muted text-xs mb-1">{s.label}</p>
-                  <p className="font-display text-3xl font-semibold text-navy">{s.value}</p>
+                  <p className='text-muted text-xs mb-1'>{s.label}</p>
+                  <p className='font-display text-3xl font-semibold text-navy'>{s.value}</p>
+                  {s.sub && <div>{s.sub}</div>}
                 </div>
                 <div className={`rounded-full p-2.5 ${toneClass[s.tone]}`}>{s.icon}</div>
               </div>
             ))}
           </div>
 
+          {/* --- Row: grafik bulanan + kegiatan terdekat --- */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3 bg-white rounded-2xl border border-app p-5 shadow-sm">
               <h3 className="font-display text-base font-semibold text-navy mb-4">Jumlah Kegiatan per Bulan</h3>
@@ -193,30 +207,20 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
 
           {/* --- Row 3: Charts baru (distribusi + progress + top petugas + top sektor) --- */}
           <DashboardStats 
-            statusDist={statusDistData}
             progressLengkap={progressLengkap}
             progressBelum={progressBelum}
-            topPetugas={topPetugasData}
             topSektor={topSektorData}
           />
 
           {/* --- Row 4: Perlu Perhatian --- */}
-          {(belumAdaPetugasCount > 0 || progressBelum > 0) && (
+          {(progressBelum > 0) && (
             <div className="bg-white rounded-2xl border border-app p-5 shadow-sm">
               <h3 className="font-display text-base font-semibold text-navy mb-3">Perlu Perhatian</h3>
               <ul className="space-y-2 text-sm">
-                {belumAdaPetugasCount > 0 && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-                    <span><strong>{belumAdaPetugasCount}</strong> kegiatan belum ada petugas</span>
-                  </li>
-                )}
-                {progressBelum > 0 && (
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
                     <span><strong>{progressBelum}</strong> kegiatan dengan dokumen belum lengkap</span>
                   </li>
-                )}
                 {perluPerhatianList.length > 0 && (
                   <li className="text-muted text-xs mt-1">
                     {perluPerhatianList.slice(0, 3).join(', ')}
