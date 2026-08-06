@@ -8,8 +8,8 @@ export type StatusKegiatanValue = StatusKegiatan;
 
 export const STATUS_KEGIATAN_LABEL: Record<StatusKegiatanValue, string> = {
  ACARA_MASUK: 'Acara Masuk',
- MENUNGGU_PENUGASAN: 'Menunggu Penugasan',
- KEGIATAN_SELESAI: 'Kegiatan Selesai',
+ MENUNGGU_PENUGASAN: 'On Progress',
+ KEGIATAN_SELESAI: 'Selesai',
  SPJ_SELESAI: 'SPJ Selesai',
 };
 

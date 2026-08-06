@@ -11,6 +11,8 @@ export type KegiatanRow = {
     tempat: string;
     pejabat: string;
     perihalSurat: string | null;
+    nomorSurat: string | null;
+    dresscode: string | null;
     picNama: string | null;
     picNoHp: string | null;
     leadingSectorId: string;

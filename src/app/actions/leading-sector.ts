@@ -92,7 +92,7 @@ export async function deleteLeadingSector(id: string): Promise<ActionResult> {
     // Safe delete: cek penggunaan sebelum menghapus.
     const usageCount = await prisma.kegiatan.count({ where: { leadingSectorId: id } });
     if (usageCount > 0) {
-      return { ok: false, error: Tidak bisa dihapus: masih dipakai di${usageCount} kegiatan. };
+      return { ok: false, error: `Tidak bisa dihapus: masih dipakai di ${usageCount} kegiatan.` };
     }
 
     await prisma.$transaction(async (tx) => {

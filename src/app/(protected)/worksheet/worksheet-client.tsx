@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
-import type { SearchableOption } from '@/components/searchable-select';
+import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
@@ -17,6 +17,9 @@ import Pagination from '@/components/pagination';
 import { toDateInput } from '@/lib/format';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
+
+// 12 bulan statis - filter bulan tak lagi diambil dari data.
+const BULAN_NAMA = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
 /** Format daftar nama petugas menjadi "Nama A, Nama B +N" agar sel tabel tetap ringkas. */
 function petugasSummary(names: string[]): string {
@@ -32,7 +35,7 @@ export default function WorksheetClient({
   page,
   pageSize,
   filters,
-  bulanOptions,
+  tahunOptions,
   canEdit,
   petugasProtokolOptions,
   petugasLiputanOptions,
@@ -43,7 +46,7 @@ export default function WorksheetClient({
   page: number;
   pageSize: number;
   filters: KegiatanFilter;
-  bulanOptions: string[];
+  tahunOptions: string[];
   canEdit: boolean;
   petugasProtokolOptions: SearchableOption[];
   petugasLiputanOptions: SearchableOption[];
@@ -128,12 +131,13 @@ export default function WorksheetClient({
     }
     const data = res.data;
     const header = [
-      'Tanggal',
+      'Tanggal Pelaksanaan',
       'Nama Kegiatan',
       'Perihal Surat',
+      'Nomor Surat',
+      'Dresscode',
       'Tempat',
       'Pejabat',
-      'PIC',
       'No. HP PIC',
       'Leading Sector',
       'Status Sambutan',
@@ -142,16 +146,17 @@ export default function WorksheetClient({
       'Petugas Liputan',
       'Link Upload',
       'Catatan',
-      'Jenis Penugasan',
+      'Jenis Tugas',
       'Status Publikasi',
     ];
     const rows = data.map((k) => [
       new Date(k.tanggal),
       k.namaKegiatan,
       k.perihalSurat || '',
+      k.nomorSurat || '',
+      k.dresscode || '',
       k.tempat,
       k.pejabat,
-      k.picNama || '',
       k.picNoHp || '',
       k.leadingSectorNama,
       k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
@@ -188,102 +193,93 @@ export default function WorksheetClient({
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             defaultValue={filters.q || ''}
-            placeholder="Cari kegiatan, tempat, atau PIC..."
+            placeholder="Cari kegiatan, tempat, atau perihal..."
             onBlur={(e) => setFilter('q', e.target.value.trim() || undefined)}
             onKeyDown={(e) => e.key === 'Enter' && setFilter('q', (e.target as HTMLInputElement).value.trim() || undefined)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
+            className="w-full min-w-0 pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <select
-            value={filters.bulan || 'Semua'}
-            onChange={(e) => setFilter('bulan', e.target.value === 'Semua' ? undefined : e.target.value)}
-            className="px-3 py-2 rounded-lg border border-app text-sm"
+          <select value={filters.tahun || ''} 
+          onChange={(e) => {
+            const v = e.target.value;
+            const params = new URLSearchParams(searchParams.toString());
+            if (v) params.set('tahun', v);
+            else params.delete('tahun');
+            params.delete('bulan'); // bulan mengikuti tahun - reset saat tahun berubah
+            params.delete('page');
+            router.replace(`/worksheet?${params.toString()}`);
+          }}
+          className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Semua Bulan</option>
-            {bulanOptions.map((b) => {
-              const [y, m] = b.split('-');
-              const label = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('id-ID', {
-                month: 'long',
-                year: 'numeric',
-              });
-              return (
-                <option key={b} value={b}>
-                  {label}
-                </option>
-              );
-            })}
+            <option value="">Semua Tahun</option>
+            {tahunOptions.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
           </select>
-          <select
-            value={filters.status || 'Semua'}
-            onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}
-            className="px-3 py-2 rounded-lg border border-app text-sm"
+          <select value={filters.bulan ? Number(filters.bulan.split('-')[1]) :0}
+          onChange={(e) => {
+            const m = Number(e.target.value);
+            const tahun = filters.tahun || String(new Date().getFullYear());
+            setFilter('bulan', m ===0 ? undefined : `${tahun}-${String(m).padStart(2, '0')}`);
+          }}
+          className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Semua Status</option>
+            <option value={0}>Tidak Dipilih</option>
+            {BULAN_NAMA.map((nama, i) => (
+              <option key={i +1} value={i +1}>{nama}</option>
+            ))}
+          </select>
+          <select value={filters.status || 'Semua'}
+          onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}
+          className="px-3 py-2 rounded-lg border border-app text-sm"
+          >
+            <option value="Semua">Tidak Dipilih</option>
             <option value="SUDAH">Sudah Sambutan</option>
             <option value="BELUM">Belum Sambutan</option>
           </select>
-          <select
-            value={filters.statusKegiatan || 'Semua'}
-            onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}
-            className="px-3 py-2 rounded-lg border border-app text-sm"
+          <select value={filters.statusKegiatan || 'Semua'}
+          onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}
+          className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Semua Status Kegiatan</option>
+            <option value="Semua">Tidak Dipilih</option>
             {STATUS_KEGIATAN_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_KEGIATAN_LABEL[s]}
-              </option>
+              <option key={s} value={s}>{STATUS_KEGIATAN_LABEL[s]}</option>
             ))}
           </select>
-          <select
-            value={filters.pejabat || 'Semua'}
-            onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}
-            className="px-3 py-2 rounded-lg border border-app text-sm"
+          <select value={filters.pejabat || 'Semua'}
+          onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}
+          className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Semua Pejabat</option>
+            <option value="Semua">Tidak Dipilih</option>
             {PEJABAT_OPTIONS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
+              <option key={p} value={p}>{p}</option>
             ))}
           </select>
-          <select
-            value={filters.penugasan || 'Semua'}
-            onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}
-            className="px-3 py-2 rounded-lg border border-app text-sm"
+          <select value={filters.penugasan || 'Semua'}
+          onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}
+          className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Semua Penugasan</option>
+            <option value="Semua">Tidak Dipilih</option>
             {JENIS_PENUGASAN_OPTIONS.map((j) => (
               <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
             ))}
           </select>
-          <select
-            value={filters.sektor || 'Semua'}
-            onChange={(e) => setFilter('sektor', e.target.value === 'Semua' ? undefined : e.target.value)}
-            className="px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value="Semua">Semua Sektor</option>
-            {leadingSectorOptions.map((s) => (
-              <option key={s.id} value={s.id}>{s.label}</option>
-            ))}
-          </select>
-          <input
-            defaultValue={filters.pic || ''}
-            placeholder="Filter PIC..."
-            onBlur={(e) => setFilter('pic', e.target.value.trim() || undefined)}
-            onKeyDown={(e) => e.key === 'Enter' && setFilter('pic', (e.target as HTMLInputElement).value.trim() || undefined)}
-            className="px-3 py-2 rounded-lg border border-app text-sm w-36"
+          <div className="w-48">
+            <SearchableSelect options={leadingSectorOptions}
+            value={filters.sektor || null}
+            onChange={(v) => setFilter('sektor', v || undefined)}
+            placeholder="Sektor"
           />
-          <button
-            onClick={exportExcel}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
+          </div>
+          <button onClick={exportExcel}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
           >
             <Download size={15} /> Excel
           </button>
           {canEdit && (
-            <button
-              onClick={openAdd}
-              className="btn-primary flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium"
+            <button onClick={openAdd}
+            className="btn-primary flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium"
             >
               <Plus size={15} /> Tambah Kegiatan
             </button>
@@ -296,12 +292,13 @@ export default function WorksheetClient({
           <table className="w-full min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
-                <th className="px-4 py-3 font-medium">Tanggal</th>
+                <th className="px-4 py-3 font-medium">Tanggal Pelaksanaan</th>
                 <th className="px-4 py-3 font-medium">Kegiatan</th>
                 <th className="px-4 py-3 font-medium">Perihal Surat</th>
+                <th className="px-4 py-3 font-medium">Nomor Surat</th>
+                <th className="px-4 py-3 font-medium">Dresscode</th>
                 <th className="px-4 py-3 font-medium">Tempat</th>
                 <th className="px-4 py-3 font-medium">Pejabat</th>
-                <th className="px-4 py-3 font-medium">PIC</th>
                 <th className="px-4 py-3 font-medium">No. HP PIC</th>
                 <th className="px-4 py-3 font-medium">Leading Sector</th>
                 <th className="px-4 py-3 font-medium">Sambutan</th>
@@ -309,7 +306,7 @@ export default function WorksheetClient({
                 <th className="px-4 py-3 font-medium">Petugas Protokol</th>
                 <th className="px-4 py-3 font-medium">Petugas Liputan</th>
                 <th className="px-4 py-3 font-medium">Dokumentasi</th>
-                <th className="px-4 py-3 font-medium">Penugasan</th>
+                <th className="px-4 py-3 font-medium">Jenis Tugas</th>
                 <th className="px-4 py-3 font-medium">Publikasi</th>
                 {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
               </tr>
@@ -317,7 +314,7 @@ export default function WorksheetClient({
             <tbody>
               {initialData.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 16 : 15} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 17 : 16} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -333,9 +330,10 @@ export default function WorksheetClient({
                     </td>
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
                     <td className="px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
+                    <td className="px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
+                    <td className="px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
                     <td className="px-4 py-3 text-muted">{k.tempat}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{k.pejabat}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{k.picNama || '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
                     <td className="px-4 py-3 text-muted">{k.leadingSectorNama}</td>
                     <td className="px-4 py-3">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from '@/lib/worksheet';
-import { type SearchableOption } from '@/components/searchable-select';
+import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import PetugasPicker from '@/components/petugas-picker';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL } from '@/lib/constants/status-penugasan';
@@ -39,6 +39,8 @@ export default function KegiatanModal({
           tempat: item.tempat,
           pejabat: item.pejabat,
           perihalSurat: item.perihalSurat || '',
+          nomorSurat: item.nomorSurat || '',
+          dresscode: item.dresscode || '',
           picNama: item.picNama || '',
           picNoHp: item.picNoHp || '',
           leadingSectorId: item.leadingSectorId,
@@ -58,6 +60,8 @@ export default function KegiatanModal({
           tempat: '',
           pejabat: 'Bupati',
           perihalSurat: '',
+          nomorSurat: '',
+          dresscode: '',
           picNama: '',
           picNoHp: '',
           leadingSectorId: leadingSectorOptions[0]?.id || '',
@@ -187,6 +191,22 @@ export default function KegiatanModal({
               placeholder="cth. Undangan Rapat Koordinasi..."
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Nomor Surat</label>
+            <input value={form.nomorSurat}
+            onChange={(e) => update('nomorSurat', e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+            placeholder="cth.005/Prokompim/2026"
+          />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Dresscode</label>
+            <input value={form.dresscode}
+            onChange={(e) => update('dresscode', e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+            placeholder="cth. Batik Brebes / PDH / Seragam..." 
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1.5">Pejabat</label>
@@ -234,15 +254,6 @@ export default function KegiatanModal({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1.5">Nama PIC</label>
-              <input
-                value={form.picNama}
-                onChange={(e) => update('picNama', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-                placeholder="cth. Budi Santoso"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium mb-1.5">No. HP PIC</label>
               <input
                 value={form.picNoHp}
@@ -254,18 +265,11 @@ export default function KegiatanModal({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Leading Sector</label>
-            <select
-              value={form.leadingSectorId}
-              onChange={(e) => update('leadingSectorId', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-app text-sm"
-            >
-              <option value="">Pilih leading sector...</option>
-              {leadingSectorOptions.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect options={leadingSectorOptions}
+            value={form.leadingSectorId || null}
+            onChange={(v) => update('leadingSectorId', v || '')}
+            placeholder="Pilih leading sector..."
+            />
             {errors.leadingSectorId && <p className="text-xs text-red-600 mt-1">{errors.leadingSectorId}</p>}
             {leadingSectorOptions.length === 0 && (
               <p className="text-xs text-muted mt-1">

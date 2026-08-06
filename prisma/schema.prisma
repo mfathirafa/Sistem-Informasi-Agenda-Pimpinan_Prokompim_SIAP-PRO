@@ -127,6 +127,7 @@ model Kegiatan {
   linkUpload      String?
   catatan         String?
   perihalSurat    String?
+  dresscode       String?
   picNama         String?
   picNoHp         String?
   createdAt       DateTime          @default(now())

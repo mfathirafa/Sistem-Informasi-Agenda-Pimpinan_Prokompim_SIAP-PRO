@@ -18,6 +18,8 @@ export type KegiatanInput = {
   tempat: string;
   pejabat: string;
   perihalSurat?: string;
+  nomorSurat?: string;
+  dresscode?: string;
   picNama?: string;
   picNoHp?: string;
   leadingSectorId: string;
@@ -98,12 +100,30 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
         return { ok: false, error: 'Petugas Liputan tidak valid.'};
       }
     }
+    // Normalisasi nomorSurat/dresscode: kosong -> null.
+    const nomorSurat = data.nomorSurat?.trim() || null;
+    const dresscode = data.dresscode?.trim() || null;
+
+    // Validasi unik per tahun: nomorSurat yang diisi wajib unik dalam tahun yang sama.
+    if (nomorSurat) {
+      const tahun = new Date(data.tanggal).getFullYear();
+      const dup = await prisma.kegiatan.findFirst({
+        where: {
+          nomorSurat,
+          tanggal: { gte: new Date(tahun,0,1), lt: new Date(tahun +1,0,1) },
+        },
+        select: { id: true },
+      });
+      if (dup) return { ok: false, error: `Nomor surat ${nomorSurat} sudah dipakai di tahun ${tahun}.` };
+    }
     const duplikat = await cekDuplikat(data.tanggal, data.tempat, data.pejabat, data.perihalSurat);
 
     await prisma.$transaction(async (tx) => {
       const created = await tx.kegiatan.create({
         data: {
           ...kegiatanData,
+          nomorSurat,
+          dresscode,
           tanggal: new Date(data.tanggal),
           petugas: {
             create: [
@@ -247,6 +267,24 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   // -- no-op guard ---
   if (!hasDiff) return { ok: true };
 
+  // Normalisasi nomorSurat/dresscode: kosong -> null,
+  const nomorSurat = data.nomorSurat?.trim() || null;
+  const dresscode = data.dresscode?.trim() || null;
+
+  // Validasi unik per tahun (kecuali record ini sendiri).
+  if (nomorSurat) {
+    const tahun = new Date(data.tanggal).getFullYear();
+    const dup = await prisma.kegiatan.findFirst({
+      where: {
+        nomorSurat,
+        tanggal: { gte: new Date(tahun,0,1), lt: new Date(tahun +1,0,1) },
+        NOT: { id },
+      },
+      select: { id:true },
+    });
+    if (dup) return { ok: false, error: `Nomor surat ${nomorSurat} sudah dipakai di tahun ${tahun}.` };
+  }
+
   const duplikat = await cekDuplikat(data.tanggal, data.tempat, data.pejabat, data.perihalSurat, id);
 
   await prisma.$transaction(async (tx) => {
@@ -255,6 +293,8 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
       data: {
         ...kegiatanData,
         tanggal: new Date(data.tanggal),
+        nomorSurat,
+        dresscode,
         petugas: {
           deleteMany: {},
           create: [

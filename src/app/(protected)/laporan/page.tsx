@@ -62,6 +62,8 @@ export default async function LaporanPage({ searchParams }: Props) {
                 tempat: k.tempat,
                 pejabat: k.pejabat,
                 perihalSurat: k.perihalSurat,
+                nomorSurat: k.nomorSurat,
+                dresscode: k.dresscode,
                 picNama: k.picNama,
                 picNoHp: k.picNoHp,
                 leadingSectorId: k.leadingSectorId,

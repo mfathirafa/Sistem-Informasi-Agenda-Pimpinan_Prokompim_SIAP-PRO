@@ -51,7 +51,24 @@ export default async function KalenderPage({
         const kegiatan = await prisma.kegiatan.findMany({
             where: { tanggal: { gte: start, lte: end } },
             orderBy: { tanggal: 'asc' },
-            select: { id: true, namaKegiatan: true, tanggal: true, waktu: true, statusKegiatan: true },
+            select: { 
+                id: true, 
+                namaKegiatan: true, 
+                tanggal: true, 
+                waktu: true, 
+                statusKegiatan: true,
+                tempat: true,
+                pejabat: true,
+                perihalSurat: true,
+                nomorSurat: true,
+                dresscode: true,
+                picNama: true,
+                picNoHp: true,
+                jenisPenugasan: true,
+                statusPublikasi: true,
+                leadingSector: { select: { nama: true } },
+                dokumen: { select: { jenis: true, status: true, link: true, catatan: true } }, 
+            },
         });
 
         // Group per tanggal (komponen lokal, konsistensi dengan sel grid).
@@ -149,12 +166,18 @@ export default async function KalenderPage({
                                                     />
                                                 ))}
                                                 {list.length > 3 && (
-                                                    <span className="text-[10px] text-muted">+{list.length - 3}</span>
+                                                    <button type="button"
+                                                    data-open-tanggal={key}
+                                                    aria-label={`Lihat ${list.length -3} kegiatan lagi`}
+                                                    className="text-[10px] text-navy font-medium underline decoration-dotted underline-offset-2"
+                                                    >
+                                                        +{list.length -3}
+                                                    </button>
                                                 )}
                                             </span>
                                         </div>
                                         <div className="hidden sm:flex flex-col gap-1">
-                                                {list.slice(0, 3).map((k) => (
+                                                {list.slice(0, 2).map((k) => (
                                                     <Link
                                                         key={k.id}
                                                         href={`/worksheet/${k.id}`}
@@ -164,13 +187,13 @@ export default async function KalenderPage({
                                                         {k.namaKegiatan}
                                                     </Link>
                                                 ))}
-                                                {list.length > 3 && (
+                                                {list.length > 2 && (
                                                     <button
                                                         type="button"
                                                         data-open-tanggal={key}
                                                         className="text-[11px] text-navy underline decoration-dotted underline-offset-2 pl-1 hover:text-gold"
                                                     >
-                                                        +{list.length - 3} lagi
+                                                        +{list.length - 2} lagi
                                                     </button>
                                                 )}
                                         </div>

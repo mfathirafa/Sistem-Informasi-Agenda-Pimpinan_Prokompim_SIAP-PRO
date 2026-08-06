@@ -8,7 +8,7 @@ export type JenisPenugasanValue = JenisPenugasan;
 export const JENIS_PENUGASAN_LABEL: Record<JenisPenugasanValue, string> = {
     LEMBUR: 'Lembur',
     SPPD: 'SPPD',
-    KEGIATAN: 'Kegiatan',
+    KEGIATAN: 'Biasa',
 };
 
 // Tone badge yang sudah ada di globals.css - tidak perli CSS baru.

@@ -18,6 +18,8 @@ type KegiatanItem = {
     tempat: string;
     pejabat: string;
     perihalSurat: string | null;
+    nomorSurat: string | null;
+    dresscode: string | null;
     picNama: string | null;
     picNoHp: string | null;
     leadingSectorNama: string;
@@ -61,18 +63,20 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
     const exportXlsx = () => {
         const header = [
-            'Tanggal', 'Nama Kegiatan', 'Perihal Surat', 'Waktu', 'Tempat', 'Pejabat',
-            'PIC', 'No. HP PIC', 'Leading Sector', 'Status Sambutan', 'Status Kegiatan',
+            'Tanggal Pelaksanaan', 'Nama Kegiatan', 'Perihal Surat', 'Nomor Surat', 'Dresscode', 
+            'Waktu', 'Tempat', 'Pejabat', 'No. HP PIC', 'Leading Sector', 
+            'Status Sambutan', 'Status Kegiatan', 
             'Petugas Protokol', 'Petugas Liputan', 'Jenis Penugasan', 'Status Publikasi',
         ];
         const rows = data.map((k) => [
             formatTanggal(k.tanggal),
             k.namaKegiatan,
             k.perihalSurat || '',
+            k.nomorSurat || '',
+            k.dresscode || '',
             k.waktu || '',
             k.tempat,
             k.pejabat,
-            k.picNama || '',
             k.picNoHp || '',
             k.leadingSectorNama,
             k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
@@ -164,18 +168,22 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 <table className="w-full text-sm">
                     <thead className="bg-gray-50 border-b">
                         <tr>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Tanggal</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Tanggal Pelaksanaan</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Kegiatan</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Perihal Surat</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Nomor Surat</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Dresscode</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden sm:table-cell">Waktu</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Tempat</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Pejabat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">PIC</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">No. HP PIC</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Sector</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Status</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Leading Sector</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Status Sambutan</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Status Kegiatan</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Petugas Protokol</th>
                             <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Petugas Liputan</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden xl:table-cell">Jenis Penugasan</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600 hidden xl:table-cell">Status Publikasi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -184,12 +192,18 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                 <td className="p-2.5 whitespace-nowrap">{formatTanggal(k.tanggal)}</td>
                                 <td className="p-2.5 font-medium">{k.namaKegiatan}</td>
                                 <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
+                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
+                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[120px] truncate">{k.dresscode || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden sm:table-cell">{k.waktu || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[200px] truncate">{k.tempat}</td>
                                 <td className="p-2.5">{k.pejabat}</td>
-                                <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.picNama || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.picNoHp || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.leadingSectorNama}</td>
+                                <td className="p-2.5">
+                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'}`}>
+                                        {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
+                                    </span>
+                                </td>
                                 <td className="p-2.5">
                                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
                                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
@@ -197,10 +211,12 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                 </td>
                                 <td className="p-2.5 text-gray-500">{k.petugasProtokolNama.join(', ') || '-'}</td>
                                 <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{k.petugasLiputanNama.join(', ') || '-'}</td>
+                                <td className="p-2.5 text-gray-500 hidden xl:table-cell">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</td>
+                                <td className="p-2.5 text-gray-500 hidden xl:table-cell">{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</td>
                             </tr>
                         ))}
                         {data.length === 0 && (
-                            <tr><td colSpan={12} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
+                            <tr><td colSpan={16} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
                         )}
                     </tbody>
                 </table>

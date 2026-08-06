@@ -24,6 +24,8 @@ export default async function DetailKegiatanPage({ params }: { params: Promise<{
           tempat: kegiatan.tempat,
           pejabat: kegiatan.pejabat,
           perihalSurat: kegiatan.perihalSurat,
+          nomorSurat: kegiatan.nomorSurat,
+          dresscode: kegiatan.dresscode,
           picNama: kegiatan.picNama,
           picNoHp: kegiatan.picNoHp,
           leadingSectorNama: kegiatan.leadingSector.nama,

@@ -20,6 +20,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
 
     const filters: KegiatanFilter = {
       q: typeof params.q === 'string' ? params.q : undefined,
+      tahun: typeof params.tahun === 'string' ? params.tahun : undefined,
       bulan: typeof params.bulan === 'string' ? params.bulan : undefined,
       status: typeof params.status === 'string' ? params.status : undefined,
       statusKegiatan: typeof params.statusKegiatan === 'string' ? params.statusKegiatan : undefined,
@@ -41,7 +42,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const safePage = Math.min(page, totalPages);
 
-    const [kegiatan, months, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
+    const [kegiatan, dates, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
         where,
         orderBy: { tanggal: 'asc' },
@@ -50,7 +51,6 @@ export default async function WorksheetPage({ searchParams }: Props) {
         take: PAGE_SIZE,
       }),
       prisma.kegiatan.findMany({
-        where: { tanggal: { gte: threeMonthsAgo } },
         select: { tanggal: true },
       }),
       prisma.petugas.findMany({
@@ -68,15 +68,11 @@ export default async function WorksheetPage({ searchParams }: Props) {
 
     const data = kegiatan.map(mapKegiatanToRow);
 
-    // Opsi filter bulan dari seluruh data dalam window (bukan hanya halaman aktif).
-    const bulanOptions = Array.from(
-      new Set(
-        months.map((m) => {
-          const d = m.tanggal;
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        })
-      )
-    ).sort();
+    // opsi filter tahun dari seluruh data di database (bukan hanya halaman aktif).
+    // Urut turun tahun terbaru di atas.
+    const tahunOptions = Array.from(
+      new Set(dates.map((d) => d.tanggal.getFullYear()))
+    ).sort((a, b) => b - a).map(String);
 
     return (
       <WorksheetClient
@@ -85,7 +81,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
         page={safePage}
         pageSize={PAGE_SIZE}
         filters={filters}
-        bulanOptions={bulanOptions}
+        tahunOptions={tahunOptions}
         canEdit={canEdit}
         petugasProtokolOptions={petugasProtokol.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
         petugasLiputanOptions={petugasLiputan.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}

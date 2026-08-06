@@ -31,6 +31,7 @@ type KegiatanWithRelations = Prisma.KegiatanGetPayload<{ include: typeof kegiata
 /** Filter dari searchParams halaman worksheet (URL-driven). */
 export type KegiatanFilter = {
     q?: string;
+    tahun?: string; // "YYYYY"
     bulan?: string; // "YYYY-MM"
     status?: string; // statusSambutan: SUDAH | BELUM
     statusKegiatan?: string;
@@ -49,8 +50,16 @@ export function buildKegiatanWhere(filters: KegiatanFilter, fromDate?: Date): Pr
     const where: Prisma.KegiatanWhereInput = {};
 
     // Gabungan window (fromDate) dan filter bulan → rentang tanggal.
-    let gte: Date | undefined = fromDate;
+    let gte: Date | undefined = filters.tahun || filters.bulan ? undefined : fromDate;
     let lt: Date | undefined;
+    if (filters.tahun) {
+        const y = Number(filters.tahun);
+        if (Number.isFinite(y)) {
+            const yearStart = new Date(y,0,1);
+            if (!gte || yearStart > gte) gte = yearStart;
+            lt = new Date(y +1,0,1); // awal tahun berikutnya+
+        }
+    }
     if (filters.bulan) {
         const [y, m] = filters.bulan.split('-').map(Number);
         const monthStart = new Date(y, m - 1, 1);
@@ -101,6 +110,8 @@ export function mapKegiatanToRow(k: KegiatanWithRelations): KegiatanRow {
         tempat: k.tempat,
         pejabat: k.pejabat,
         perihalSurat: k.perihalSurat,
+        nomorSurat: k.nomorSurat,
+        dresscode: k.dresscode,
         picNama: k.picNama,
         picNoHp: k.picNoHp,
         leadingSectorId: k.leadingSectorId,

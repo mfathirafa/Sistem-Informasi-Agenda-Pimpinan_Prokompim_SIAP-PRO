@@ -2,33 +2,144 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { X } from 'lucide-react';
-import { STATUS_KEGIATAN_BADGE_CLASS, STATUS_KEGIATAN_LABEL, type StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
+import { X, ExternalLink, ChevronDown } from 'lucide-react';
+import {
+  STATUS_KEGIATAN_BADGE_CLASS,
+  STATUS_KEGIATAN_LABEL,
+  type StatusKegiatanValue,
+} from '@/lib/constants/status-kegiatan';
+import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from '@/lib/constants/status-penugasan';
+import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from '@/lib/constants/status-publikasi';
+import type { JenisDokumenValue, StatusDokumenValue } from '@/lib/constants/status-dokumen';
 
+type KalenderDokumen = {
+  jenis: JenisDokumenValue;
+  status: StatusDokumenValue;
+  link: string | null;
+  catatan: string | null;
+};
+
+// Harus match persis shape select di server (kalender/page.tsx) - termasuk
+// leadingSector nested, bukan flat.
 type KalenderEvent = {
   id: string;
   namaKegiatan: string;
   tanggal: Date;
   waktu: string | null;
   statusKegiatan: StatusKegiatanValue;
+  tempat: string;
+  pejabat: string;
+  perihalSurat: string | null;
+  nomorSurat: string | null;
+  dresscode: string | null;
+  picNama: string | null;
+  picNoHp: string | null;
+  leadingSector: { nama: string };
+  jenisPenugasan: JenisPenugasanValue;
+  statusPublikasi: StatusPublikasiValue;
+  dokumen: KalenderDokumen[];
 };
-
-const POPOVER_W = 288;
-const POPOVER_MAX_H = 320;
-const GAP = 6;
-const VIEWPORT_PAD = 8;
 
 // Key harus sama persis dengan server (kalender/page.tsx) agar data-open-tanggal cocok.
 function dateKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-/**
- * Hanya menangani interaktivitas popover agenda per hari.
- * Grid kalender tetap di-render server (children). Klik pada trigger
- * (data-open-tanggal) dibuka lewat event delegation, lalu popover muncul
- * di dekat sel dan di-clamp agar tidak keluar viewport.
- */
+// --- Item Kegiatan (accordion detail) ---
+function KegiatanItem({
+  k,
+  expanded,
+  onToggle,
+}: {
+  k: KalenderEvent;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-app overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="w-full flex items-start gap-2 px-3 py-2.5 text-left hover:bg-app"
+      >
+        {k.waktu && (
+          <span className="font-mono text-xs text-muted pt-0.5 whitespace-nowrap">{k.waktu}</span>
+        )}
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-medium truncate">{k.namaKegiatan}</span>
+          <span
+            className={`inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium mt-1 ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]}`}
+          >
+            {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
+          </span>
+        </span>
+        <ChevronDown
+          size={14}
+          className={`text-muted mt-1 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 space-y-3 border-t border-app">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <dt className="text-muted text-xs">Tempat</dt>
+              <dd className="font-medium">{k.tempat}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Pejabat</dt>
+              <dd className="font-medium">{k.pejabat}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Perihal Surat</dt>
+              <dd className="font-medium">{k.perihalSurat || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Nomor Surat</dt>
+              <dd className="font-medium">{k.nomorSurat || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Dresscode</dt>
+              <dd className="font-medium">{k.dresscode || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">No. HP PIC</dt>
+              <dd className="font-medium">{k.picNoHp || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Leading Sector</dt>
+              <dd className="font-medium">{k.leadingSector.nama}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">PIC (LS)</dt>
+              <dd className="font-medium">{k.picNama || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Jenis Penugasan</dt>
+              <dd className="font-medium">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</dd>
+            </div>
+            <div>
+              <dt className="text-muted text-xs">Status Publikasi</dt>
+              <dd className="font-medium">{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</dd>
+            </div>
+          </dl>
+
+          <div className="flex justify-end pt-1 border-t border-app">
+            <Link
+              href={`/worksheet/${k.id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-app text-navy hover:bg-slate-200 transition-colors"
+            >
+              Lihat Detail <ExternalLink size={11} />
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Main Component ---
 export default function KalenderClient({
   events,
   children,
@@ -37,9 +148,8 @@ export default function KalenderClient({
   children: React.ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const byTanggal = useMemo(() => {
     const m = new Map<string, KalenderEvent[]>();
@@ -52,7 +162,7 @@ export default function KalenderClient({
     return m;
   }, [events]);
 
-  // Delegasi klik di container: trigger mana pun yang diklik → buka popover hari itu.
+  // Delegasi klik: trigger (data-open-tanggal) -> buka modal hari itu.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -62,42 +172,36 @@ export default function KalenderClient({
       if (!trigger) return;
       const key = trigger.dataset.openTanggal;
       if (!key) return;
-
-      const r = trigger.getBoundingClientRect();
-      let left = r.left;
-      if (left + POPOVER_W > window.innerWidth - VIEWPORT_PAD) {
-        left = window.innerWidth - VIEWPORT_PAD - POPOVER_W;
-      }
-      if (left < VIEWPORT_PAD) left = VIEWPORT_PAD;
-      let top = r.bottom + GAP;
-      if (top + POPOVER_MAX_H > window.innerHeight - VIEWPORT_PAD) {
-        top = Math.max(VIEWPORT_PAD, window.innerHeight - VIEWPORT_PAD - POPOVER_MAX_H);
-      }
-
-      setPos({ left, top });
       setOpenKey(key);
+      setExpandedId(null);
     };
     el.addEventListener('click', handler);
     return () => el.removeEventListener('click', handler);
   }, []);
 
-  // Tutup: klik di luar, Escape. Klik trigger lain dibiarkan agar delegation menangani perpindahan.
+  // Tutup: Escape. Klik backdrop ditangani onClick pada wrapper modal.
   useEffect(() => {
     if (!openKey) return;
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as HTMLElement;
-      if (popoverRef.current?.contains(t)) return;
-      if (t.closest('[data-open-tanggal]')) return;
-      setOpenKey(null);
-    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpenKey(null);
     };
-    document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [openKey]);
+
+  // Lock page scroll while modal is open. Lock html AND body — di browser
+  // desktop viewport yang discroll adalah documentElement, body saja tidak cukup.
+  useEffect(() => {
+    if (!openKey) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
     };
   }, [openKey]);
 
@@ -121,52 +225,50 @@ export default function KalenderClient({
       {children}
       {openKey && headerDate && (
         <div
-          ref={popoverRef}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+          onClick={() => setOpenKey(null)}
           role="dialog"
-          aria-label={`Agenda ${headerLabel}`}
-          className="fixed z-50 w-[288px] bg-white rounded-xl border border-app shadow-lg"
-          style={{ left: pos?.left, top: pos?.top }}
+          aria-modal="true"
+          aria-labelledby="kalender-agenda-title"
         >
-          <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-app">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-navy leading-tight">{headerLabel}</p>
-              <p className="text-xs text-muted mt-0.5">{sorted.length} kegiatan</p>
+          <div
+            className="bg-white w-full sm:max-w-[760px] rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[85vh] sm:max-h-[75vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-2 px-4 py-3 border-b border-app shrink-0">
+              <div className="min-w-0">
+                <h2 id="kalender-agenda-title" className="text-sm font-semibold text-navy leading-tight">
+                  {headerLabel}
+                </h2>
+                <p className="text-xs text-muted mt-0.5">{sorted.length} kegiatan</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenKey(null)}
+                aria-label="Tutup"
+                className="p-1 -mr-1 rounded-md hover:bg-app text-muted shrink-0"
+              >
+                <X size={14} />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setOpenKey(null)}
-              aria-label="Tutup"
-              className="p-1 -mr-1 rounded-md hover:bg-app text-muted"
-            >
-              <X size={14} />
-            </button>
+
+            {/* Body scrollable */}
+            <div className="overflow-y-auto p-3 space-y-2">
+              {sorted.length === 0 ? (
+                <p className="px-2 py-6 text-sm text-muted text-center">Tidak ada kegiatan.</p>
+              ) : (
+                sorted.map((k) => (
+                  <KegiatanItem
+                    key={k.id}
+                    k={k}
+                    expanded={expandedId === k.id}
+                    onToggle={() => setExpandedId((cur) => (cur === k.id ? null : k.id))}
+                  />
+                ))
+              )}
+            </div>
           </div>
-          <ul className="max-h-[320px] overflow-y-auto p-1.5 space-y-0.5">
-            {sorted.length === 0 ? (
-              <li className="px-2 py-2 text-sm text-muted">Tidak ada kegiatan.</li>
-            ) : (
-              sorted.map((k) => (
-                <li key={k.id}>
-                  <Link
-                    href={`/worksheet/${k.id}`}
-                    className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-app"
-                  >
-                    {k.waktu && (
-                      <span className="font-mono text-xs text-muted pt-0.5 whitespace-nowrap">{k.waktu}</span>
-                    )}
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-sm truncate">{k.namaKegiatan}</span>
-                      <span
-                        className={`inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium mt-0.5 ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]}`}
-                      >
-                        {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))
-            )}
-          </ul>
         </div>
       )}
     </div>
