@@ -23,6 +23,8 @@ export type KegiatanRow = {
     petugasProtokolNama: string[];
     petugasLiputanIds: string[];
     petugasLiputanNama: string[];
+    allCrewProtokol: boolean;
+    allCrewLiputan: boolean;
     linkUpload: string | null;
     catatan: string | null;
     jenisPenugasan: JenisPenugasanValue;

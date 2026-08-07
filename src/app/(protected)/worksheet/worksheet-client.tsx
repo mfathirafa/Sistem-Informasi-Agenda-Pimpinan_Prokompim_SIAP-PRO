@@ -29,6 +29,13 @@ function petugasSummary(names: string[]): string {
   return extra > 0 ? `${shown.join(', ')} +${extra}` : shown.join(', ');
 }
 
+/** Tampilan ALL CREW: seluruh anggota kategori bertugas, nama yang terpilih = Penanggung Jawab. */
+function allCrewSummary(allCrew: boolean, names: string[]): string {
+  if (!allCrew) return petugasSummary(names);
+  const pj = petugasSummary(names);
+  return pj === '-' ? 'Semua crew' : `Semua crew (PJ: ${pj})`;
+}
+
 export default function WorksheetClient({
   initialData,
   total,
@@ -350,8 +357,8 @@ export default function WorksheetClient({
                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted">{petugasSummary(k.petugasProtokolNama)}</td>
-                    <td className="px-4 py-3 text-muted">{petugasSummary(k.petugasLiputanNama)}</td>
+                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
+                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
                     <td className="px-4 py-3">
                       {k.linkUpload ? (
                         <a

@@ -1,10 +1,11 @@
 'use server';
 
 import { revalidatePath } from "next/cache";
-import { StatusDokumen } from "@prisma/client";
+import { JenisDokumen, StatusDokumen } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, canEditRole, type ActionResult } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
+import { before } from "node:test";
 
 type DokumenUpdateInput = {
     id: string;
@@ -93,5 +94,93 @@ export async function updateDokumen(input: DokumenUpdateInput): Promise<ActionRe
         return { ok: true };
     } catch {
         return { ok: false, error: 'Gagal memperbarui dokumen.' };
+    }
+}
+
+// Simpan semua dokumen sekaligus --1 link Google Drive (folder) berlaku untuk seluruh jenis dokumen, status tetap per-jenis. Satu transaksi + satu revalidate.
+export async function saveDokumenKegiatan(
+    kegiatanId: string,
+    folderLink: string | null,
+    statuses: { jenis: JenisDokumen; status: StatusDokumen }[],
+): Promise<ActionResult> {
+    const user = await getCurrentUser();
+    if (!canEditRole(user?.role)) {
+        return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
+    }
+
+    // Validasi status enum (semua nilai harus valid)
+   const statusValues = Object.values(StatusDokumen);
+   const jenisValues = Object.values(JenisDokumen);
+    if (!statuses.every((s) => jenisValues.includes(s.jenis) && statusValues.includes(s.status))) {
+    return { ok: false, error: 'Status dokumen tidak valid.'};
+    }
+
+    // Validasi link URL jika diisi (pola sama dengan updateDokumen)
+    const link = folderLink?.trim() || null;
+    if (link) {
+        try {
+            new URL(link);
+        } catch {
+            return {
+                ok: false, error: 'Link harus berupa URL yang valid.' 
+            };
+        }
+    }
+    try {
+        const kegiatan = await prisma.kegiatan.findUnique({
+            where: { id: kegiatanId },
+            select: { namaKegiatan: true },
+        });
+        if (!kegiatan) {
+            return { ok: false, error: 'Kegiatan tidak ditemukan.' };
+        }
+        const docs = await prisma.dokumen.findMany({
+            where: { kegiatanId },
+            orderBy: { jenis: 'asc' },
+        });
+        if (docs.length === 0) {
+            return { ok: false, error: 'Dokumen tidak ditemukan.' };
+        }
+
+        await prisma.$transaction(async (tx) => {
+            for (const doc of docs) {
+                const newStatus = statuses.find((s) => s.jenis === doc.jenis)?.status ?? doc.status;
+                // Skip no-op (status & link sama) -> tidak ada update kosong & log kosong if (newStatus === doc.status && link === (doc.link ?? '')) continue;
+
+                await tx.dokumen.update({
+                    where: { id: doc.id },
+                    data: { status: newStatus, link },
+                });
+                
+                await logActivity({
+                    entity: 'DOKUMEN',
+                    entityId: doc.id,
+                    action: 'UPDATE',
+                    userId: user!.id,
+                    changes: {
+                        before: {
+                            status: doc.status, link: doc.link
+                        },
+                        after: {
+                            status: newStatus, link
+                        },
+                        meta: {
+                            entityName: `Dokumen ${doc.jenis} - ${kegiatan.namaKegiatan}`
+                        },
+                    },
+                }, tx);
+            }
+        });
+
+        revalidatePath('/worksheet');
+        revalidatePath(`/worksheet/${kegiatanId}`);
+        return {
+            ok: true
+        };
+    } catch {
+        return {
+            ok: false,
+            error: 'Gagal menyimpan dokumen.'
+        };
     }
 }

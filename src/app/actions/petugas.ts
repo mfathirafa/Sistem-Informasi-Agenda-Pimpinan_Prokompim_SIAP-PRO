@@ -6,8 +6,22 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 
+// Deteksi petugas dengan nama sama (soft warning, tidak memblokir simpan).
+async function cekDuplikatPetugas(nama: string, excludeId?: string): Promise<boolean> {
+  const dup = await prisma.petugas.findFirst({
+    where: {
+      nama: nama.trim(),
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    select: {
+      id: true
+    },
+  });
+  return Boolean(dup);
+}
 export type PetugasInput = {
   nama: string;
+  nip?: string;
   jabatan?: string;
   noHp?: string;
   statusAktif: boolean;
@@ -21,6 +35,7 @@ export async function createPetugas(data: PetugasInput): Promise<ActionResult> {
   if (!Object.values(KategoriPetugas).includes(data.kategori)) return { ok: false, error: 'Kategori tidak valid.' };
 
   try {
+    const duplikat = await cekDuplikatPetugas(data.nama);
     await prisma.$transaction(async (tx) => {
       const created = await tx.petugas.create({ data });
       await logActivity({
@@ -33,7 +48,8 @@ export async function createPetugas(data: PetugasInput): Promise<ActionResult> {
     });
     revalidatePath('/master-petugas');
     revalidatePath('/worksheet');
-    return { ok: true };
+    return duplikat ? { ok: true, warning: 'Petugas dengan nama yang sama sudah ada. Periksa kembali apakah data ini benar-benar baru.' }
+    : { ok: true };
   } catch {
     return { ok: false, error: 'Gagal menambah petugas.' };
   }
@@ -64,6 +80,8 @@ export async function updatePetugas(id: string, data: PetugasInput): Promise<Act
     const hasDiff = Object.keys(beforeSnapshot).length > 0;
     if (!hasDiff) return { ok: true };
 
+    const duplikat = await cekDuplikatPetugas(data.nama, id);
+
     await prisma.$transaction(async (tx) => {
       await tx.petugas.update({ where: { id }, data });
       await logActivity({
@@ -76,7 +94,8 @@ export async function updatePetugas(id: string, data: PetugasInput): Promise<Act
     });
     revalidatePath('/master-petugas');
     revalidatePath('/worksheet');
-    return { ok: true };
+    return duplikat ? { ok: true, warning: 'Petugas dengan nama yang sama sudah ada. Periksa kembali apakah data ini benar-benar baru.'}
+    : { ok: true };
   } catch {
     return { ok: false, error: 'Gagal memperbarui petugas.' };
   }

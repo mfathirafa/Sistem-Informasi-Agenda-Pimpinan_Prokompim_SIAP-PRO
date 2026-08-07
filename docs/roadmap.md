@@ -44,7 +44,7 @@
 
 ### 5 Agustus 2026 — Sprint24: Revisi UAT Klien — Penyempurnaan UX/UI & Workflow (PLANNED)
 
-> **Status: 🚧 In Progress** — Sprint24A (Foundation) selesai 5 Agustus 2026. **Sprint24B-1 (Dashboard) selesai; Sprint24B-2 (Leading Sector) selesai; Sprint24C (Worksheet) selesai 6 Agustus 2026** — Nomor Surat (unik per tahun) + Dresscode + filter Tahun/Bulan + SearchableSelect sektor + picNama disembunyikan. **Sprint24D-1 (Activity Log FIELD_LABEL) selesai; Sprint24D-2 (Laporan sync) selesai 6 Agustus 2026; Sprint24E (Kalender) selesai 6 Agustus 2026** — modal detail (bottom sheet/centered, scrollable) + Leading Sector/PIC/No. HP + dokumen gabungan + fix +N. Sisa: Petugas, Kelola Pengguna.
+> **Status: 🚧 In Progress** — Sprint24A (Foundation) selesai 5 Agustus 2026. **Sprint24B-1 (Dashboard) selesai; Sprint24B-2 (Leading Sector) selesai; Sprint24C (Worksheet) selesai 6 Agustus 2026** — Nomor Surat (unik per tahun) + Dresscode + filter Tahun/Bulan + SearchableSelect sektor + picNama disembunyikan. **Sprint24D-1 (Activity Log FIELD_LABEL) selesai; Sprint24D-2 (Laporan sync) selesai 6 Agustus 2026; Sprint24E (Kalender) selesai 6 Agustus 2026** — modal detail (bottom sheet/centered, scrollable) + Leading Sector/PIC/No. HP + dokumen gabungan + fix +N. **Sprint24F (Petugas) selesai 7 Agustus 2026** — NIP + search + filter kategori + disable backdrop close + soft warning duplikat + ALL CREW (2 boolean columns). Sisa: Kelola Pengguna (+ Laporan/Export sync ALL CREW).
 >
 > **Revisi scope 5 Agustus 2026 (per list revisi UAT klien + konfirmasi user):**
 > - **Semua rencana rename enum DIBATALKAN** — `ACARA_MASUK`, `KEGIATAN_SELESAI`, `SURAT_TUGAS`, `SURAT_UNDANGAN` tetap. `JenisDokumen` tidak disentuh. Status kegiatan tetap **4 enum**.
@@ -109,12 +109,12 @@
 
 | Revisi | Status | Catatan |
 |--------|--------|---------|
-| Disable backdrop close (hanya Batal/X) | 🚧 Planned | Cegah kehilangan data form |
-| Duplicate name → soft warning (bukan block) | 🚧 Planned | Pola sama `cekDuplikat()` kegiatan; ada kasus legitimate nama sama |
-| Kolom nomor (NIP / Nomor Induk) | 🚧 Planned | Dikonfirmasi user: tambah field `nip String?` di model Petugas — tampil di kolom tabel dan form |
-| Search | 🚧 Planned | Client-side (data kecil) |
-| Filter kategori | 🚧 Planned | Client-side |
-| Opsi "ALL CREW" di PetugasPicker | 🚧 Planned | Revisi scope 5 Agt: ALL CREW pindah dari filter → jadi opsi di PetugasPicker (form kegiatan) untuk acara yang semua petugas ikut. Bukan kategori petugas |
+| Disable backdrop close (hanya Batal/X) | ✅ Selesai | 24F (7 Agt): modal hanya tutup via Batal/X/Escape — cegah kehilangan data form |
+| Duplicate name → soft warning (bukan block) | ✅ Selesai | 24F (7 Agt): `cekDuplikatPetugas()` → `{ ok: true, warning }`, modal TETAP terbuka supaya warning terbaca (pola sama `cekDuplikat()` kegiatan) |
+| Kolom nomor (NIP / Nomor Induk) | ✅ Selesai | 24F (7 Agt): field `nip String?` di `actions/petugas.ts` + kolom tabel + input form |
+| Search | ✅ Selesai | 24F (7 Agt): client-side search nama/jabatan/NIP |
+| Filter kategori | ✅ Selesai | 24F (7 Agt): client-side dropdown Semua/Protokol/Liputan |
+| Opsi "ALL CREW" di PetugasPicker | ✅ Selesai | 24F (7 Agt): **2 boolean di Kegiatan** (`allCrewProtokol`, `allCrewLiputan`). ALL CREW = seluruh kategori ikut bertugas (bukan select-all IDs). Checkbox di form kegiatan; saat ON PetugasPicker jadi pilih PJ/Koordinator (opsional); display worksheet "Semua crew (PJ: ...)" |
 
 #### Leading Sector
 
@@ -204,6 +204,39 @@
 **Verifikasi:** `npx tsc --noEmit` PASS + build/app normal. Zero migration (field `kategori` sudah ada sejak Sprint24A).
 **Files:** `src/lib/constants/kategori-leading-sector.ts` (NEW), `src/app/actions/leading-sector.ts` (MODIFIED), `src/app/(protected)/master-leading-sector/master-leading-sector-client.tsx` (MODIFIED), `src/app/(protected)/activity-log/activity-log-client.tsx` (MODIFIED — FIELD_LABEL kategori).
 
+### 7 Agustus 2026 — Sprint24F ✅ Selesai: Petugas (NIP + Search + Filter + ALL CREW)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| NIP field di Master Petugas | ✅ Selesai | `nip String?` di `PetugasInput` + kolom tabel + input form |
+| Client-side search | ✅ Selesai | Search nama/jabatan/NIP |
+| Client-side filter kategori | ✅ Selesai | Dropdown Semua/Protokol/Liputan |
+| Disable backdrop close | ✅ Selesai | Modal tutup hanya via Batal/X/Escape |
+| Soft warning duplikat nama | ✅ Selesai | `cekDuplikatPetugas()` → modal tetap terbuka, warning visible |
+| ALL CREW (2 boolean columns) | ✅ Selesai | `allCrewProtokol` + `allCrewLiputan` di Kegiatan. Checkbox "Semua crew" di form kegiatan. Saat ON → PetugasPicker pilih PJ/Koordinator. Display: "Semua crew (PJ: ...)" |
+| Migration `add_all_crew_kegiatan` | ✅ Selesai | ALTER TABLE ADD COLUMN 2 boolean DEFAULT false |
+| Activity Log FIELD_LABEL | ✅ Selesai | `allCrewProtokol` + `allCrewLiputan` ditambah ke display |
+
+**Decisions:**
+- **2 boolean columns** dipilih di atas alternatif (sentinel ID, text column, select-all IDs). Konsep ALL CREW = seluruh anggota kategori bertugas, terpisah dari daftar petugas.
+- **PetugasPicker tidak diubah** — hanya label berubah (ON → "Pilih Penanggung Jawab (opsional)").
+- **Backend zero-change** — destructuring + spread pattern otomatis mengalirkan boolean ke DB.
+- **Data existing otomatis false** — semua kegiatan existing tidak terpengaruh.
+
+**Verifikasi:** tsc clean ✅ + build pass ✅. Flow tested: tambah tanpa ALL CREW, tambah dengan ALL CREW (Protokol/Liputan/keduanya), edit ON↔OFF, Activity Log CREATE/UPDATE.
+
+**Known limitations (Sprint24G):** Laporan + XLSX Export belum refleksikan ALL CREW.
+
+**Files (7 code + 1 migration):**
+- `prisma/schema.prisma` — MODIFIED: +2 boolean allCrew
+- `prisma/migrations/20260807070648_add_all_crew_kegiatan/` — NEW
+- `src/app/actions/kegiatan.ts` — MODIFIED: +2 field di KegiatanInput
+- `src/lib/worksheet.ts` — MODIFIED: +2 field di KegiatanRow
+- `src/lib/queries/kegiatan.ts` — MODIFIED: +2 mapping
+- `src/app/(protected)/worksheet/kegiatan-modal.tsx` — MODIFIED: checkbox + label dinamis
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: allCrewSummary helper + cell
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: FIELD_LABEL x2
+
 ### 6 Agustus 2026 — Sprint24C ✅ Selesai: Worksheet (Nomor Surat + Dresscode + Filter Tahun/Bulan + SearchableSelect + picNama disembunyikan)
 
 | Tahap | Status | Catatan |
@@ -230,6 +263,24 @@
 | Kalender modal scroll-lock | ✅ Selesai | `kalender-client.tsx`: lock `document.documentElement` + `document.body` (sebelumnya hanya body — di desktop viewport scroll ada di `<html>`) |
 
 **Files (2):** `src/app/(protected)/worksheet/[id]/detail-client.tsx`, `src/app/(protected)/kalender/kalender-client.tsx`.
+
+### 7 Agustus 2026 — Revisi UI Dokumen di Detail Worksheet (v2: 1 link folder untuk semua dokumen)
+
+Menggantikan desain flat-list 6 Agustus (tiap baris punya input link + tombol Simpan sendiri).
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Satu card Dokumen ringkas | ✅ Selesai | 1 input **Link Google Drive (Folder)** + daftar 7 jenis dokumen (label + dropdown status, divider tipis `divide-y`) + **1 tombol Simpan** di kanan-bawah |
+| 1 link folder → semua dokumen | ✅ Selesai | Link Google Drive yang sama dikirim ke seluruh 7 record dokumen (folder memang format upload SIMAKP). Hanya status yang berbeda per jenis — admin copy-paste cukup 1 kali |
+| Server action bulk `saveDokumenKegiatan()` | ✅ Selesai | `actions/dokumen.ts`: payload array `{ jenis, status }[]`, validasi enum jenis+status, validasi URL, satu `$transaction`, Activity Log per dokumen (`Dokumen ${jenis} - ${namaKegiatan}`), `revalidatePath` sekali. `updateDokumen()` **TIDAK diubah** (dipakai flow lain) |
+| State frontend | ✅ Selesai | `initialFolderLink` disimpan sekali (const) untuk init + dirty; `Map<jenis, status>` (cocok per jenis, bukan urutan array); submit konversi Map → array payload |
+| `dirty` guard | ✅ Selesai | Tombol Simpan disabled jika link/status tidak berubah (bandingkan per jenis via Map) |
+| Catatan tetap dipertahankan | ✅ Selesai | Tidak dirender & tidak dikirim — `saveDokumenKegiatan` tidak menyentuh kolom `catatan`, nilai DB aman |
+| Zero schema change | ✅ Selesai | Tetap 7 record dokumen per kegiatan (`@@unique([kegiatanId, jenis])`), tidak ada migration |
+
+**Files (2):** `src/app/actions/dokumen.ts` (+`saveDokumenKegiatan` payload array), `src/app/(protected)/worksheet/[id]/detail-client.tsx` (card baru, hapus `DokumenRow` + import tak terpakai).
+
+**Verifikasi:** `npx tsc --noEmit` ✅ · `npm run build` ✓ 14/14 ✅ (DYNAMIC_SERVER_USAGE pre-existing)
 
 ### 4 Agustus 2026 — Sprint23 ✅ Selesai: Kategori Petugas jadi field wajib (fix bug default PROTOKOL)
 

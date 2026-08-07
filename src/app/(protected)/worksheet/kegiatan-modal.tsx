@@ -48,6 +48,8 @@ export default function KegiatanModal({
           statusKegiatan: item.statusKegiatan,
           petugasProtokolIds: item.petugasProtokolIds,
           petugasLiputanIds: item.petugasLiputanIds,
+          allCrewProtokol: item.allCrewProtokol,
+          allCrewLiputan: item.allCrewLiputan,
           linkUpload: item.linkUpload || '',
           catatan: item.catatan || '',
           jenisPenugasan: item.jenisPenugasan,
@@ -69,6 +71,8 @@ export default function KegiatanModal({
           statusKegiatan: 'ACARA_MASUK',
           petugasProtokolIds: [],
           petugasLiputanIds: [],
+          allCrewProtokol: false,
+          allCrewLiputan: false,
           linkUpload: '',
           catatan: '',
           jenisPenugasan: 'LEMBUR',
@@ -300,20 +304,38 @@ export default function KegiatanModal({
           </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <PetugasPicker
-              label="Petugas Protokol"
-              options={petugasProtokolOptions}
-              selected={form.petugasProtokolIds || []}
-              onChange={(ids) => update('petugasProtokolIds', ids)}
-              disabled={saving}
-            />
-            <PetugasPicker
-              label="Petugas Liputan"
-              options={petugasLiputanOptions}
-              selected={form.petugasLiputanIds || []}
-              onChange={(ids) => update('petugasLiputanIds', ids)}
-              disabled={saving}
-            />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.allCrewProtokol}
+                  onChange={(e) => update('allCrewProtokol', e.target.checked)}
+                  disabled={saving}
+                  className="rounded border-app text-navy" />
+                <span className="font-medium">Semua crew Protokol</span>
+              </label>
+              <PetugasPicker
+                label={form.allCrewProtokol ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Protokol'}
+                options={petugasProtokolOptions}
+                selected={form.petugasProtokolIds || []}
+                onChange={(ids) => update('petugasProtokolIds', ids)}
+                disabled={saving}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.allCrewLiputan}
+                  onChange={(e) => update('allCrewLiputan', e.target.checked)}
+                  disabled={saving}
+                  className="rounded border-app text-navy" />
+                <span className="font-medium">Semua crew Liputan</span>
+              </label>
+              <PetugasPicker
+                label={form.allCrewLiputan ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Liputan'}
+                options={petugasLiputanOptions}
+                selected={form.petugasLiputanIds || []}
+                onChange={(ids) => update('petugasLiputanIds', ids)}
+                disabled={saving}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Link Upload Dokumentasi</label>

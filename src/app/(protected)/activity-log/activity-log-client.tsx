@@ -43,6 +43,8 @@ const FIELD_LABEL: Record<string, string> = {
   perihalSurat: 'Perihal Surat',
   nomorSurat: 'Nomor Surat',
   dresscode: 'Dresscode',
+  allCrewProtokol: 'Semua Crew Protokol',
+  allCrewLiputan: 'Semua Crew Liputan',
   picNama: 'Nama PIC',
   picNoHp: 'No. HP PIC',
   nama: 'Nama',

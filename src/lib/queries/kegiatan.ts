@@ -122,6 +122,8 @@ export function mapKegiatanToRow(k: KegiatanWithRelations): KegiatanRow {
         petugasProtokolNama: k.petugas.filter((p) => p.petugas.kategori === 'PROTOKOL').map((p) => p.petugas.nama),
         petugasLiputanIds: k.petugas.filter((p) => p.petugas.kategori === 'LIPUTAN').map((p) => p.petugas.id),
         petugasLiputanNama: k.petugas.filter((p) => p.petugas.kategori === 'LIPUTAN').map((p) => p.petugas.nama),
+        allCrewProtokol: k.allCrewProtokol,
+        allCrewLiputan: k.allCrewLiputan,
         linkUpload: k.linkUpload,
         catatan: k.catatan,
         jenisPenugasan: k.jenisPenugasan,

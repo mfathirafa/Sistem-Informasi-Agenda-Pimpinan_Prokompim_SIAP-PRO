@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Check } from 'lucide-react';
-import { updateDokumen } from '@/app/actions/dokumen';
+import { saveDokumenKegiatan } from '@/app/actions/dokumen';
 import {
   JENIS_DOKUMEN_LABEL,
   STATUS_DOKUMEN_LABEL,
@@ -40,84 +40,6 @@ type DokumenDetail = {
   catatan: string | null;
 };
 
-// Satu baris dokumen selalu dalam mode edit (flat list, tanpa expand).
-function DokumenRow({ doc }: { doc: DokumenDetail }) {
-  const router = useRouter();
-  const [status, setStatus] = useState<StatusDokumenValue>(doc.status);
-  const [link, setLink] = useState(doc.link ?? '');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Catatan tidak ditampilkan, tapi nilainya dipertahankan saat update.
-  const catatan = doc.catatan;
-
-  const dirty = status !== doc.status || link !== (doc.link ?? '');
-
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-    const result = await updateDokumen({
-      id: doc.id,
-      status,
-      link: link || null,
-      catatan,
-    });
-    setSaving(false);
-    if (result.ok) {
-      router.refresh();
-    } else {
-      setError(result.error ?? 'Terjadi kesalahan.');
-    }
-  }
-
-  return (
-    <div className="p-3 rounded-lg bg-slate-50">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-sm font-medium">{JENIS_DOKUMEN_LABEL[doc.jenis]}</p>
-        {doc.link && (
-          <a
-            href={doc.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-navy hover:underline"
-          >
-            <ExternalLink size={12} /> Buka
-          </a>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as StatusDokumenValue)}
-          className="w-44 text-sm border border-app rounded-lg px-3 py-1.5"
-        >
-          {STATUS_DOKUMEN_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_DOKUMEN_LABEL[s]}
-            </option>
-          ))}
-        </select>
-        <input
-          type="url"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          placeholder="https://drive.google.com/..."
-          className="flex-1 min-w-[200px] text-sm border border-app rounded-lg px-3 py-1.5"
-        />
-        <button
-          onClick={handleSave}
-          disabled={saving || !dirty}
-          className="inline-flex items-center gap-1 px-3 py-1.5 bg-navy text-white text-xs font-medium rounded-lg disabled:opacity-50"
-        >
-          <Check size={14} />
-          {saving ? 'Menyimpan...' : 'Simpan'}
-        </button>
-      </div>
-      {error && <p className="text-xs text-red-600 mt-1.5">{error}</p>}
-    </div>
-  );
-}
-
 export default function DetailClient({
   kegiatan,
   dokumen,
@@ -126,14 +48,57 @@ export default function DetailClient({
   dokumen: DokumenDetail[];
 }) {
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Simpan nilai awal sekali -- dipakai untuk init state & perbandingan dirty.
+  const initialFolderLink = dokumen.find((d) => d.link)?.link ?? '';
+
+  // Link folder sama untuk semua dokuemn.
+  const [folderLink, setFolderLink] = useState(initialFolderLink);
+
+  // Status per jenis -- Map di dalam, diubah ke array saat submit (mengikuti payload backend).
+  const [statuses, setStatuses] = useState<Map<JenisDokumenValue, StatusDokumenValue>>(() => {
+    const m = new Map<JenisDokumenValue, StatusDokumenValue>();
+    for (const d of dokumen) m.set(d.jenis, d.status);
+    return m;
+  });
 
   const progress = hitungProgressDokumen(dokumen);
 
+  // Cocokkan per jenis (bukan urutan array).
+  const dirty = 
+  folderLink.trim() !== initialFolderLink ||
+  dokumen.some((d) => statuses.get(d.jenis) !== d.status);
+
+  const openUrl = (() => {
+    const t = folderLink.trim();
+    if (!t) return null;
+    try {
+      return new URL(t).toString();
+    } catch {
+      return null;
+    }
+  })();
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    // Konversi Map -> array { jenis, status } mengikuti bentuk payload backend.c
+    const payload = Array.from(statuses, ([jenis, status]) => ({ jenis, status }));
+    const result = await saveDokumenKegiatan(kegiatan.id, folderLink.trim() || null, payload);
+    setSaving(false);
+    if (result.ok) {
+      router.refresh();
+    } else {
+      setError(result.error ?? 'Terjadi kesalahan.');
+    }
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button
+        <button 
           onClick={() => router.back()}
           className="p-2 rounded-lg hover:bg-app text-navy"
         >
@@ -157,76 +122,144 @@ export default function DetailClient({
 
       {/* Info Kegiatan */}
       <div className="bg-white rounded-2xl border border-app p-5">
-        <h2 className="font-display text-sm font-semibold text-navy uppercase tracking-wide mb-4">
-          Informasi Kegiatan
-        </h2>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <div>
-            <dt className="text-muted">Tempat</dt>
-            <dd className="font-medium">{kegiatan.tempat}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Pejabat</dt>
-            <dd className="font-medium">{kegiatan.pejabat}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Perihal Surat</dt>
-            <dd className="font-medium">{kegiatan.perihalSurat || '-'}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Nomor Surat</dt>
-            <dd className="font-medium">{kegiatan.nomorSurat || '-'}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Dresscode</dt>
-            <dd className="font-medium">{kegiatan.dresscode || '-'}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">No. HP PIC</dt>
-            <dd className="font-medium">{kegiatan.picNoHp || '-'}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Leading Sector</dt>
-            <dd className="font-medium">{kegiatan.leadingSectorNama}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Waktu</dt>
-            <dd className="font-medium">{kegiatan.waktu || '-'}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Jenis Penugasan</dt>
-            <dd className="font-medium">{JENIS_PENUGASAN_LABEL[kegiatan.jenisPenugasan]}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">Status Publikasi</dt>
-            <dd className="font-medium">{STATUS_PUBLIKASI_LABEL[kegiatan.statusPublikasi]}</dd>
-          </div>
-        </dl>
+          <h2 className="font-display text-sm font-semibold text-navy uppercase tracking-wide mb-4">
+            Informasi Kegiatan
+          </h2>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <dt className="text-muted">Tempat</dt>
+              <dd className="font-medium">{kegiatan.tempat}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Pejabat</dt>
+              <dd className="font-medium">{kegiatan.pejabat}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Perihal Surat</dt>
+              <dd className="font-medium">{kegiatan.perihalSurat || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Nomor Surat</dt>
+              <dd className="font-medium">{kegiatan.nomorSurat || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Dresscode</dt>
+              <dd className="font-medium">{kegiatan.dresscode || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">No. HP PIC</dt>
+              <dd className="font-medium">{kegiatan.picNoHp || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Leading Secto</dt>
+              <dd className="font-medium">{kegiatan.leadingSectorNama}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Waktu</dt>
+              <dd className="font-medium">{kegiatan.waktu || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Jenis Penugasan</dt>
+              <dd className="font-medium">{JENIS_PENUGASAN_LABEL[kegiatan.jenisPenugasan]}</dd>
+            </div>
+            <div>
+              <dt className="text-muted">Status Publikasi</dt>
+              <dd className="font-medium">{STATUS_PUBLIKASI_LABEL[kegiatan.statusPublikasi]}</dd>
+            </div>
+          </dl>
       </div>
 
-      {/* Progress Dokumen */}
+      {/* Dokumen */}
       <div className="bg-white rounded-2xl border border-app p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-sm font-semibold text-navy uppercase tracking-wide">
-            Dokumen
-          </h2>
-          <span className="text-sm text-muted">
-            {dokumen.filter((d) => d.status === 'SUDAH_UPLOAD').length} / {dokumen.length} selesai
-          </span>
-        </div>
-        <div className="w-full bg-slate-100 rounded-full h-2 mb-5">
-          <div
-            className="bg-navy h-2 rounded-full transition-all"
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display text-sm font-semibold text-navy uppercase tracking-wide">
+              Dokumen
+            </h2>
+            <span className="text-sm text-muted">
+              {dokumen.filter((d) => d.status === 'SUDAH_UPLOAD').length} / {dokumen.length} selesai 
+            </span>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-2 mb-5"> 
+            <div className="bg-navy h-2 rounded-full transition-all"
             style={{ width: `${progress}%` }}
-          />
-        </div>
+            />
+          </div>
 
-        {/* Daftar Dokumen — semua baris selalu editable */}
-        <div className="space-y-3">
-          {dokumen.map((d) => (
-            <DokumenRow key={d.id} doc={d} />
-          ))}
-        </div>
+          <div className="space-y-4">
+            {/*Link Google Drive folder - berlaku untuk semua jenis dokumen */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium">Link Google Drive (folder)</label>
+                {openUrl && (
+                  <a 
+                    href={openUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-navy hover:underline"
+                  >
+                    <ExternalLink size={12} /> Buka
+                  </a>
+                )}
+              </div>
+              <input 
+                type="url"
+                value={folderLink}
+                onChange={(e) => setFolderLink(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+              />
+              <p className="text-xs text-muted mt-1">
+                Link ini otomatis dipakai untuk semua jenis dokumen.
+              </p>
+            </div>
+
+            {/* Daftar status per jenis dokumen */}
+            <div className="border border-app rounded-lg divide-y divide-app">
+                {dokumen.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <p className="text-sm font-medium">
+                      {JENIS_DOKUMEN_LABEL[d.jenis]}
+                    </p>
+                    <select 
+                      value={statuses.get(d.jenis) ?? d.status}
+                      onChange={(ev) => 
+                        setStatuses((prev) => {
+                          const next = new Map(prev);
+                          next.set(d.jenis, ev.target.value as StatusDokumenValue);
+                          return next;
+                        })
+                      }
+                      className="w-44 text-sm border border-app rounded-lg px-3 py-1.5"
+                    >
+                      {STATUS_DOKUMEN_OPTIONS.map((s)=> (
+                        <option 
+                          key={s}
+                          value={s}
+                        >
+                          {STATUS_DOKUMEN_LABEL[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+            </div>
+
+            {/* Simpan */}
+            <div className="flex items-center justify-end gap-3">
+              {error && 
+                <p className="text-xs text-red-600">
+                  {error}
+                </p>}
+              <button
+                onClick={handleSave}
+                disabled={saving || !dirty}
+                className="inline-flex items-center gap-1 px-4 py-2 bg-navy text-white text-sm font-medium rounded-lg disabled:opacity-50"
+              >
+                <Check size={14} />
+                {saving ? 'Menyimpan...' : 'Simpan'} 
+              </button>
+            </div>
+          </div>
       </div>
     </div>
   );

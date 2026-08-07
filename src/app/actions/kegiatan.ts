@@ -27,6 +27,8 @@ export type KegiatanInput = {
   statusKegiatan: StatusKegiatanValue;
   petugasProtokolIds: string[];
   petugasLiputanIds: string[];
+  allCrewProtokol?: boolean;
+  allCrewLiputan?: boolean;
   linkUpload?: string;
   catatan?: string;
   jenisPenugasan: JenisPenugasanValue;

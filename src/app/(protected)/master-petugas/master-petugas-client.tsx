@@ -10,13 +10,14 @@ import ConfirmDialog from '@/components/confirm-dialog';
 export type PetugasRow = {
   id: string;
   nama: string;
+  nip: string | null;
   jabatan: string | null;
   noHp: string | null;
   statusAktif: boolean;
   kategori: KategoriPetugas;
 };
 
-const emptyForm: PetugasInput = { nama: '', jabatan: '', noHp: '', statusAktif: true, kategori: 'PROTOKOL' };
+const emptyForm: PetugasInput = { nama: '', nip: '', jabatan: '', noHp: '', statusAktif: true, kategori: 'PROTOKOL' };
 
 export default function MasterPetugasClient({ initialData, canEdit }: { initialData: PetugasRow[]; canEdit: boolean }) {
   const [items, setItems] = useState<PetugasRow[]>(initialData);
@@ -26,7 +27,10 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
+  const [warning, setWarning] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState('');
+  const [filterKategori, setFilterKategori] = useState<'ALL' | KategoriPetugas>('ALL');
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -37,13 +41,25 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [modalOpen, isPending]);
 
-  const openAdd = () => { setEditingItem(null); setForm(emptyForm); setError(''); setModalOpen(true); };
+  const openAdd = () => { setEditingItem(null); setForm(emptyForm); setError(''); setWarning(''); setModalOpen(true); };
   const openEdit = (item: PetugasRow) => {
     setEditingItem(item);
-    setForm({ nama: item.nama, jabatan: item.jabatan || '', noHp: item.noHp || '', statusAktif: item.statusAktif, kategori: item.kategori });
+    setForm({ nama: item.nama, nip: item.nip || '', jabatan: item.jabatan || '', noHp: item.noHp || '', statusAktif: item.statusAktif, kategori: item.kategori });
     setError('');
+    setWarning('');
     setModalOpen(true);
   };
+
+  const filtered = items.filter((p) => {
+    const matchKategori = filterKategori === 'ALL' || p.kategori === filterKategori;
+    const q = search.trim().toLowerCase();
+    const matchSearch = 
+    !q ||
+    p.nama.toLowerCase().includes(q) ||
+    (p.jabatan ?? '').toLowerCase().includes(q) ||
+    (p.nip ?? '').includes(q);
+    return matchKategori && matchSearch;
+  });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,18 +67,21 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
     startTransition(async () => {
       const res = editingItem ? await updatePetugas(editingItem.id, form) : await createPetugas(form);
       if (res.ok) {
-        if (editingItem) {
-          setItems((prev) => prev.map((p) => p.id === editingItem.id ? { ...p, ...form } : p));
+        const row = {
+          id: editingItem?.id ?? 'temp-' + Date.now(),
+          ...form,
+          nip: form.nip ?? null,
+          jabatan: form.jabatan ?? null,
+          noHp: form.noHp ?? null,
+        };
+        setItems((prev) => (editingItem ? prev.map((p) => (p.id === editingItem.id ? row : p)) : [...prev, row]));
+        if (res.warning) {
+          setWarning(res.warning);
         } else {
-          setItems((prev) => [...prev, {
-             id: 'temp-' + Date.now(),
-              ...form,
-            jabatan: form.jabatan ?? null,
-            noHp: form.noHp ?? null }]);
+          setModalOpen(false);
         }
-        setModalOpen(false);
       } else { setError(res.error || 'Gagal menyimpan.'); }
-    });
+  });
   };
 
   const handleDelete = (id: string, nama: string) => {
@@ -89,11 +108,29 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
         <p className="text-sm text-muted">
           Petugas di sini akan muncul sebagai pilihan di form Tambah Kegiatan.
         </p>
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          <input 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari nama / jabatan / NIP..."
+            className="w-56 px-3 py-2 rounded-lg border border-app text-sm"
+          />
+          <select 
+            value={filterKategori}
+            onChange={(e) => setFilterKategori(e.target.value as 'ALL' | KategoriPetugas)}
+            className="px-3 py-2 rounded-lg border border-app text-sm"
+          >
+            <option value="ALL">Semua Kategori</option>
+            {KATEGORI_PETUGAS_OPTIONS.map((k) => (
+              <option key={k} value={k}>{KATEGORI_PETUGAS_LABEL[k]}</option>
+            ))}
+          </select>
         {canEdit && (
           <button onClick={openAdd} className="btn-primary flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium">
             <Plus size={15} /> Tambah Petugas
           </button>
         )}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-app overflow-hidden">
@@ -101,6 +138,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
           <thead>
             <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
               <th className="px-4 py-3 font-medium">Nama</th>
+              <th className="px-4 py-3 font-medium">NIP</th>
               <th className="px-4 py-3 font-medium">Jabatan</th>
               <th className="px-4 py-3 font-medium">Kategori</th>
               <th className="px-4 py-3 font-medium">Nomor HP</th>
@@ -109,11 +147,14 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 ? (
-              <tr><td colSpan={canEdit ? 6 : 5} className="px-4 py-10 text-center text-muted">Belum ada data petugas.</td></tr>
-            ) : items.map((p) => (
+            {filtered.length === 0 ? (
+              <tr><td colSpan={canEdit ? 7 : 6} className="px-4 py-10 text-center text-muted">
+                {items.length === 0 ? 'Belum ada data petugas.' : 'Tidak ada petugas yang cocok.'}
+              </td></tr>
+            ) : filtered.map((p) => (
               <tr key={p.id} className="border-t border-app hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium">{p.nama}</td>
+                <td className="px-4 py-3 text-muted font-mono text-xs">{p.nip || '-'}</td>
                 <td className="px-4 py-3 text-muted">{p.jabatan || '-'}</td>
                 <td className="px-4 py-3">
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-app text-navy">{KATEGORI_PETUGAS_LABEL[p.kategori]}</span>
@@ -157,7 +198,6 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
       {modalOpen && (
         <div
           className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
-          onClick={() => setModalOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="petugas-edit-title"
@@ -171,6 +211,10 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
               <div>
                 <label className="block text-sm font-medium mb-1.5">Nama</label>
                 <input value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="Nama lengkap petugas" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">NIP</label>
+                <input value={form.nip || ''} onChange={(e) => setForm((f) => ({ ...f, nip: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="cth.198512312010011001" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Jabatan</label>
@@ -197,6 +241,14 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
                 Status aktif (muncul di form kegiatan)
               </label>
               {error && <p className="text-xs text-red-600">{error}</p>}
+              {warning && (
+                <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg flex items-center justify-between gap-2">
+                  {warning}
+                  <button type="button" onClick={() => setWarning('')} aria-label="Tutup" className="shrink-0 p-0.5 hover:opacity-70">
+                    <X size={14} />
+                  </button>
+                </p>
+              )}
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium">Batal</button>
                 <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Simpan'}</button>
