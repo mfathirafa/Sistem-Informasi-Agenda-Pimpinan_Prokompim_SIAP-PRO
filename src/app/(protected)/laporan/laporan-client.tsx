@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from "next/navigation";
-import { useState, useMemo, useTransition } from "react";
-import { Download, FileDown } from "lucide-react";
+import { useState, useMemo, useEffect, useTransition } from "react";
+import { Download, FileDown, Settings2 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
 import { formatTanggal } from '@/lib/format';
@@ -27,9 +27,49 @@ type KegiatanItem = {
     statusKegiatan: StatusKegiatan;
     petugasProtokolNama: string[];
     petugasLiputanNama: string[];
+    allCrewProtokol: boolean;
+    allCrewLiputan: boolean;
     jenisPenugasan: JenisPenugasanValue;
     statusPublikasi: StatusPublikasiValue;
 };
+
+/** ALL CREW: seluruh anggota kategori bertugas, nama terpilih = Penanggung Jawab.
+ * Non-ALL CREW tetap menampilkan daftar lengkap (laporan adalah report).
+ */
+function crewLabel(allCrew: boolean, names: string[]): string {
+    if (!allCrew) return names.join(', ') || '-';
+    const pj = names.join(', ') || '-';
+    return pj === '-' ? 'Semua crew' : `Semua crew (PJ: ${pj})`;
+}
+
+// Urutan array = urutan kolom tabel/laporan - jadi header & row XLSX ikut urutan itu.
+type ColumnKey = 
+    | 'tanggal' | 'namaKegiatan' | 'perihalSurat' | 'nomorSurat' | 'dresscode'
+    | 'waktu' | 'tempat' | 'pejabat' | 'picNoHp' | 'leadingSector'
+    | 'statusSambutan' | 'statusKegiatan' | 'petugasProtokol' | 'petugasLiputan'
+    | 'jenisPenugasan' | 'statusPublikasi';
+
+const COLUMNS: { key: ColumnKey; label: string; get: (k: KegiatanItem) => string }[] = [
+    { key: 'tanggal', label: 'Tanggal Pelaksanaan', get: (k) => formatTanggal(k.tanggal) },
+    { key: 'namaKegiatan', label: 'Nama Kegiatan', get: (k) => k.namaKegiatan },
+    { key: 'perihalSurat', label: 'Perihal Surat', get: (k) => k.perihalSurat || '' },
+    { key: 'nomorSurat', label: 'Nomor Surat', get: (k) => k.nomorSurat || '' },
+    { key: 'dresscode', label: 'Dresscode', get: (k) => k.dresscode || '' },
+    { key: 'waktu', label: 'Waktu', get: (k) => k.waktu || '' },
+    { key: 'tempat', label: 'Tempat', get: (k) => k.tempat },
+    { key: 'pejabat', label: 'Pejabat', get: (k) => k.pejabat },
+    { key: 'picNoHp', label: 'No. HP PIC', get: (k) => k.picNoHp || '' },
+    { key: 'leadingSector', label: 'Leading Sector', get: (k) => k.leadingSectorNama },
+    { key: 'statusSambutan', label: 'Status Sambutan', get: (k) => k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum' },
+    { key: 'statusKegiatan', label: 'Status Kegiatan', get: (k) => STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan },
+    { key: 'petugasProtokol', label: 'Petugas Protokol', get: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama) },
+    { key: 'petugasLiputan', label: 'Petugas Liputan', get: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama) },
+    { key: 'jenisPenugasan', label: 'Jenis Penugasan', get: (k) => JENIS_PENUGASAN_LABEL[k.jenisPenugasan] },
+    { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi] },
+];
+
+const ALL_COLUMN_KEYS: ColumnKey[] = COLUMNS.map((c) => c.key);
+const STORAGE_KEY = 'laporan.exportColumns';
 
 type Props = {
     data: KegiatanItem[];
@@ -43,6 +83,41 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
     const [localStart, setLocalStart] = useState(startDate);
     const [localEnd, setLocalEnd] = useState(endDate);
+
+    const [activeColumns, setActiveColumns] = useState<ColumnKey[]>(ALL_COLUMN_KEYS);
+    const [showColumnPicker, setShowColumnPicker] = useState(false)
+
+    // Baca pilihan setela mount (render awal selalu semua kolom -> tanpa hydration mismatch).
+    useEffect (() => {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const parsed: unknown = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return;
+            const keys = parsed.filter((k) : k is string => typeof k === 'string');
+            const valid = keys.filter((k) : k is ColumnKey => COLUMNS.some((c) => c.key === k));
+            if (valid.length > 0) setActiveColumns(valid); 
+        } catch {
+            //data korup -> biarkan default (semua kolum)
+        }
+    }, []);
+
+    // Simpan tiap perubahan.
+    useEffect(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(activeColumns)); } catch {
+            // stroage penuh / private mode -> abaikan, aplikasi tetap jalan 
+        }
+    }, [activeColumns]);
+
+    const toggleColumn = (key : ColumnKey) => {
+        setActiveColumns((prev) => {
+            if (prev.includes(key)) {
+                if (prev.length === 1) return prev; // minimal 1 kolom aktif 
+                return prev.filter((k) => k!== key);
+            }
+            return [...prev, key];
+        });
+    };
 
     const summary = useMemo(() => {
         const perStatus: Record<string, number> = {};
@@ -62,30 +137,14 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
     };
 
     const exportXlsx = () => {
-        const header = [
-            'Tanggal Pelaksanaan', 'Nama Kegiatan', 'Perihal Surat', 'Nomor Surat', 'Dresscode', 
-            'Waktu', 'Tempat', 'Pejabat', 'No. HP PIC', 'Leading Sector', 
-            'Status Sambutan', 'Status Kegiatan', 
-            'Petugas Protokol', 'Petugas Liputan', 'Jenis Penugasan', 'Status Publikasi',
-        ];
-        const rows = data.map((k) => [
-            formatTanggal(k.tanggal),
-            k.namaKegiatan,
-            k.perihalSurat || '',
-            k.nomorSurat || '',
-            k.dresscode || '',
-            k.waktu || '',
-            k.tempat,
-            k.pejabat,
-            k.picNoHp || '',
-            k.leadingSectorNama,
-            k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
-            STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan,
-            k.petugasProtokolNama.join(', '),
-            k.petugasLiputanNama.join(', '),
-            JENIS_PENUGASAN_LABEL[k.jenisPenugasan],
-            STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
-        ]);
+        const active = COLUMNS.filter((c) => activeColumns.includes(c.key));
+        if (active.length === 0) {
+            alert('Pilih minimal satu kolom untuk diexport.');
+            return;
+        }
+
+        const header = active.map((c) => c.label);
+        const rows = data.map((k) => active.map((c) => c.get(k)));
 
         const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
         const colWidths = header.map((_, ci) => ({
@@ -106,7 +165,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 <p className="text-sm">Periode: {formatTanggal(localStart)} s.d. {formatTanggal(localEnd)}</p>
             </div>
 
-            <h1 className="text-2xl font-bold no-print">Laporan SPJ</h1>
+            <h1 className="text-2xl font-bold no-print">Laporan Kegiatan</h1>
 
             {/* Filter */}
             <div className="no-print flex flex-wrap gap-3 items-end">
@@ -147,7 +206,39 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 >
                     <FileDown size={14} /> Export PDF
                 </button>
+                <button
+                    onClick={() => setShowColumnPicker((v) => !v)}
+                    className={`px-4 py-1.5 border text-sm rounded hover:bg-gray-100 flex items-center gap-1.5 ${showColumnPicker ? 'bg-gray-100' : ''}`}
+                >
+                    <Settings2 size={14} /> Kolom Export
+                </button>
             </div>
+
+            {/* Column Picker */}
+            {showColumnPicker && (
+                <div className="no-print border rounded-lg p-3 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                            Kolom Export ({activeColumns.length}/{COLUMNS.length})
+                        </span>
+                        <button onClick={() => setActiveColumns(ALL_COLUMN_KEYS)} className="text-xs text-blue-600 hover:underline">
+                            Pilih Semua
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1.5">
+                        {COLUMNS.map((c) => (
+                            <label key={c.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox" 
+                                    checked={activeColumns.includes(c.key)}
+                                    onChange={() => toggleColumn(c.key)}
+                                    className="accent-blue-600"
+                                />
+                                {c.label}
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Summary */}
             <div className="no-print flex flex-wrap gap-3">
@@ -209,8 +300,8 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
                                     </span>
                                 </td>
-                                <td className="p-2.5 text-gray-500">{k.petugasProtokolNama.join(', ') || '-'}</td>
-                                <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{k.petugasLiputanNama.join(', ') || '-'}</td>
+                                <td className="p-2.5 text-gray-500 ">{crewLabel(k.allCrewProtokol, k.petugasProtokolNama)}</td>
+                                <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{crewLabel(k.allCrewLiputan, k.petugasLiputanNama)}</td>
                                 <td className="p-2.5 text-gray-500 hidden xl:table-cell">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</td>
                                 <td className="p-2.5 text-gray-500 hidden xl:table-cell">{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</td>
                             </tr>

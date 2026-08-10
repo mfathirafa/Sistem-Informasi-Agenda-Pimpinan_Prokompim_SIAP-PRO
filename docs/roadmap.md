@@ -42,9 +42,9 @@
 
 ## Changelog
 
-### 5 Agustus 2026 — Sprint24: Revisi UAT Klien — Penyempurnaan UX/UI & Workflow (PLANNED)
+### 5 Agustus 2026 — Sprint24: Revisi UAT Klien — Penyempurnaan UX/UI & Workflow ✅ SELESAI
 
-> **Status: 🚧 In Progress** — Sprint24A (Foundation) selesai 5 Agustus 2026. **Sprint24B-1 (Dashboard) selesai; Sprint24B-2 (Leading Sector) selesai; Sprint24C (Worksheet) selesai 6 Agustus 2026** — Nomor Surat (unik per tahun) + Dresscode + filter Tahun/Bulan + SearchableSelect sektor + picNama disembunyikan. **Sprint24D-1 (Activity Log FIELD_LABEL) selesai; Sprint24D-2 (Laporan sync) selesai 6 Agustus 2026; Sprint24E (Kalender) selesai 6 Agustus 2026** — modal detail (bottom sheet/centered, scrollable) + Leading Sector/PIC/No. HP + dokumen gabungan + fix +N. **Sprint24F (Petugas) selesai 7 Agustus 2026** — NIP + search + filter kategori + disable backdrop close + soft warning duplikat + ALL CREW (2 boolean columns). Sisa: Kelola Pengguna (+ Laporan/Export sync ALL CREW).
+> **Status: ✅ Selesai** — Sprint24A (Foundation) selesai 5 Agustus 2026. **Sprint24B-1 (Dashboard) selesai; Sprint24B-2 (Leading Sector) selesai; Sprint24C (Worksheet) selesai 6 Agustus 2026** — Nomor Surat (unik per tahun) + Dresscode + filter Tahun/Bulan + SearchableSelect sektor + picNama disembunyikan. **Sprint24D-1 (Activity Log FIELD_LABEL) selesai; Sprint24D-2 (Laporan sync) selesai 6 Agustus 2026; Sprint24E (Kalender) selesai 6 Agustus 2026** — modal detail (bottom sheet/centered, scrollable) + Leading Sector/PIC/No. HP + dokumen gabungan + fix +N. **Sprint24F (Petugas) selesai 7 Agustus 2026** — NIP + search + filter kategori + disable backdrop close + soft warning duplikat + ALL CREW (2 boolean columns). **Sprint24G (Laporan/Export/Kelola Pengguna) selesai 10 Agustus 2026** — ALL CREW sync di Laporan + Export XLSX, Kelola Pengguna simplify form + search + filter peran. **Sprint24H (Laporan polish) selesai 10 Agustus 2026** — rename header → "Laporan Kegiatan", default date range 1 s.d. akhir bulan, fix bug timezone (`toISOString()` → `toDateInput()`). **Sprint24I (Activity Log value formatter) selesai 10 Agustus 2026** — Petugas kategori `PROTOKOL`/`LIPUTAN` tampil "Protokol"/"Liputan" di Activity Log. **Sprint24J (Laporan column picker) selesai 10 Agustus 2026** — toggle kolom export XLSX + persist `localStorage`, default semua aktif (perilaku lama tidak berubah), export hanya kolom aktif.
 >
 > **Revisi scope 5 Agustus 2026 (per list revisi UAT klien + konfirmasi user):**
 > - **Semua rencana rename enum DIBATALKAN** — `ACARA_MASUK`, `KEGIATAN_SELESAI`, `SURAT_TUGAS`, `SURAT_UNDANGAN` tetap. `JenisDokumen` tidak disentuh. Status kegiatan tetap **4 enum**.
@@ -99,9 +99,10 @@
 | Revisi | Status | Catatan |
 |--------|--------|---------|
 | Sync dengan perubahan Worksheet (kolom, filter) | ✅ Selesai | 24D-2: hapus picNama, tambah Nomor Surat + Dresscode + Jenis Penugasan + Status Publikasi; header/table/export konsisten 16 kolom |
-| Ganti nama "Laporan SPJ" (bukan hanya SPJ) | 🚧 Planned | Rekomendasi: "Laporan Kegiatan" |
-| Column picker (pilih kolom yang diextract) | 🚧 Planned | Rekomendasi: dropdown toggle + persist `localStorage` |
-| Default date range = 1 s.d. terakhir bulan berjalan | 🚧 Planned | |
+| ALL CREW sync (display + export) | ✅ Selesai | 24G: `crewLabel()` — ALL CREW tampil "Semua crew (PJ: ...)"; non-ALL CREW daftar lengkap |
+| Ganti nama "Laporan SPJ" → "Laporan Kegiatan" | ✅ Selesai | 24H: header halaman `<h1>`; navbar sudah "Laporan", print header sudah "LAPORAN KEGIATAN PROTOKOL" |
+| Column picker (pilih kolom yang diextract) | ✅ Selesai | 24J: toggle panel "Kolom Export" + persist `localStorage` (`laporan.exportColumns`) — export XLSX hanya kolom aktif, urutan mengikuti tabel. Default semua aktif → perilaku user lama tidak berubah |
+| Default date range = 1 s.d. terakhir bulan berjalan | ✅ Selesai | 24H: `endDate` default = akhir bulan (`new Date(y, m+1, 0)`); fix bug timezone — `toISOString().split('T')[0]` (UTC, mundur 1 hari di WIB) → `toDateInput()` (komponen lokal) |
 | Rename "Sector" → "Leading Sector" | ✅ Selesai | 24D-2 |
 | Revisi tampilan hasil & data | 🚧 Planned | |
 
@@ -130,18 +131,18 @@
 
 | Revisi | Status | Catatan |
 |--------|--------|---------|
-| Simplify form (Nama Lengkap + Nama Pengguna + Kata Sandi) | 🚧 Planned | Role pindah ke edit-only |
-| Search | 🚧 Planned | Client-side |
-| Filter peran | 🚧 Planned | Client-side |
-| Pagination | 🚧 Planned | ⚠️ Rekomendasi: skip — data <20 user, search+filter sudah cukup (menunggu konfirmasi) |
+| Simplify form (Nama Lengkap + Nama Pengguna + Kata Sandi) | ✅ Selesai | 24G: role pindah ke edit-only, default STAFF |
+| Search | ✅ Selesai | 24G: client-side nama/username |
+| Filter peran | ✅ Selesai | 24G: client-side dropdown |
+| Pagination | ⏭️ Skip | Data <20 user — search + filter sudah cukup |
 
 #### Activity Log
 
 | Revisi | Status | Catatan |
 |--------|--------|---------|
-| Dampak rename enum (JenisDokumen/StatusKegiatan) | 🚧 Planned | Display-layer via shared constants — snapshot lama tetap terbaca, zero data migration |
+| ~~Dampak rename enum (JenisDokumen/StatusKegiatan)~~ | ❌ Batal | Revisi scope 5 Agt membatalkan SEMUA rename enum — label display diperbaiki di Sprint24A; value formatter kategori selesai Sprint24I |
 | FIELD_LABEL untuk field baru (nomorSurat, dresscode) | ✅ Selesai | 6 Agustus 2026: `nomorSurat: 'Nomor Surat'`, `dresscode: 'Dresscode'` di `activity-log-client.tsx` |
-| FIELD_LABEL kategori petugas / leading sector | 🚧 Planned | `kategori: 'Kategori'` sudah ditambah (leading sector, Sprint24B-2). Petugas `KATEGORI_PETUGAS_LABEL` masih perlu value formatter (bukan hanya key label). |
+| FIELD_LABEL kategori petugas / leading sector | ✅ Selesai | Key label `kategori: 'Kategori'` sudah ada (Sprint24B-2). Value formatter Petugas: `formatFieldValue()` branch `key === 'kategori'` → `KATEGORI_PETUGAS_LABEL` — tampilkan "Protokol"/"Liputan" alih-alih "PROTOKOL"/"LIPUTAN" (24I). Leading sector fallback ke nilai teks yang sudah readable. |
 
 **Decisions (dikonfirmasi user, 5 Agustus 2026):**
 - **Arah Sprint24 = UAT refinement**, bukan fitur baru besar.
@@ -153,7 +154,7 @@
 - **Field baru (`nomorSurat`, `dresscode`, `kategori` leading sector, `nip`) semua nullable** — data existing aman tanpa backfill.
 - **9 kategori Leading Sector** (Forum Koordinasi Pimpinan Daerah, SKPD, Dinas, Instansi Vertikal, Badan, Rumah Sakit, Perumda, Camat, Lain-lain) — field `kategori String?` nullable, existing = "Belum Dikategorikan".
 - **Chart yang dihapus dari Dashboard: Pie Distribusi Status + Bar Petugas Aktif.** **Leading Sector Terbanyak DIPERTAHANKAN** (bermanfaat tracking sektor). Progress Dokumen + DashboardCharts (grafik 6 bulan) tetap.
-- **Carryover dari Sprint23** (data, bukan code): perbaiki kategori petugas yang sudah terlanjur `PROTOKOL` via Edit; input 21 pegawai asli Prokompim.
+- **Carryover dari Sprint23** (data, bukan code): perbaiki kategori petugas yang sudah terlanjur `PROTOKOL` via Edit; input 21 pegawai asli Prokompim. **✅ Selesai 10 Agustus 2026** — audit data carryover: 21 pegawai asli Prokompim sudah ada di Master Petugas (18 PROTOKOL, 3 LIPUTAN), kategori sudah benar, dummy data sudah dibersihkan. NIP belum diisi (opsional, menunggu keputusan).
 
 ### 5 Agustus 2026 — Sprint24A ✅ Selesai: Foundation & Migration
 
@@ -225,7 +226,7 @@
 
 **Verifikasi:** tsc clean ✅ + build pass ✅. Flow tested: tambah tanpa ALL CREW, tambah dengan ALL CREW (Protokol/Liputan/keduanya), edit ON↔OFF, Activity Log CREATE/UPDATE.
 
-**Known limitations (Sprint24G):** Laporan + XLSX Export belum refleksikan ALL CREW.
+**Known limitations:** ✅ Diselesaikan di Sprint24G (Laporan + XLSX Export sync ALL CREW).
 
 **Files (7 code + 1 migration):**
 - `prisma/schema.prisma` — MODIFIED: +2 boolean allCrew
@@ -236,6 +237,89 @@
 - `src/app/(protected)/worksheet/kegiatan-modal.tsx` — MODIFIED: checkbox + label dinamis
 - `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: allCrewSummary helper + cell
 - `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: FIELD_LABEL x2
+
+### 10 Agustus 2026 — Sprint24G ✅ Selesai: Laporan ALL CREW + Export XLSX + Kelola Pengguna
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Laporan: ALL CREW display + export sync | ✅ Selesai | `crewLabel()` lokal — ALL CREW tampil "Semua crew (PJ: ...)"; non-ALL CREW daftar lengkap (laporan = report, tidak dipotong "+N") |
+| Worksheet Export XLSX: ALL CREW sync | ✅ Selesai | Kolom Petugas pakai `allCrewSummary()` — export = persis tampilan tabel; format non-ALL CREW: "Nama A, Nama B +N" (menggantikan array mentah) |
+| Kelola Pengguna: simplify form | ✅ Selesai | Form Tambah: Nama + Username + Password saja. Role pindah ke edit-only, default STAFF |
+| Kelola Pengguna: search | ✅ Selesai | Client-side search nama/username |
+| Kelola Pengguna: filter peran | ✅ Selesai | Client-side dropdown Semua/Admin/Staf Protokom/Kepala Bagian |
+| Kelola Pengguna: pagination | ⏭️ Skip | Data <20 user — search + filter sudah cukup |
+
+**Decisions:**
+- **New user default STAFF** — form create tidak punya opsi role; user baru otomatis STAFF (least privilege), admin ubah via Edit bila perlu.
+- **Export worksheet: `allCrewSummary()` untuk semua baris** — konsisten dengan tampilan tabel (Sprint21: "hasil filter tabel == hasil export"). Format non-ALL CREW berubah dari array mentah ke "Nama A, Nama B +N".
+- **Laporan pakai `crewLabel()` terpisah** — laporan = report, daftar nama harus lengkap (tidak dipotong "+N" seperti tabel worksheet). ALL CREW tetap "Semua crew (PJ: ...)".
+
+**Verifikasi:** tsc clean ✅ + user confirm web works ✅.
+
+**Files (4 code):**
+- `src/app/(protected)/laporan/page.tsx` — MODIFIED: +allCrewProtokol/allCrewLiputan di map data
+- `src/app/(protected)/laporan/laporan-client.tsx` — MODIFIED: +crewLabel helper, type KegiatanItem +2 fields, display + export pakai crewLabel
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — MODIFIED: export pakai allCrewSummary
+- `src/app/(protected)/users/users-client.tsx` — MODIFIED: form simplify, +search +filter peran, -role dari form, filtered.map + empty state
+
+### 10 Agustus 2026 — Sprint24H ✅ Selesai: Laporan Polish (Rename + Default Date Range + Fix Timezone)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Ganti nama header "Laporan SPJ" → "Laporan Kegiatan" | ✅ Selesai | `<h1>` di `laporan-client.tsx`. Navbar sudah "Laporan"; print header sudah "LAPORAN KEGIATAN PROTOKOL" — tidak disentuh |
+| Default date range = 1 s.d. akhir bulan berjalan | ✅ Selesai | `laporan/page.tsx`: `endDate` default `now` → `new Date(y, m+1, 0)` (hari terakhir bulan). Awal bulan sudah benar sejak awal |
+| Fix bug timezone tanggal input | ✅ Selesai | `toISOString().split('T')[0]` = UTC → di WIB (UTC+7) tanggal lokal mundur 1 hari (default tampil 31/07–30/08). Ganti ke `toDateInput()` (`lib/format.ts`, baca komponen lokal) — helper yang sama dipakai export filename worksheet |
+
+**Decisions:**
+- **Nama baru "Laporan Kegiatan"** — dikonfirmasi user. Konten laporan = semua kegiatan, bukan hanya SPJ; konsisten dengan print header.
+- **Fix root-cause di `lib/format.ts` `toDateInput()`**, bukan menambah konversi manual — helper sudah ada & dipakai worksheet.
+- **`actions/kegiatan.ts:216` (`toISOString()` di diff snapshot) TIDAK diubah** — itu hanya bandingkan string tanggal untuk Activity Log, bukan display; tanggal disimpan UTC tengah malam sehingga round-trip stabil.
+- Zero schema, zero migration, display + default behavior saja.
+
+**Verifikasi:** web `/laporan` default `1/08/2026 – 31/08/2026` ✅ + `npx tsc --noEmit` lolos ✅.
+
+**Files (1 code):**
+- `src/app/(protected)/laporan/laporan-client.tsx` — MODIFIED: header `Laporan Kegiatan`
+- `src/app/(protected)/laporan/page.tsx` — MODIFIED: default endDate akhir bulan + `toDateInput()` import & props
+
+### 10 Agustus 2026 — Sprint24I ✅ Selesai: Activity Log — Petugas Kategori Value Formatter
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Petugas kategori tampil "Protokol"/"Liputan" alih-alih "PROTOKOL"/"LIPUTAN" | ✅ Selesai | `formatFieldValue()` di `activity-log-client.tsx`: branch `key === 'kategori'` → lookup `KATEGORI_PETUGAS_LABEL`, fallback ke nilai mentah (leading sector tidak terpengaruh) |
+
+**Decisions:**
+- **Branch `key === 'kategori'` aman** — nilai leading sector (`SKPD`, `Dinas`, dll.) tidak ada yang collide dengan `PROTOKOL`/`LIPUTAN`, jadi fallback ke nilai mentah (sudah readable teks Indonesia).
+- **Display-layer only** — snapshot tetap simpan enum mentah `PROTOKOL`/`LIPUTAN`. Mapping terjadi saat render → **log lama juga ikut terbaca benar**.
+- Zero schema, zero migration, zero action change, zero UI layout change.
+
+**Verifikasi:** `npx tsc --noEmit` lolos ✅.
+
+**Files (1 code):**
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: import `KATEGORI_PETUGAS_LABEL` + branch `formatFieldValue` untuk key `kategori`
+
+### 10 Agustus 2026 — Sprint24J ✅ Selesai: Laporan Column Picker (Export XLSX)
+
+| Fitur | Status | Catatan |
+|-------|--------|---------|
+| Toggle kolom export XLSX | ✅ Selesai | Tombol "Kolom Export" → panel checkbox. Export hanya kolom yang aktif |
+| Persist pilihan di localStorage | ✅ Selesai | Key `laporan.exportColumns` — pilihan tetap saat halaman dibuka kembali |
+| Default semua kolom aktif | ✅ Selesai | `useState(ALL_COLUMN_KEYS)` saat render awal → perilaku export user lama tidak berubah |
+| Urutan kolom ikut tabel | ✅ Selesai | Registry `COLUMNS[]` (key + label + get) diindex sesuai urutan kolom tabel; filter tidak mengubah urutan |
+| Guard minimal 1 kolom | ✅ Selesai | `toggleColumn` blokir uncheck kolom terakhir + `exportXlsx` alert jika 0 kolom aktif |
+
+**Decisions:**
+- **Registry tunggal `COLUMNS[]`** — `key` (persist localStorage) + `label` (header XLSX) + `get` (nilai cell). Header & row diturunkan dari registry yang sama → tidak ada drift array paralel.
+- **Tanpa hydration mismatch** — state init = semua kolom, baca localStorage di `useEffect` post-mount (bukan lazy init yang beda SSR vs client).
+- **Type-safe tanpa `any`** — `JSON.parse` → `unknown` → `Array.isArray` narrow → type guard `k is string` + `k is ColumnKey` (validasi terhadap `COLUMNS`).
+- **Display tabel, query, ALL CREW (`crewLabel`), default date range (24H) tidak diubah** — murni lapisan export.
+- **Panel inline, bukan floating popover** — tanpa positioning/z-index/Escape complexity.
+- Zero schema, zero migration, zero backend change, 1 file diubah.
+
+**Verifikasi:** `npx tsc --noEmit` lolos ✅.
+
+**Files (1 code):**
+- `src/app/(protected)/laporan/laporan-client.tsx` — MODIFIED: +`useEffect`/`Settings2` import, +`ColumnKey`/`COLUMNS`/`ALL_COLUMN_KEYS`/`STORAGE_KEY`, +state `activeColumns`/`showColumnPicker` + 2 effects + `toggleColumn`, exportXlsx pakai `active.map(...)`, +tombol & panel "Kolom Export"
 
 ### 6 Agustus 2026 — Sprint24C ✅ Selesai: Worksheet (Nomor Surat + Dresscode + Filter Tahun/Bulan + SearchableSelect + picNama disembunyikan)
 
@@ -306,8 +390,8 @@ Menggantikan desain flat-list 6 Agustus (tiap baris punya input link + tombol Si
 - `npm run build` — ✓ 14/14 pages ✅ (DYNAMIC_SERVER_USAGE pre-existing)
 
 **Remaining:**
-- Perbaiki kategori petugas yang sudah terlanjur default PROTOKOL lewat fitur Edit Petugas
-- Input 21 pegawai asli Prokompim ke Master Petugas
+- ✅ Selesai 10 Agustus 2026 — kategori petugas sudah benar (audit: 21 pegawai asli, 18 PROTOKOL / 3 LIPUTAN)
+- ✅ Selesai 10 Agustus 2026 — 21 pegawai asli Prokompim sudah ada di Master Petugas (NIP belum diisi — opsional)
 
 ### 4 Agustus 2026 — Sprint22: Pre-Rilis UX — Navbar Wrap + Popover Agenda Kalender
 

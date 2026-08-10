@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback, useMemo, useEffect, useTransition } from "react";
 import { getEntityName } from "@/lib/activity-log";
 import Pagination from "@/components/pagination";
+import { KATEGORI_PETUGAS_LABEL, type KategoriPetugasValue } from "@/lib/constants/kategori-petugas";
 
 // -- Label Maps --
 
@@ -110,6 +111,11 @@ function formatFieldValue(key: string, val: unknown, sectorMap: SectorMap): stri
       return String((val as { nama: string }).nama);
     }
     return String(val);
+  }
+
+  // Enum kategori petugas (PROTOKOL/LIPUTAN) -> label UI. Key 'kategori' juga dipakai leading sector (nilai 9 opsi teks bebas) - fallback ke nilai mentah.
+  if (key === 'kategori' && typeof val === 'string') {
+    return KATEGORI_PETUGAS_LABEL[val as KategoriPetugasValue] ?? val;
   }
 
   // Objek relasi yang sudah di-enrich {id, nama} → tampilkan nama.

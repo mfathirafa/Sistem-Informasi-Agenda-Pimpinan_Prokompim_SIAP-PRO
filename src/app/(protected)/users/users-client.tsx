@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
-import { Trash2, Pencil, X } from 'lucide-react';
+import { useState, useEffect, useTransition, useMemo } from 'react';
+import { Trash2, Pencil, X, Search } from 'lucide-react';
 import { createUser, updateUser, deleteUser } from '@/app/actions/users';
 import ConfirmDialog from '@/components/confirm-dialog';
 
@@ -10,7 +10,9 @@ type UserRow = { id: string; username: string; nama: string; role: string };
 
 export default function UsersClient({ users: initialUsers, currentUserId }: { users: UserRow[]; currentUserId: string }) {
   const [users, setUsers] = useState(initialUsers);
-  const [form, setForm] = useState({ username: '', password: '', nama: '', role: 'STAFF' });
+  const [form, setForm] = useState({ username: '', password: '', nama: ''});
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
@@ -18,6 +20,15 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return users.filter((u) => {
+      const matchRole = roleFilter === 'ALL' || u.role === roleFilter;
+      const matchSearch = !q || u.nama.toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
+      return matchRole && matchSearch;
+    });
+  }, [users, search, roleFilter])
 
   useEffect(() => {
     if (!editingUser) return;
@@ -33,10 +44,10 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
     if (!form.username.trim() || !form.password.trim() || !form.nama.trim()) { setError('Semua kolom wajib diisi'); return; }
     setError('');
     startTransition(async () => {
-      const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: form.role as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN' });
+      const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: 'STAFF' });
       if (res.ok) {
-        setUsers((prev) => [...prev, { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: form.role }]);
-        setForm({ username: '', password: '', nama: '', role: 'STAFF' });
+        setUsers((prev) => [...prev, { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: 'STAFF' }]);
+        setForm({ username: '', password: '', nama: ''});
       } else { setError(res.error || 'Gagal menambah pengguna.'); }
     });
   };
@@ -87,6 +98,23 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div className="lg:col-span-2 bg-white rounded-2xl border border-app overflow-hidden">
+        <div className="flex flex-col sm:flex-row gap-2 p-3 border-b border-app">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari nama / nama pengguna..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-app text-sm" 
+            />
+          </div>
+          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} aria-label="Filter Peran" className="px-3 py-1.5 rounded-lg border border-app text-sm">
+            <option value="ALL">Semua Peran</option>
+            <option value="ADMIN">Admin</option>
+            <option value="STAFF">Staf Protokom</option>
+            <option value="KEPALA_BAGIAN">Kepala Bagian</option>
+          </select>
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
@@ -97,7 +125,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {filtered.map((u) => (
               <tr key={u.id} className="border-t border-app">
                 <td className="px-4 py-3 font-medium">{u.nama}</td>
                 <td className="px-4 py-3 font-mono text-xs">{u.username}</td>
@@ -116,6 +144,15 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="p-6 text-center text-gray-400">
+                    Tidak ada pengguna yang cocok.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -125,11 +162,6 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
           <input placeholder="Nama lengkap" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
           <input placeholder="Nama pengguna" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
           <input placeholder="Kata sandi" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
-          <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm">
-            <option value="STAFF">Staf Protokom</option>
-            <option value="KEPALA_BAGIAN">Kepala Bagian</option>
-            <option value="ADMIN">Admin</option>
-          </select>
           {error && <p className="text-xs text-red-600">{error}</p>}
           <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Tambah'}</button>
         </form>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import LaporanClient from './laporan-client';
+import { toDateInput } from "@/lib/format";
 import { type Prisma } from "@prisma/client";
 
 type Props = {
@@ -32,7 +33,8 @@ export default async function LaporanPage({ searchParams }: Props) {
         const startDate = rawStart
             ? new Date(rawStart)
             : new Date(now.getFullYear(), now.getMonth(), 1);
-        const endDate = rawEnd ? new Date(rawEnd) : now;
+        const endDate = rawEnd ? new Date(rawEnd) 
+            : new Date(now.getFullYear(), now.getMonth() +1,0); // akhir bulan berjalan
 
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
             throw new Error('Invalid date');
@@ -74,6 +76,8 @@ export default async function LaporanPage({ searchParams }: Props) {
                 petugasProtokolNama: protokol.names,
                 petugasLiputanIds: liputan.ids,
                 petugasLiputanNama: liputan.names,
+                allCrewProtokol: k.allCrewProtokol,
+                allCrewLiputan: k.allCrewLiputan,
                 linkUpload: k.linkUpload,
                 catatan: k.catatan,
                 jenisPenugasan: k.jenisPenugasan,
@@ -84,8 +88,8 @@ export default async function LaporanPage({ searchParams }: Props) {
         return (
             <LaporanClient
                 data={data}
-                startDate={startDate.toISOString().split('T')[0]}
-                endDate={endDate.toISOString().split('T')[0]}
+                startDate={toDateInput(startDate)}
+                endDate={toDateInput(endDate)}
             />
         );
     } catch (error) {
