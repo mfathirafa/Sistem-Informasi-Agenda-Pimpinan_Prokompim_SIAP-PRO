@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Trash2, Plus, X } from 'lucide-react';
+import { Trash2, Plus, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '@/app/actions/petugas';
 import { KategoriPetugas } from '@prisma/client';
 import { KATEGORI_PETUGAS_OPTIONS, KATEGORI_PETUGAS_LABEL } from '@/lib/constants/kategori-petugas';
@@ -31,6 +31,17 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState<'ALL' | KategoriPetugas>('ALL');
+  const [sortKey, setSortKey] = useState<'nama' | 'jabatan'>('nama');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (key: 'nama' | 'jabatan') => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -59,6 +70,12 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
     (p.jabatan ?? '').toLowerCase().includes(q) ||
     (p.nip ?? '').includes(q);
     return matchKategori && matchSearch;
+  })
+  .sort((a, b) => {
+    const av = (a[sortKey] ?? '').toLowerCase();
+    const bv = (b[sortKey] ?? '').toLowerCase();
+    const cmp = av.localeCompare(bv, 'id');
+    return sortDir === 'asc' ? cmp : -cmp;
   });
 
   const submit = (e: React.FormEvent) => {
@@ -104,7 +121,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-sm text-muted">
           Petugas di sini akan muncul sebagai pilihan di form Tambah Kegiatan.
         </p>
@@ -113,7 +130,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama / jabatan / NIP..."
-            className="w-56 px-3 py-2 rounded-lg border border-app text-sm"
+            className="w-full sm:w-56 px-3 py-2 rounded-lg border border-app text-sm"
           />
           <select 
             value={filterKategori}
@@ -134,12 +151,22 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
       </div>
 
       <div className="bg-white rounded-2xl border border-app overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
-              <th className="px-4 py-3 font-medium">Nama</th>
+              <th className="px-4 py-3 font-medium w-12 text-center">#</th>
+              <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'nama' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('nama')} className='inline-flex items-center gap-1 hover:text-navy'>
+                  Nama {sortKey === 'nama' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                </button>
+              </th>
               <th className="px-4 py-3 font-medium">NIP</th>
-              <th className="px-4 py-3 font-medium">Jabatan</th>
+              <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'jabatan' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('jabatan')} className="inline-flex items-center gap-1 hover:text-navy">
+                  Jabatan {sortKey === 'jabatan' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                </button>
+              </th>
               <th className="px-4 py-3 font-medium">Kategori</th>
               <th className="px-4 py-3 font-medium">Nomor HP</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -148,11 +175,12 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={canEdit ? 7 : 6} className="px-4 py-10 text-center text-muted">
+              <tr><td colSpan={canEdit ? 8 : 7} className="px-4 py-10 text-center text-muted">
                 {items.length === 0 ? 'Belum ada data petugas.' : 'Tidak ada petugas yang cocok.'}
               </td></tr>
-            ) : filtered.map((p) => (
+            ) : filtered.map((p, index) => (
               <tr key={p.id} className="border-t border-app hover:bg-slate-50">
+                <td className="px-4 py-3 text-center text-muted">{index + 1}</td>
                 <td className="px-4 py-3 font-medium">{p.nama}</td>
                 <td className="px-4 py-3 text-muted font-mono text-xs">{p.nip || '-'}</td>
                 <td className="px-4 py-3 text-muted">{p.jabatan || '-'}</td>
@@ -179,6 +207,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {deleteError && (

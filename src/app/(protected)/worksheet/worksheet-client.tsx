@@ -206,7 +206,7 @@ export default function WorksheetClient({
             className="w-full min-w-0 pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
           <select value={filters.tahun || ''} 
           onChange={(e) => {
             const v = e.target.value;
@@ -232,7 +232,7 @@ export default function WorksheetClient({
           }}
           className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value={0}>Tidak Dipilih</option>
+            <option value={0}>Semua Bulan</option>
             {BULAN_NAMA.map((nama, i) => (
               <option key={i +1} value={i +1}>{nama}</option>
             ))}
@@ -241,7 +241,7 @@ export default function WorksheetClient({
           onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}
           className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Tidak Dipilih</option>
+            <option value="Semua">Semua Sambutan</option>
             <option value="SUDAH">Sudah Sambutan</option>
             <option value="BELUM">Belum Sambutan</option>
           </select>
@@ -249,7 +249,7 @@ export default function WorksheetClient({
           onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}
           className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Tidak Dipilih</option>
+            <option value="Semua">Semua Status Kegiatan</option>
             {STATUS_KEGIATAN_OPTIONS.map((s) => (
               <option key={s} value={s}>{STATUS_KEGIATAN_LABEL[s]}</option>
             ))}
@@ -258,7 +258,7 @@ export default function WorksheetClient({
           onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}
           className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Tidak Dipilih</option>
+            <option value="Semua">Semua Pejabat</option>
             {PEJABAT_OPTIONS.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
@@ -267,16 +267,16 @@ export default function WorksheetClient({
           onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}
           className="px-3 py-2 rounded-lg border border-app text-sm"
           >
-            <option value="Semua">Tidak Dipilih</option>
+            <option value="Semua">Semua Jenis Tugas</option>
             {JENIS_PENUGASAN_OPTIONS.map((j) => (
               <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
             ))}
           </select>
-          <div className="w-48">
+          <div className="w-full sm:w-48">
             <SearchableSelect options={leadingSectorOptions}
             value={filters.sektor || null}
             onChange={(v) => setFilter('sektor', v || undefined)}
-            placeholder="Sektor"
+            placeholder="Semua Sektor"
           />
           </div>
           <button onClick={exportExcel}
@@ -296,25 +296,25 @@ export default function WorksheetClient({
 
       <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-sm">
+          <table className="w-full min-w-[480px] sm:min-w-[640px] md:min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
-                <th className="px-4 py-3 font-medium">Tanggal Pelaksanaan</th>
+                <th className="sticky left-0 z-10 bg-app border-r border-app px-4 py-3 font-medium">Tanggal Pelaksanaan</th>
                 <th className="px-4 py-3 font-medium">Kegiatan</th>
-                <th className="px-4 py-3 font-medium">Perihal Surat</th>
-                <th className="px-4 py-3 font-medium">Nomor Surat</th>
-                <th className="px-4 py-3 font-medium">Dresscode</th>
-                <th className="px-4 py-3 font-medium">Tempat</th>
-                <th className="px-4 py-3 font-medium">Pejabat</th>
-                <th className="px-4 py-3 font-medium">No. HP PIC</th>
-                <th className="px-4 py-3 font-medium">Leading Sector</th>
-                <th className="px-4 py-3 font-medium">Sambutan</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Perihal Surat</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Nomor Surat</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Dresscode</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Tempat</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Pejabat</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">No. HP PIC</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Leading Sector</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Sambutan</th>
                 <th className="px-4 py-3 font-medium">Status Kegiatan</th>
-                <th className="px-4 py-3 font-medium">Petugas Protokol</th>
-                <th className="px-4 py-3 font-medium">Petugas Liputan</th>
-                <th className="px-4 py-3 font-medium">Dokumentasi</th>
-                <th className="px-4 py-3 font-medium">Jenis Tugas</th>
-                <th className="px-4 py-3 font-medium">Publikasi</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Petugas Protokol</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Petugas Liputan</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Dokumentasi</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Jenis Tugas</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium">Publikasi</th>
                 {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
               </tr>
             </thead>
@@ -328,7 +328,7 @@ export default function WorksheetClient({
               ) : (
                 initialData.map((k) => (
                   <tr key={k.id} className="border-t border-app hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
+                    <td className="sticky left-0 z-10 bg-white hover:bg-slate-50 border-r border-app px-4 py-3 font-mono text-xs whitespace-nowrap">
                       {new Date(k.tanggal).toLocaleDateString('id-ID', {
                         day: '2-digit',
                         month: 'short',
@@ -336,14 +336,14 @@ export default function WorksheetClient({
                       })}
                     </td>
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
-                    <td className="px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
-                    <td className="px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
-                    <td className="px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
-                    <td className="px-4 py-3 text-muted">{k.tempat}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{k.pejabat}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
-                    <td className="px-4 py-3 text-muted">{k.leadingSectorNama}</td>
-                    <td className="px-4 py-3">
+                    <td className="hidden md:table-cell px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-muted">{k.tempat}</td>
+                    <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap">{k.pejabat}</td>
+                    <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-muted">{k.leadingSectorNama}</td>
+                    <td className="hidden md:table-cell px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'
@@ -357,9 +357,9 @@ export default function WorksheetClient({
                         {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
-                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
-                    <td className="px-4 py-3">
+                    <td className="hidden md:table-cell px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
+                    <td className="hidden md:table-cell px-4 py-3">
                       {k.linkUpload ? (
                         <a
                           href={k.linkUpload}
@@ -373,12 +373,12 @@ export default function WorksheetClient({
                         <span className="text-muted">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden md:table-cell px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]}`}>
                         {JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden md:table-cell px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_PUBLIKASI_BADGE_CLASS[k.statusPublikasi]}`}>
                         {STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}
                       </span>

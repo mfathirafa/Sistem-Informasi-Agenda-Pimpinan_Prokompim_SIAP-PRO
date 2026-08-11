@@ -86,6 +86,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
     const [activeColumns, setActiveColumns] = useState<ColumnKey[]>(ALL_COLUMN_KEYS);
     const [showColumnPicker, setShowColumnPicker] = useState(false)
+    const [hydrated, setHydrated] = useState(false);
 
     // Baca pilihan setela mount (render awal selalu semua kolom -> tanpa hydration mismatch).
     useEffect (() => {
@@ -99,15 +100,18 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
             if (valid.length > 0) setActiveColumns(valid); 
         } catch {
             //data korup -> biarkan default (semua kolum)
+        } finally {
+            setHydrated(true); // penanda: nilai localStorage sudah dibaca, aman untuk menalis
         }
     }, []);
 
     // Simpan tiap perubahan.
     useEffect(() => {
+        if (!hydrated) return;
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(activeColumns)); } catch {
             // stroage penuh / private mode -> abaikan, aplikasi tetap jalan 
         }
-    }, [activeColumns]);
+    }, [activeColumns, hydrated]);
 
     const toggleColumn = (key : ColumnKey) => {
         setActiveColumns((prev) => {
@@ -254,6 +258,42 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 ))}
             </div>
 
+            {/* Mobile: card per kegiatan -- semua field terbaca tanpa scroll */}
+            <div className="md:hidden print:hidden space-y-3">
+                {data.length === 0 ? (
+                    <p className="p-6 text-center text-gray-400 text-sm">Tidak ada data.</p>
+                ) : (
+                    data.map((k) => (
+                        <div key={k.id} className="bg-white border rounded-xl p-3.5 text-sm">
+                            <div className="flex items-start justify-between gap-2">
+                                <div>
+                                    <p className="font-medium text-navy">{formatTanggal(k.tanggal)}</p>
+                                    <p className="font-semibold mt-0.5">{k.namaKegiatan}</p>
+                                </div>
+                                <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
+                                    {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
+                                </span>
+                            </div>
+                            <dl className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-grey-600">
+                                <div><dt className="text-gray-400">Waktu</dt><dd>{k.waktu || '-'}</dd></div>
+                                <div><dt className="text-gray-400">Tempat</dt><dd>{k.tempat}</dd></div>
+                                <div><dt className="text-gray-400">Pejabat</dt><dd>{k.pejabat}</dd></div>
+                                <div><dt className="text-gray-400">No. HP PIC</dt><dd>{k.picNoHp || '-'}</dd></div>
+                                <div className="col-span-2"><dt className="text-gray-400">Perihal Surat</dt><dd>{k.perihalSurat || '-'}</dd></div>
+                                <div className="col-span-2"><dt className="text-gray-400">Nomor Surat</dt><dd>{k.nomorSurat || '-'}</dd></div>
+                                <div><dt className="text-gray-400">Dresscode</dt><dd>{k.dresscode || '-'}</dd></div>
+                                <div><dt className="text-gray-400">Leading Sector</dt><dd>{k.leadingSectorNama}</dd></div>
+                                <div><dt className="text-gray-400">Sambutan</dt><dd>{k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}</dd></div>
+                                <div><dt className="text-gray-400">Jenis Penugasan</dt><dd>{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</dd></div>
+                                <div className="col-span-2"><dt className="text-gray-400">Petugas Protokol</dt><dd>{crewLabel(k.allCrewProtokol, k.petugasProtokolNama)}</dd></div>
+                                <div className="col-span-2"><dt className="text-gray-400">Petugas Liputan</dt><dd>{crewLabel(k.allCrewLiputan, k.petugasLiputanNama)}</dd></div>
+                                <div><dt className="text-gray-400">Status Publikasi</dt><dd>{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</dd></div>
+                            </dl>
+                        </div>
+                    ))
+                )}
+            </div>
+            
             {/* Table */}
             <div className={`overflow-x-auto border rounded-lg transition-opacity ${isPending ? 'opacity-50' : ''}`}>
                 <table className="w-full text-sm">
@@ -261,20 +301,20 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                         <tr>
                             <th className="text-left p-2.5 font-medium text-gray-600">Tanggal Pelaksanaan</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Kegiatan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Perihal Surat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Nomor Surat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Dresscode</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden sm:table-cell">Waktu</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden md:table-cell">Tempat</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Perihal Surat</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Nomor Surat</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Dresscode</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Waktu</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Tempat</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Pejabat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">No. HP PIC</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Leading Sector</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">No. HP PIC</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Leading Sector</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Status Sambutan</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Status Kegiatan</th>
                             <th className="text-left p-2.5 font-medium text-gray-600">Petugas Protokol</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden lg:table-cell">Petugas Liputan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden xl:table-cell">Jenis Penugasan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600 hidden xl:table-cell">Status Publikasi</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Petugas Liputan</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Jenis Penugasan</th>
+                            <th className="text-left p-2.5 font-medium text-gray-600">Status Publikasi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -282,14 +322,14 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                             <tr key={k.id} className="border-b hover:bg-gray-50">
                                 <td className="p-2.5 whitespace-nowrap">{formatTanggal(k.tanggal)}</td>
                                 <td className="p-2.5 font-medium">{k.namaKegiatan}</td>
-                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
-                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
-                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[120px] truncate">{k.dresscode || '-'}</td>
-                                <td className="p-2.5 text-gray-500 hidden sm:table-cell">{k.waktu || '-'}</td>
-                                <td className="p-2.5 text-gray-500 hidden md:table-cell max-w-[200px] truncate">{k.tempat}</td>
+                                <td className="p-2.5 text-gray-500  max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
+                                <td className="p-2.5 text-gray-500  max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
+                                <td className="p-2.5 text-gray-500  max-w-[120px] truncate">{k.dresscode || '-'}</td>
+                                <td className="p-2.5 text-gray-500 ">{k.waktu || '-'}</td>
+                                <td className="p-2.5 text-gray-500  max-w-[200px] truncate">{k.tempat}</td>
                                 <td className="p-2.5">{k.pejabat}</td>
-                                <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.picNoHp || '-'}</td>
-                                <td className="p-2.5 text-gray-500 hidden lg:table-cell">{k.leadingSectorNama}</td>
+                                <td className="p-2.5 text-gray-500 ">{k.picNoHp || '-'}</td>
+                                <td className="p-2.5 text-gray-500 ">{k.leadingSectorNama}</td>
                                 <td className="p-2.5">
                                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'}`}>
                                         {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
@@ -301,9 +341,9 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                     </span>
                                 </td>
                                 <td className="p-2.5 text-gray-500 ">{crewLabel(k.allCrewProtokol, k.petugasProtokolNama)}</td>
-                                <td className="p-2.5 text-gray-500 hidden lg:table-cell max-w-[200px] truncate">{crewLabel(k.allCrewLiputan, k.petugasLiputanNama)}</td>
-                                <td className="p-2.5 text-gray-500 hidden xl:table-cell">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</td>
-                                <td className="p-2.5 text-gray-500 hidden xl:table-cell">{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</td>
+                                <td className="p-2.5 text-gray-500  max-w-[200px] truncate">{crewLabel(k.allCrewLiputan, k.petugasLiputanNama)}</td>
+                                <td className="p-2.5 text-gray-500 ">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</td>
+                                <td className="p-2.5 text-gray-500 ">{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</td>
                             </tr>
                         ))}
                         {data.length === 0 && (
@@ -314,7 +354,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
             </div>
 
             {/* Print styles */}
-            <style jsx>{`
+            <style>{`
                 @media print {
                     nav, header, button, .no-print { display: none !important; }
                     body { font-size: 10pt; }

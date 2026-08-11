@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CalendarDays, CheckCircle2, FileWarning } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { existsSync } from 'fs';
@@ -152,7 +153,7 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
               }}></div>
             )}
             <div className='absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/30' />
-            <div className='relative p-6 sm:p-8'>
+            <div className='relative p-5 sm:p-8'>
               <p className='text-gold text-xs font-semibold uppercase tracking-wider'>Sistem Manajemen SPJ · Protokom</p>
               <h1 className='font-display text-2xl sm:text-3xl font-semibold mt-1'>
                 Selamat datang, {user?.nama ?? 'Pengguna'}
@@ -190,14 +191,19 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
               ) : (
                 <ul className="space-y-3">
                   {upcoming.map((k) => (
-                    <li key={k.id} className="flex items-start gap-3 text-sm">
-                      <div className="font-mono text-xs bg-app rounded-md px-2 py-1 text-navy flex-shrink-0 mt-0.5">
-                        {new Date(k.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{k.namaKegiatan}</p>
-                        <p className="text-muted text-xs truncate">{k.tempat}</p>
-                      </div>
+                    <li key={k.id}>
+                      <Link
+                        href="/worksheet"
+                        className="flex items-start gap-3 text-sm rounded-lg p-1.5 -m-1.5 hover:bg-app transition-colors"
+                      >
+                        <div className="font-mono text-xs bg-app rounded-md px-2 py-1 text-navy flex-shrink-0 mt-0.5">
+                          {new Date(k.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{k.namaKegiatan}</p>
+                          <p className="text-muted text-xs truncate">{k.tempat}</p>
+                        </div>
+                      </Link>
                     </li>
                   ))}
                 </ul>

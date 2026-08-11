@@ -42,6 +42,80 @@
 
 ## Changelog
 
+### 11 Agustus 2026 — QC Batch1: Mobile UX + Export + PDF ✅ SELESAI
+
+> **Status: ✅ Selesai** — Batch1 dari work plan QC (3 batch) selesai 11 Agustus 2026. Fokus: penyempurnaan mobile UX, fix export kolom, dan print PDF. Murni layout/UI — tanpa perubahan schema, database, query, atau behavior CRUD.
+
+| # | Item | Status | Catatan |
+|---|------|--------|---------|
+| P1 | Worksheet: fix export kolom (localStorage) | ✅ Selesai | Root cause React StrictMode double-mount menimpa localStorage → baca sekali + cache di state. `laporan-client.tsx` |
+| P2 | Laporan: card layout mobile | ✅ Selesai | 16 field dalam `<dl>` 2-kolom `md:hidden print:hidden`, `col-span-2` untuk field panjang. `laporan-client.tsx` |
+| P3 | Laporan: print PDF global styles | ✅ Selesai | `<style jsx>` → `<style>` global agar `nav/header/button/.no-print` ikut disembunyikan saat `window.print()`. `laporan-client.tsx` |
+| P4 | Worksheet: tabel responsif | ✅ Selesai | Tanggal sticky kiri (anchor scroll), 4 kolom inti selalu tampil, 13 kolom sekunder `hidden md:table-cell`, `min-w-[1100px]` di md+. `worksheet-client.tsx` |
+| P5 | Worksheet: filter grid mobile | ✅ Selesai | `grid grid-cols-2 sm:flex sm:flex-wrap`, wrapper SearchableSelect `w-full sm:w-48`. `worksheet-client.tsx` |
+| P6 | Petugas: sorting Nama/Jabatan | ✅ Selesai | `sortKey`/`sortDir` + `toggleSort`, `localeCompare('id')`, tombol `<th>` + icon panah + `aria-sort`. `master-petugas-client.tsx` |
+| P7 | Petugas: kolom No (#) | ✅ Selesai | Nomor urut baris (`index + 1`), `colSpan` empty state 8/7. `master-petugas-client.tsx` |
+| P8 | Petugas: responsive mobile | ✅ Selesai | Header tumpuk vertikal, search `w-full sm:w-56`, tabel `overflow-x-auto` + `min-w-[640px]`. `master-petugas-client.tsx` |
+| P9 | Leading Sector: order swap | ✅ Selesai | Form Tambah `order-1 lg:order-2` (atas di mobile), tabel `order-2 lg:order-1`. `master-leading-sector-client.tsx` |
+| P10-P12 | Kelola Pengguna: responsive | ✅ Selesai | Order swap form/tabel, select filter `w-full sm:w-auto`, tabel `overflow-x-auto` + `min-w-[480px]`. `users-client.tsx` |
+
+**Decisions:**
+- Semua item murni UI/layout — tidak menyentuh schema, query, server action, atau behavior CRUD.
+- Pola `overflow-x-auto` + `min-w-[Npx]`: tanpa `min-w`, tabel `w-full` tidak pernah overflow → scroll horizontal tidak aktif. `min-w` menentukan ambang scroll di mobile.
+- Pola order swap `order-1 lg:order-2` / `order-2 lg:order-1` — menempatkan form di atas di mobile tanpa mengubah layout desktop.
+- Sticky anchor kolom butuh `z-10` + `bg` solid (header `bg-app`, body `bg-white hover:bg-slate-50`) + `border-r`.
+
+**Files (5):**
+- `src/app/(protected)/laporan/laporan-client.tsx` — P1-P3
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — P4-P5
+- `src/app/(protected)/master-petugas/master-petugas-client.tsx` — P6-P8
+- `src/app/(protected)/master-leading-sector/master-leading-sector-client.tsx` — P9
+- `src/app/(protected)/users/users-client.tsx` — P10-P12
+
+**Verifikasi:** dilakukan per item via review kode (OLD→NEW) oleh user + verifikasi Claude. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+### 11 Agustus 2026 — QC Batch2: Filter Labels + Loading Skeleton + Navbar Mobile ✅ SELESAI
+
+> **Status: ✅ Selesai** — Batch2 dari work plan QC selesai 11 Agustus 2026. Murni UX — tanpa perubahan data/schema/behavior.
+
+| # | Item | Status | Catatan |
+|---|------|--------|---------|
+| P13 | Worksheet: filter labels | ✅ Selesai | Default tiap dropdown jadi self-describing: "Semua Bulan", "Semua Sambutan", "Semua Status Kegiatan", "Semua Pejabat", "Semua Jenis Tugas", placeholder Sektor "Semua Sektor". `value` tidak berubah. `worksheet-client.tsx` |
+| P14 | Loading skeleton global | ✅ Selesai | NEW `(protected)/loading.tsx` — Suspense fallback bawaan App Router; header/nav langsung tampil, konten skeleton pulse saat query Prisma jalan. Berlaku semua halaman protected, tanpa per-halaman. |
+| P15 | Navbar mobile | ✅ Selesai | `<nav>` `flex-wrap` → `overflow-x-auto`: 1 baris horizontal scroll di HP, desktop tidak berubah. `app-shell.tsx` |
+
+**Decisions:**
+- P13: ganti teks option default, bukan menambah elemen `<label>` — minimal & langsung menyebut nama filter.
+- P14: satu `loading.tsx` shared alih-alih per-halaman — cukup & idiomatic App Router.
+- P15: horizontal scroll alih-alih hamburger menu — tanpa JS/state baru, header height stabil.
+
+**Files (3):**
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — P13
+- `src/app/(protected)/loading.tsx` — P14 (NEW)
+- `src/app/(protected)/app-shell.tsx` — P15
+
+**Verifikasi:** review OLD→NEW per item. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+### 11 Agustus 2026 — QC Batch3: Dashboard UX ✅ SELESAI (sebagian)
+
+> **Status: 🚧 Partial** — Batch3 item pertama (Dashboard) selesai 11 Agustus 2026. Murni UX/UI — tanpa perubahan data/schema/behavior.
+
+| # | Item | Status | Catatan |
+|---|------|--------|---------|
+| P16 | Kegiatan Terdekat clickable | ✅ Selesai | Setiap item di "Kegiatan Terdekat" dibungkus `Link href="/worksheet"` — user bisa langsung klik ke halaman Worksheet. `hover:bg-app transition-colors`. `page.tsx` |
+| P17 | Hero banner mobile padding | ✅ Selesai | Padding hero `p-6` → `p-5` di mobile (hemat ~16px vertikal). Desktop tetap `sm:p-8`. `page.tsx` |
+
+**Decisions:**
+- P16: Link ke `/worksheet` (bukan `/worksheet/[id]`) karena tidak ada halaman detail terpisah yang sesuai; user bisa filter/navigasi dari situ.
+- P17: Perubahan minimal — hanya padding mobile, tidak mengubah struktur hero.
+
+**Files (1):**
+- `src/app/(protected)/dashboard/page.tsx` — P16-P17
+
+**Verifikasi:** diagnostics IDE bersih ✅. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+**Belum dikerjakan (Batch3 sisa):** Kalender UX, sort worksheet, activity log UX.
+
 ### 5 Agustus 2026 — Sprint24: Revisi UAT Klien — Penyempurnaan UX/UI & Workflow ✅ SELESAI
 
 > **Status: ✅ Selesai** — Sprint24A (Foundation) selesai 5 Agustus 2026. **Sprint24B-1 (Dashboard) selesai; Sprint24B-2 (Leading Sector) selesai; Sprint24C (Worksheet) selesai 6 Agustus 2026** — Nomor Surat (unik per tahun) + Dresscode + filter Tahun/Bulan + SearchableSelect sektor + picNama disembunyikan. **Sprint24D-1 (Activity Log FIELD_LABEL) selesai; Sprint24D-2 (Laporan sync) selesai 6 Agustus 2026; Sprint24E (Kalender) selesai 6 Agustus 2026** — modal detail (bottom sheet/centered, scrollable) + Leading Sector/PIC/No. HP + dokumen gabungan + fix +N. **Sprint24F (Petugas) selesai 7 Agustus 2026** — NIP + search + filter kategori + disable backdrop close + soft warning duplikat + ALL CREW (2 boolean columns). **Sprint24G (Laporan/Export/Kelola Pengguna) selesai 10 Agustus 2026** — ALL CREW sync di Laporan + Export XLSX, Kelola Pengguna simplify form + search + filter peran. **Sprint24H (Laporan polish) selesai 10 Agustus 2026** — rename header → "Laporan Kegiatan", default date range 1 s.d. akhir bulan, fix bug timezone (`toISOString()` → `toDateInput()`). **Sprint24I (Activity Log value formatter) selesai 10 Agustus 2026** — Petugas kategori `PROTOKOL`/`LIPUTAN` tampil "Protokol"/"Liputan" di Activity Log. **Sprint24J (Laporan column picker) selesai 10 Agustus 2026** — toggle kolom export XLSX + persist `localStorage`, default semua aktif (perilaku lama tidak berubah), export hanya kolom aktif.

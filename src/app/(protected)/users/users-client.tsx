@@ -97,7 +97,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-2 bg-white rounded-2xl border border-app overflow-hidden">
+      <div className="lg:col-span-2 order-2 lg:order-1 bg-white rounded-2xl border border-app overflow-hidden">
         <div className="flex flex-col sm:flex-row gap-2 p-3 border-b border-app">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -108,14 +108,15 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-app text-sm" 
             />
           </div>
-          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} aria-label="Filter Peran" className="px-3 py-1.5 rounded-lg border border-app text-sm">
+          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} aria-label="Filter Peran" className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-app text-sm">
             <option value="ALL">Semua Peran</option>
             <option value="ADMIN">Admin</option>
             <option value="STAFF">Staf Protokom</option>
             <option value="KEPALA_BAGIAN">Kepala Bagian</option>
           </select>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[480px] text-sm">
           <thead>
             <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
               <th className="px-4 py-3 font-medium">Nama</th>
@@ -155,8 +156,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
             )}
           </tbody>
         </table>
+        </div>
       </div>
-      <div className="bg-white rounded-2xl border border-app p-5 self-start">
+      <div className="order-1 lg:order-2 bg-white rounded-2xl border border-app p-5 self-start">
         <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Pengguna</h3>
         <form onSubmit={submit} className="space-y-3">
           <input placeholder="Nama lengkap" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />

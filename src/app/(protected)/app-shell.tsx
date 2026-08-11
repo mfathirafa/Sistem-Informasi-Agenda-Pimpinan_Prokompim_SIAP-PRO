@@ -67,7 +67,7 @@ export default function AppShell({
             </button>
           </div>
         </div>
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-wrap gap-x-1 gap-y-0.5 border-t border-white/10">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-x-1 border-t border-white/10 overflow-x-auto">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
