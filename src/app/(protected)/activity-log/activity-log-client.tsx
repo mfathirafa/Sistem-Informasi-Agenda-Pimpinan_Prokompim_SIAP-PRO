@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback, useMemo, useEffect, useTransition } from "react";
+import { X } from "lucide-react";
 import { getEntityName } from "@/lib/activity-log";
 import Pagination from "@/components/pagination";
 import { KATEGORI_PETUGAS_LABEL, type KategoriPetugasValue } from "@/lib/constants/kategori-petugas";
@@ -154,19 +155,21 @@ function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () =>
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="activity-log-detail-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 id="activity-log-detail-title" className="text-lg font-semibold">Detail Perubahan</h2>
-          <button onClick={onClose} aria-label="Tutup" className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      <div className="bg-white w-full sm:max-w-2xl sm:rounded-xl shadow-xl flex flex-col max-h-[85vh] sm:max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-app shrink-0">
+          <h2 id="activity-log-detail-title" className="font-display font-semibold text-navy">Detail Perubahan</h2>
+          <button onClick={onClose} aria-label="Tutup" className="p-1 -mr-1 rounded-md hover:bg-app text-muted">
+            <X size={14} />
+          </button>
         </div>
-        <div className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-2 text-sm text-gray-500">
+        <div className="overflow-y-auto p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-2 text-sm text-muted">
             <div><span className="font-medium">Entity:</span> {ENTITY_LABEL[log.entity] || log.entity}</div>
             <div><span className="font-medium">Aksi:</span> {ACTION_LABEL[log.action] || log.action}</div>
             <div><span className="font-medium">Oleh:</span> {log.user.nama}</div>
@@ -175,11 +178,11 @@ function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () =>
 
           {log.action === 'CREATE' && after && (
             <div>
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">Data setelah dibuat:</h3>
-              <div className="bg-gray-50 rounded p-3 space-y-1 text-sm">
+              <h3 className="font-semibold text-sm text-navy mb-2">Data setelah dibuat:</h3>
+              <div className="bg-app rounded p-3 space-y-1 text-sm">
                 {visibleEntries(after).map(([key, val]) => (
                   <div key={key} className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500">{FIELD_LABEL[key] || key}:</span>
+                    <span className="text-muted">{FIELD_LABEL[key] || key}:</span>
                     <span className="col-span-2">{formatFieldValue(key, val, sectorMap)}</span>
                   </div>
                 ))}
@@ -189,11 +192,11 @@ function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () =>
 
           {log.action === 'UPDATE' && before && after && (
             <div>
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">Field yang berubah:</h3>
-              <div className="bg-gray-50 rounded p-3 space-y-2 text-sm">
+              <h3 className="font-semibold text-sm text-navy mb-2">Field yang berubah:</h3>
+              <div className="bg-app rounded p-3 space-y-2 text-sm">
                 {Object.keys(before).map((key) => (
-                  <div key={key} className="border-b border-gray-200 pb-2 last:border-0">
-                    <div className="font-medium text-gray-600 mb-1">{FIELD_LABEL[key] || key}</div>
+                  <div key={key} className="border-b border-app pb-2 last:border-0">
+                    <div className="font-medium text-navy mb-1">{FIELD_LABEL[key] || key}</div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-red-50 p-1.5 rounded"><span className="text-red-500 text-xs">Before:</span> {formatFieldValue(key, before[key], sectorMap)}</div>
                       <div className="bg-green-50 p-1.5 rounded"><span className="text-green-600 text-xs">After:</span> {formatFieldValue(key, after[key], sectorMap)}</div>
@@ -206,11 +209,11 @@ function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () =>
 
           {log.action === 'DELETE' && before && (
             <div>
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">Data sebelum dihapus:</h3>
-              <div className="bg-gray-50 rounded p-3 space-y-1 text-sm">
+              <h3 className="font-semibold text-sm text-navy mb-2">Data sebelum dihapus:</h3>
+              <div className="bg-app rounded p-3 space-y-1 text-sm">
                 {visibleEntries(before).map(([key, val]) => (
                   <div key={key} className="grid grid-cols-3 gap-2">
-                    <span className="text-gray-500">{FIELD_LABEL[key] || key}:</span>
+                    <span className="text-muted">{FIELD_LABEL[key] || key}:</span>
                     <span className="col-span-2">{formatFieldValue(key, val, sectorMap)}</span>
                   </div>
                 ))}
@@ -229,7 +232,7 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
   const router = useRouter();
   const searchParams = useSearchParams();
   const [detail, setDetail] = useState<LogItem | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const sectorMap = useMemo(() => {
     const m: SectorMap = {};
@@ -238,6 +241,8 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
   }, [leadingSectors]);
 
   const totalPages = Math.ceil(total / pageSize);
+  const pageStart =  total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const pageEnd = Math.min(page * pageSize, total);
 
   const setFilter = useCallback((key: string, value: string | undefined) => {
     startTransition(() => {
@@ -255,114 +260,137 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
   }, [router]);
 
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Activity Log</h1>
+    <div className="space-y-4">
+      <h1 className="font-display text-xl font-semibold text-navy">Activity Log</h1>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">Entity</label>
-          <select
-            className="border rounded px-3 py-1.5 text-sm"
-            value={filters.entity || ''}
-            onChange={(e) => setFilter('entity', e.target.value || undefined)}
-          >
-            <option value="">Semua Entity</option>
-            {Object.entries(ENTITY_LABEL).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">Aksi</label>
-          <select
-            className="border rounded px-3 py-1.5 text-sm"
-            value={filters.action || ''}
-            onChange={(e) => setFilter('action', e.target.value || undefined)}
-          >
-            <option value="">Semua Aksi</option>
-            {Object.entries(ACTION_LABEL).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">User</label>
-          <select
-            className="border rounded px-3 py-1.5 text-sm"
-            value={filters.userId || ''}
-            onChange={(e) => setFilter('userId', e.target.value || undefined)}
-          >
-            <option value="">Semua User</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>{u.nama}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500">Pencarian</label>
-          <input
-            className="border rounded px-3 py-1.5 text-sm w-48"
-            placeholder="Cari dalam data..."
-            defaultValue={filters.search || ''}
-            onBlur={(e) => setFilter('search', e.target.value || undefined)}
-            onKeyDown={(e) => e.key === 'Enter' && setFilter('search', (e.target as HTMLInputElement).value || undefined)}
-          />
-        </div>
+      <div className="flex flex-wrap gap-2">
+        <select 
+          className="px-3 py-2 rounded-lg border border-app text-sm"
+          value={filters.entity || ''}
+          onChange={(e) => setFilter('entity', e.target.value || undefined)}
+        >
+          <option value="">Semua Entity</option>
+          {Object.entries(ENTITY_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+        <select className="px-3 py-2 rounded-lg border border-app text-sm"
+          value={filters.action || ''}
+          onChange={(e) => setFilter('action', e.target.value || undefined)}
+        >
+          <option value="">Semua Aksi</option>
+          {Object.entries(ACTION_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+        <select className="px-3 py-2 rounded-lg border border-app text-sm"
+          value={filters.userId || ''}
+          onChange={(e) => setFilter('userId', e.target.value || undefined)}
+        >
+          <option value="">Semua User</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>{u.nama}</option>
+          ))}
+        </select>
+        <input className="px-3 py-2 rounded-lg border border-app text-sm w-full sm:w-56"
+          placeholder="Cari dalam data..."
+          defaultValue={filters.search || ''}
+          onBlur={(e) => setFilter('search', e.target.value || undefined)}
+          onKeyDown={(e) => e.key === 'Enter' && setFilter('search', (e.target as HTMLInputElement).value || undefined)}
+        />
         {(filters.entity || filters.action || filters.userId || filters.search) && (
-          <button onClick={resetFilters} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100">
+          <button onClick={resetFilters} className="px-3 py-2 rounded-lg border border-app text-sm hover:bg-app">
             Reset Filter
           </button>
         )}
       </div>
 
-      {/* Table */}
-      <div className={`overflow-x-auto border rounded-lg transition-opacity ${isPending ? 'opacity-50' : ''}`}>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left p-3 font-medium text-gray-600">Waktu</th>
-              <th className="text-left p-3 font-medium text-gray-600">Entity</th>
-              <th className="text-left p-3 font-medium text-gray-600">Nama</th>
-              <th className="text-left p-3 font-medium text-gray-600">Aksi</th>
-              <th className="text-left p-3 font-medium text-gray-600">Oleh</th>
-              <th className="text-left p-3 font-medium text-gray-600">Detail</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <tr key={log.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 text-gray-500 whitespace-nowrap">{formatDate(log.createdAt)}</td>
-                <td className="p-3">{ENTITY_LABEL[log.entity] || log.entity}</td>
-                <td className="p-3 font-medium">{getEntityName(log.changes)}</td>
-                <td className="p-3">
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${ACTION_BADGE[log.action] || ''}`}>
+      {/* Table - Desktop */}
+      <div className="hidden lg:block bg-white rounded-2xl border border-app overflow-hidden transition-opacity">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
+                <th className="px-4 p-3 font-medium">Waktu</th>
+                <th className="px-4 p-3 font-medium">Entity</th>
+                <th className="px-4 p-3 font-medium">Nama</th>
+                <th className="px-4 p-3 font-medium">Aksi</th>
+                <th className="px-4 p-3 font-medium">Oleh</th>
+                <th className="px-4 p-3 font-medium">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log.id} className="border-t border-app hover:bg-slate-50">
+                  <td className="px-4 py-3 text-muted whitespace-nowrap">{formatDate(log.createdAt)}</td>
+                  <td className="px-4 py-3">{ENTITY_LABEL[log.entity] || log.entity}</td>
+                  <td className="px-4 py-3 font-medium">{getEntityName(log.changes)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${ACTION_BADGE[log.action] || ''}`}>
+                      {ACTION_LABEL[log.action] || log.action}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-muted">{log.user.nama}</td>
+                  <td className="px-4 py-3">
+                    {log.changes && Object.keys(log.changes).length >0 ? (
+                      <button onClick={() => setDetail(log)} className="text-navy hover:underline text-xs font-medium">
+                        Lihat Perubahan
+                      </button>
+                    ) : (
+                      <span className="text-muted text-xs">-</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {logs.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted">Tidak ada log yang cocok.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Cards - Mobile */}
+      <div className="lg:hidden space-y-3">
+        {logs.map((log) => (
+          <div key={log.id} className="bg-white rounded-2xl border border-app p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-medium text-navy whitespace-nowrap">{formatDate(log.createdAt)}</span>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${ACTION_BADGE[log.action] || ''}`}>
                     {ACTION_LABEL[log.action] || log.action}
                   </span>
-                </td>
-                <td className="p-3 text-gray-600">{log.user.nama}</td>
-                <td className="p-3">
-                  {log.changes && Object.keys(log.changes).length > 0 ? (
-                    <button onClick={() => setDetail(log)} className="text-blue-600 hover:underline text-xs">
-                      Lihat Perubahan
-                    </button>
-                  ) : (
-                    <span className="text-gray-300 text-xs">-</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {logs.length === 0 && (
-              <tr><td colSpan={6} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
-            )}
-          </tbody>
-        </table>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-sm">
+                  <span className="font-medium text-navy truncate">{getEntityName(log.changes)}</span>
+                  <span className="text-muted">({ENTITY_LABEL[log.entity] || log.entity})</span>
+                </div>
+                <div className="mt-1 text-xs text-muted">Oleh: {log.user.nama}</div>
+              </div>
+              {log.changes && Object.keys(log.changes).length > 0 && (
+                <button
+                  onClick={() => setDetail(log)}
+                  className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-navy bg-amber-50 rounded-lg hover:bg-amber-100 whitespace-nowrap"
+                >
+                  Detail
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {logs.length === 0 && (
+          <div className="bg-white rounded-2xl border border-app p-10 text-center text-muted">
+            Tidak ada log yang cocok.
+          </div>
+        )}
       </div>
 
       {/* Pagination + Info */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">{total} data</span>
+          <span className="text-muted">Menampilkan {pageStart}-{pageEnd} dari {total} log</span>
           <Pagination
             page={page}
             totalPages={totalPages}

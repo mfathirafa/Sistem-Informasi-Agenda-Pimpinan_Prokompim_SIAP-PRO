@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, useMemo } from 'react';
 import { Trash2, Pencil, X, Search } from 'lucide-react';
-import { createUser, updateUser, deleteUser } from '@/app/actions/users';
+import { createUser, updateUser, deleteUser, resetAllStaffPassword } from '@/app/actions/users';
 import ConfirmDialog from '@/components/confirm-dialog';
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', KEPALA_BAGIAN: 'Kepala Bagian' };
@@ -20,6 +20,10 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
+  const [resetAllOpen, setResetAllOpen] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -95,9 +99,25 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
     });
   };
 
+  const submitResetAll = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetPassword.length < 6) { setResetError('Kata sandi minimal 6 karakter.' ); return; }
+    setResetError('');
+    startTransition(async () => {
+      const res = await resetAllStaffPassword(resetPassword);
+      if (res.ok) {
+        setResetAllOpen(false);
+        setResetPassword('');
+        setResetSuccess('Password semua staf berhasil direset.');
+      } else {
+        setResetError(res.error || 'Gagal mereset password staf.');
+      }
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-2 order-2 lg:order-1 bg-white rounded-2xl border border-app overflow-hidden">
+      <div className="lg:col-span-2 lg:order-1 bg-white rounded-2xl border border-app overflow-hidden">
         <div className="flex flex-col sm:flex-row gap-2 p-3 border-b border-app">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -114,6 +134,12 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
             <option value="STAFF">Staf Protokom</option>
             <option value="KEPALA_BAGIAN">Kepala Bagian</option>
           </select>
+          <button type="button"
+            onClick={() => { setResetAllOpen(true); setResetPassword(''); setResetError(''); setResetSuccess(''); }}
+            className="px-3 py-1.5 rounded-lg border border-app text-sm hover:bg-app whitespace-nowrap"
+          >
+            Reset Password Semua Staf
+          </button>
         </div>
         <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
@@ -158,7 +184,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
         </table>
         </div>
       </div>
-      <div className="order-1 lg:order-2 bg-white rounded-2xl border border-app p-5 self-start">
+      <div className="lg:order-2 bg-white rounded-2xl border border-app p-5 self-start">
         <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Pengguna</h3>
         <form onSubmit={submit} className="space-y-3">
           <input placeholder="Nama lengkap" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
@@ -171,6 +197,10 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
 
       {deleteError && (
         <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>
+      )}
+
+      {resetSuccess && (
+        <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">{resetSuccess}</p>
       )}
 
       <ConfirmDialog
@@ -217,6 +247,43 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium">Batal</button>
                 <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Simpan'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {resetAllOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setResetAllOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby='reset-all-title'
+        >
+          <div className="bg-white rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-app">
+              <h3 id="reset-all-title" className="font-display text-lg font-semibold text-navy">Reset Password Semua Staff</h3>
+              <button onClick={() => setResetAllOpen(false)} aria-label="Tutup" className="p-1 rounded-md hover:bg-app"><X size={18} /></button>
+            </div>
+            <form onSubmit={submitResetAll} className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Kata sandi baru untuk semua staf</label>
+                <input type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  placeholder="Minimal 6 Karakter"
+                  className="w-full px-3 py-2 rounded-lg border border-app text-sm" 
+                />
+                <p className="text-xs text-muted mt-1.5">Semua staf akan memakai kata sandi yang sama ini. Beri tahu mereka setelah direset.</p>
+              </div>
+              {resetError && <p className="text-xs text-red-600">{resetError}</p>}
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setResetAllOpen(false)} className='flex-1 py-2.5 rounded-lg border border-app text-sm font-medium'>
+                  Batal
+                </button>
+                <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">
+                  {isPending ? 'Mereset...' : 'Reset Semua'}
+                </button>
               </div>
             </form>
           </div>

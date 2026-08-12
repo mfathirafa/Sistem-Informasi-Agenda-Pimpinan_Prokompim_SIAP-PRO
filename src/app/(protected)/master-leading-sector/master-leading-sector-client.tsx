@@ -109,7 +109,7 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-2 order-2 lg:order-1 bg-white rounded-2xl border border-app overflow-hidden">
+      <div className="lg:col-span-2 lg:order-1 bg-white rounded-2xl border border-app overflow-hidden">
       <div className="p-4 flex flex-col sm:flex-row gap-3">
         <input aria-label="Cari nama leading sector"
           value={search}
@@ -172,7 +172,7 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
       </div>
 
       {canEdit && (
-        <div className="order-1 lg:order-2 bg-white rounded-2xl border border-app p-5 self-start">
+        <div className="lg:order-2 bg-white rounded-2xl border border-app p-5 self-start">
           <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Leading Sector</h3>  
           <form onSubmit={submit} className="space-y-3">
             <input placeholder="cth. Dinas Pendidikan" value={nama} onChange={(e) => setNama(e.target.value)}

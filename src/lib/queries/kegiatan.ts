@@ -38,8 +38,24 @@ export type KegiatanFilter = {
     pejabat?: string;
     penugasan?: string; // jenisPenugasan
     sektor?: string; // leadingSectorId
-    pic?: string; // picNama contains
+    pic?: string; // picNama contains 
+    sort?: KegiatanSortKey; // kolom yang di-sort 
+    dir?: KegiatanSortDir; // arah sort
 };
+/** Kolom worksheet yang bisa di-sort (klik header). */
+export type KegiatanSortKey = 'tanggal' | 'namaKegiatan' | 'statusKegiatan';
+export type KegiatanSortDir = 'asc' | 'desc';
+
+/** OrderBy Prisma dari pilihan sort. Default tanggal asc (perilaku lama).
+ * Tie-break tanggal asc agar urutan stabil saat sort non-tanggal. */
+export function buildKegiatanOrderBy(
+    sort?: KegiatanSortKey,
+    dir: KegiatanSortDir = 'asc',
+) : Prisma.KegiatanOrderByWithRelationInput[] {
+    if (sort === 'namaKegiatan') return [{ namaKegiatan: dir }, { tanggal: 'asc' }, { createdAt: 'desc' }];
+    if (sort === 'statusKegiatan') return [{ statusKegiatan: dir }, { tanggal: 'asc' }, { createdAt: 'desc' }];
+    return [{ tanggal: dir }, { createdAt: 'desc' }];
+}
 
 /**
  * Bangun Prisma where dari filter URL + window tanggal (3 bulan terakhir).

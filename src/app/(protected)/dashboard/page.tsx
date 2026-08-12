@@ -212,30 +212,12 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
           </div>
 
           {/* --- Row 3: Charts baru (distribusi + progress + top petugas + top sektor) --- */}
-          <DashboardStats 
+          <DashboardStats
             progressLengkap={progressLengkap}
             progressBelum={progressBelum}
             topSektor={topSektorData}
+            perluPerhatian={perluPerhatianList}
           />
-
-          {/* --- Row 4: Perlu Perhatian --- */}
-          {(progressBelum > 0) && (
-            <div className="bg-white rounded-2xl border border-app p-5 shadow-sm">
-              <h3 className="font-display text-base font-semibold text-navy mb-3">Perlu Perhatian</h3>
-              <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
-                    <span><strong>{progressBelum}</strong> kegiatan dengan dokumen belum lengkap</span>
-                  </li>
-                {perluPerhatianList.length > 0 && (
-                  <li className="text-muted text-xs mt-1">
-                    {perluPerhatianList.slice(0, 3).join(', ')}
-                    {perluPerhatianList.length > 3 && `, +${perluPerhatianList.length - 3} lagi`}
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
         </div>
       );
     } catch (error) {

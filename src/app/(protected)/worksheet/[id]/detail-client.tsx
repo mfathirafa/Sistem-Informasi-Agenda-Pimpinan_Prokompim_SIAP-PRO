@@ -147,11 +147,15 @@ export default function DetailClient({
               <dd className="font-medium">{kegiatan.dresscode || '-'}</dd>
             </div>
             <div>
+              <dt className="text-muted">PIC (LS)</dt>
+              <dd className="font-medium">{kegiatan.picNama || '-'}</dd>
+            </div>
+            <div>
               <dt className="text-muted">No. HP PIC</dt>
               <dd className="font-medium">{kegiatan.picNoHp || '-'}</dd>
             </div>
             <div>
-              <dt className="text-muted">Leading Secto</dt>
+              <dt className="text-muted">Leading Sector</dt>
               <dd className="font-medium">{kegiatan.leadingSectorNama}</dd>
             </div>
             <div>

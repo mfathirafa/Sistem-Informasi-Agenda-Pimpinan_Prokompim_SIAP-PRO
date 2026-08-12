@@ -8,9 +8,10 @@ type Props = {
     progressLengkap: number;
     progressBelum: number;
     topSektor: { nama: string; count: number}[];
+    perluPerhatian: string[];
 };
 
-export default function DashboardStats({ progressLengkap, progressBelum, topSektor }: Props) {
+export default function DashboardStats({ progressLengkap, progressBelum, topSektor, perluPerhatian }: Props) {
     const totalProgress = progressLengkap + progressBelum;
     const progressPct = totalProgress > 0 ? Math.round((progressLengkap / totalProgress) * 100) : 0;
 
@@ -36,6 +37,12 @@ export default function DashboardStats({ progressLengkap, progressBelum, topSekt
  <span>{progressBelum} kegiatan belum lengkap</span>
  {progressLengkap === totalProgress && <span className="text-green-600 font-medium">Semua Lengkap ✓</span>}
  </div>
+ {perluPerhatian.length > 0 && (
+ <p className="text-xs text-muted">
+ {perluPerhatian.slice(0, 3).join(', ')}
+ {perluPerhatian.length > 3 && `, +${perluPerhatian.length - 3} lagi`}
+ </p>
+ )}
  </div>
  )}
  </div>

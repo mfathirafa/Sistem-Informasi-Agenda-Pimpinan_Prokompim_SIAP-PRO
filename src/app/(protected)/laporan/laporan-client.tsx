@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from "next/navigation";
-import { useState, useMemo, useEffect, useTransition } from "react";
+import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
 import { Download, FileDown, Settings2 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
@@ -49,23 +49,49 @@ type ColumnKey =
     | 'statusSambutan' | 'statusKegiatan' | 'petugasProtokol' | 'petugasLiputan'
     | 'jenisPenugasan' | 'statusPublikasi';
 
-const COLUMNS: { key: ColumnKey; label: string; get: (k: KegiatanItem) => string }[] = [
-    { key: 'tanggal', label: 'Tanggal Pelaksanaan', get: (k) => formatTanggal(k.tanggal) },
-    { key: 'namaKegiatan', label: 'Nama Kegiatan', get: (k) => k.namaKegiatan },
-    { key: 'perihalSurat', label: 'Perihal Surat', get: (k) => k.perihalSurat || '' },
-    { key: 'nomorSurat', label: 'Nomor Surat', get: (k) => k.nomorSurat || '' },
-    { key: 'dresscode', label: 'Dresscode', get: (k) => k.dresscode || '' },
-    { key: 'waktu', label: 'Waktu', get: (k) => k.waktu || '' },
-    { key: 'tempat', label: 'Tempat', get: (k) => k.tempat },
-    { key: 'pejabat', label: 'Pejabat', get: (k) => k.pejabat },
-    { key: 'picNoHp', label: 'No. HP PIC', get: (k) => k.picNoHp || '' },
-    { key: 'leadingSector', label: 'Leading Sector', get: (k) => k.leadingSectorNama },
-    { key: 'statusSambutan', label: 'Status Sambutan', get: (k) => k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum' },
-    { key: 'statusKegiatan', label: 'Status Kegiatan', get: (k) => STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan },
-    { key: 'petugasProtokol', label: 'Petugas Protokol', get: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama) },
-    { key: 'petugasLiputan', label: 'Petugas Liputan', get: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama) },
-    { key: 'jenisPenugasan', label: 'Jenis Penugasan', get: (k) => JENIS_PENUGASAN_LABEL[k.jenisPenugasan] },
-    { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi] },
+type ColumnDef = {
+    key: ColumnKey;
+    label: string;
+    /** String polos untuk export XLSX. */
+    get: (k: KegiatanItem) => string;
+    /** JSX untuk tabel layar / kartu mobile / print. */
+    render: (k: KegiatanItem) => ReactNode;
+    tdClass?: string;
+};
+
+const COLUMNS: ColumnDef[] = [
+    { key: 'tanggal', label: 'Tanggal Pelaksanaan', get: (k) => formatTanggal(k.tanggal), render: (k) => formatTanggal(k.tanggal), tdClass: 'whitespace-nowrap' },
+    { key: 'namaKegiatan', label: 'Nama Kegiatan', get: (k) => k.namaKegiatan, render: (k) => k.namaKegiatan, tdClass: 'font-medium' },
+    { key: 'perihalSurat', label: 'Perihal Surat', get: (k) => k.perihalSurat || '', render: (k) => k.perihalSurat || '-', tdClass: 'text-gray-500 max-w-[200px] truncate' },
+    { key: 'nomorSurat', label: 'Nomor Surat', get: (k) => k.nomorSurat || '', render: (k) => k.nomorSurat || '-', tdClass: 'text-gray-500 max-w-[180px] truncate' },
+    { key: 'dresscode', label: 'Dresscode', get: (k) => k.dresscode || '', render: (k) => k.dresscode || '-', tdClass: 'text-gray-500 max-w-[120px] truncate' },
+    { key: 'waktu', label: 'Waktu', get: (k) => k.waktu || '', render: (k) => k.waktu || '-', tdClass: 'text-gray-500' },
+    { key: 'tempat', label: 'Tempat', get: (k) => k.tempat, render: (k) => k.tempat, tdClass: 'text-gray-500 max-w-[200px] truncate' },
+    { key: 'pejabat', label: 'Pejabat', get: (k) => k.pejabat, render: (k) => k.pejabat },
+    { key: 'picNoHp', label: 'No. HP PIC', get: (k) => k.picNoHp || '', render: (k) => k.picNoHp || '-', tdClass: 'text-gray-500' },
+    { key: 'leadingSector', label: 'Leading Sector', get: (k) => k.leadingSectorNama, render: (k) => k.leadingSectorNama, tdClass: 'text-gray-500' },
+    {
+        key: 'statusSambutan', label: 'Status Sambutan',
+        get: (k) => k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum',
+        render: (k) => (
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'}`}>
+                {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
+            </span>
+        ),
+    },
+    {
+        key: 'statusKegiatan', label: 'Status Kegiatan',
+        get: (k) => STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan,
+        render: (k) => (
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
+                {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
+            </span>
+        ),
+    },
+    { key: 'petugasProtokol', label: 'Petugas Protokol', get: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), render: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), tdClass: 'text-gray-500' },
+    { key: 'petugasLiputan', label: 'Petugas Liputan', get: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), render: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), tdClass: 'text-gray-500 max-w-[200px] truncate' },
+    { key: 'jenisPenugasan', label: 'Jenis Penugasan', get: (k) => JENIS_PENUGASAN_LABEL[k.jenisPenugasan], render: (k) => JENIS_PENUGASAN_LABEL[k.jenisPenugasan], tdClass: 'text-gray-500' },
+    { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], render: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], tdClass: 'text-gray-500' },
 ];
 
 const ALL_COLUMN_KEYS: ColumnKey[] = COLUMNS.map((c) => c.key);
@@ -169,63 +195,63 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 <p className="text-sm">Periode: {formatTanggal(localStart)} s.d. {formatTanggal(localEnd)}</p>
             </div>
 
-            <h1 className="text-2xl font-bold no-print">Laporan Kegiatan</h1>
+            <h1 className="font-display text-xl font-semibold text-navy no-print">Laporan Kegiatan</h1>
 
             {/* Filter */}
             <div className="no-print flex flex-wrap gap-3 items-end">
                 <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-500">Tanggal Awal</label>
+                    <label className="text-xs text-muted">Tanggal Awal</label>
                     <input 
                         type="date"
                         value={localStart}
                         onChange={(e) => setLocalStart(e.target.value)}
-                        className="border rounded px-3 py-1.5 text-sm"
+                        className="px-3 py-2 rounded-lg border border-app text-sm"
                     />
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-xs text-gray-500">Tanggal Akhir</label>
+                    <label className="text-xs text-muted">Tanggal Akhir</label>
                     <input 
                         type="date" 
                         value={localEnd} 
                         onChange={(e) => setLocalEnd(e.target.value)}
-                        className="border rounded px-3 py-1.5 text-sm" 
+                        className="px-3 py-2 rounded-lg border border-app text-sm"
                     />
                 </div>
                 <button
                     onClick={applyFilter}
                     disabled={isPending}
-                    className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                    className="btn-primary flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium"
                 >
                     {isPending ? 'Memuat...' : 'Tampilkan'}
                 </button>
                 <button
                     onClick={exportXlsx}
-                    className="px-4 py-1.5 border text-sm rounded hover:bg-gray-100 flex items-center gap-1.5"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
                 >
                     <Download size={14} /> Export XLSX
                 </button>
                 <button
                     onClick={() => window.print()}
-                    className="px-4 py-1.5 border text-sm rounded hover:bg-gray-100 flex items-center gap-1.5"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
                 >
                     <FileDown size={14} /> Export PDF
                 </button>
                 <button
                     onClick={() => setShowColumnPicker((v) => !v)}
-                    className={`px-4 py-1.5 border text-sm rounded hover:bg-gray-100 flex items-center gap-1.5 ${showColumnPicker ? 'bg-gray-100' : ''}`}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app ${showColumnPicker ? 'bg-app' : ''}`}
                 >
-                    <Settings2 size={14} /> Kolom Export
+                    <Settings2 size={14} /> Atur Kolom
                 </button>
             </div>
 
             {/* Column Picker */}
             {showColumnPicker && (
-                <div className="no-print border rounded-lg p-3 bg-white">
+                <div className="no-print bg-white rounded-2xl border border-app p-4">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">
-                            Kolom Export ({activeColumns.length}/{COLUMNS.length})
+                        <span className="text-sm font-medium text-muted">
+                            Kolom Tampilan ({activeColumns.length}/{COLUMNS.length})
                         </span>
-                        <button onClick={() => setActiveColumns(ALL_COLUMN_KEYS)} className="text-xs text-blue-600 hover:underline">
+                        <button onClick={() => setActiveColumns(ALL_COLUMN_KEYS)} className="text-xs text-navy hover:underline">
                             Pilih Semua
                         </button>
                     </div>
@@ -246,115 +272,86 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
             {/* Summary */}
             <div className="no-print flex flex-wrap gap-3">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm">
-                    <span className="text-blue-600 font-semibold">{summary.total}</span>{' '}
-                    <span className="text-blue-500">total kegiatan</span>
+                <div className="bg-white rounded-2xl border border-app px-4 py-2 text-sm">
+                    <span className="text-navy font-semibold">{summary.total}</span>{' '}
+                    <span className="text-muted">total kegiatan</span>
                 </div>
                 {Object.entries(summary.perStatus).map(([status, count]) => (
-                    <div key={status} className="bg-gray-50 border rounded-lg px-4 py-2 text-sm">
+                    <div key={status} className="bg-white rounded-2xl border border-app px-4 py-2 text-sm">
                         <span className="font-semibold">{count}</span>{' '}
-                        <span className="text-gray-500">{STATUS_KEGIATAN_LABEL[status as keyof typeof STATUS_KEGIATAN_LABEL] || status}</span>
+                        <span className="text-muted">{STATUS_KEGIATAN_LABEL[status as keyof typeof STATUS_KEGIATAN_LABEL] || status}</span>
                     </div>
                 ))}
             </div>
 
-            {/* Mobile: card per kegiatan -- semua field terbaca tanpa scroll */}
+            {/* Mobile: card per kegiatan -- field sesuai kolom yang aktif */}
             <div className="md:hidden print:hidden space-y-3">
                 {data.length === 0 ? (
-                    <p className="p-6 text-center text-gray-400 text-sm">Tidak ada data.</p>
+                    <p className="p-6 text-center text-muted text-sm">Tidak ada data.</p>
                 ) : (
-                    data.map((k) => (
-                        <div key={k.id} className="bg-white border rounded-xl p-3.5 text-sm">
-                            <div className="flex items-start justify-between gap-2">
-                                <div>
-                                    <p className="font-medium text-navy">{formatTanggal(k.tanggal)}</p>
-                                    <p className="font-semibold mt-0.5">{k.namaKegiatan}</p>
+                    data.map((k) => {
+                        // namaKegiatan + statusKegiatan sudah jadi header kartu (identitas record).
+                        const cardColumns = COLUMNS.filter((c) => activeColumns.includes(c.key) && c.key !== 'namaKegiatan' && c.key !== 'statusKegiatan');
+                        return (
+                            <div key={k.id} className="bg-white border rounded-xl p-3.5 text-sm">
+                                <div className="flex items-start justify-between gap-2">
+                                    <p className="font-semibold text-navy">{k.namaKegiatan}</p>
+                                    {activeColumns.includes('statusKegiatan') && (
+                                        <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
+                                            {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
+                                        </span>
+                                    )}
                                 </div>
-                                <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
-                                    {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
-                                </span>
+                                <dl className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted">
+                                    {cardColumns.map((col) => {
+                                        const long = col.key === 'perihalSurat' || col.key === 'nomorSurat' || col.key === 'petugasProtokol' || col.key === 'petugasLiputan';
+                                        return (
+                                            <div key={col.key} className={long ? 'col-span-2' : ''}>
+                                                <dt className="text-gray-400">{col.label}</dt>
+                                                <dd>{col.render(k)}</dd>
+                                            </div>
+                                        );
+                                    })}
+                                </dl>
                             </div>
-                            <dl className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-grey-600">
-                                <div><dt className="text-gray-400">Waktu</dt><dd>{k.waktu || '-'}</dd></div>
-                                <div><dt className="text-gray-400">Tempat</dt><dd>{k.tempat}</dd></div>
-                                <div><dt className="text-gray-400">Pejabat</dt><dd>{k.pejabat}</dd></div>
-                                <div><dt className="text-gray-400">No. HP PIC</dt><dd>{k.picNoHp || '-'}</dd></div>
-                                <div className="col-span-2"><dt className="text-gray-400">Perihal Surat</dt><dd>{k.perihalSurat || '-'}</dd></div>
-                                <div className="col-span-2"><dt className="text-gray-400">Nomor Surat</dt><dd>{k.nomorSurat || '-'}</dd></div>
-                                <div><dt className="text-gray-400">Dresscode</dt><dd>{k.dresscode || '-'}</dd></div>
-                                <div><dt className="text-gray-400">Leading Sector</dt><dd>{k.leadingSectorNama}</dd></div>
-                                <div><dt className="text-gray-400">Sambutan</dt><dd>{k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}</dd></div>
-                                <div><dt className="text-gray-400">Jenis Penugasan</dt><dd>{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</dd></div>
-                                <div className="col-span-2"><dt className="text-gray-400">Petugas Protokol</dt><dd>{crewLabel(k.allCrewProtokol, k.petugasProtokolNama)}</dd></div>
-                                <div className="col-span-2"><dt className="text-gray-400">Petugas Liputan</dt><dd>{crewLabel(k.allCrewLiputan, k.petugasLiputanNama)}</dd></div>
-                                <div><dt className="text-gray-400">Status Publikasi</dt><dd>{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</dd></div>
-                            </dl>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
             
-            {/* Table */}
-            <div className={`overflow-x-auto border rounded-lg transition-opacity ${isPending ? 'opacity-50' : ''}`}>
+            {/* Table -- kolom mengikuti pilihan user (activeColumns) */}
+            <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
+                <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b">
+                    <thead className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                         <tr>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Tanggal Pelaksanaan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Kegiatan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Perihal Surat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Nomor Surat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Dresscode</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Waktu</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Tempat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Pejabat</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">No. HP PIC</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Leading Sector</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Status Sambutan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Status Kegiatan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Petugas Protokol</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Petugas Liputan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Jenis Penugasan</th>
-                            <th className="text-left p-2.5 font-medium text-gray-600">Status Publikasi</th>
+                            {/* Urutan kolom selalu tetap (urutan COLUMNS = urutan worksheet), activeColumns hanya filter. */}
+                            {COLUMNS.filter((c) => activeColumns.includes(c.key)).map((col) => (
+                                <th key={col.key} className="px-4 p-3 font-medium">{col.label}</th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody>
                         {data.map((k) => (
-                            <tr key={k.id} className="border-b hover:bg-gray-50">
-                                <td className="p-2.5 whitespace-nowrap">{formatTanggal(k.tanggal)}</td>
-                                <td className="p-2.5 font-medium">{k.namaKegiatan}</td>
-                                <td className="p-2.5 text-gray-500  max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
-                                <td className="p-2.5 text-gray-500  max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
-                                <td className="p-2.5 text-gray-500  max-w-[120px] truncate">{k.dresscode || '-'}</td>
-                                <td className="p-2.5 text-gray-500 ">{k.waktu || '-'}</td>
-                                <td className="p-2.5 text-gray-500  max-w-[200px] truncate">{k.tempat}</td>
-                                <td className="p-2.5">{k.pejabat}</td>
-                                <td className="p-2.5 text-gray-500 ">{k.picNoHp || '-'}</td>
-                                <td className="p-2.5 text-gray-500 ">{k.leadingSectorNama}</td>
-                                <td className="p-2.5">
-                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'}`}>
-                                        {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
-                                    </span>
-                                </td>
-                                <td className="p-2.5">
-                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
-                                        {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
-                                    </span>
-                                </td>
-                                <td className="p-2.5 text-gray-500 ">{crewLabel(k.allCrewProtokol, k.petugasProtokolNama)}</td>
-                                <td className="p-2.5 text-gray-500  max-w-[200px] truncate">{crewLabel(k.allCrewLiputan, k.petugasLiputanNama)}</td>
-                                <td className="p-2.5 text-gray-500 ">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</td>
-                                <td className="p-2.5 text-gray-500 ">{STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}</td>
+                            <tr key={k.id} className="border-t border-app hover:bg-slate-50">
+                                {COLUMNS.filter((c) => activeColumns.includes(c.key)).map((col) => (
+                                    <td key={col.key} className={`px-4 py-3 ${col.tdClass || ''}`}>
+                                        {col.render(k)}
+                                    </td>
+                                ))}
                             </tr>
                         ))}
                         {data.length === 0 && (
-                            <tr><td colSpan={16} className="p-6 text-center text-gray-400">Tidak ada data.</td></tr>
+                            <tr><td colSpan={activeColumns.length} className="px-4 py-10 text-center text-muted">Tidak ada data.</td></tr>
                         )}
                     </tbody>
                 </table>
+                </div>
             </div>
 
-            {/* Print styles */}
+            {/* Print styles -- landscape + kolom mengikuti pilihan user */}
             <style>{`
+                @page { size: A4 landscape; margin: 12mm; }
                 @media print {
                     nav, header, button, .no-print { display: none !important; }
                     body { font-size: 10pt; }

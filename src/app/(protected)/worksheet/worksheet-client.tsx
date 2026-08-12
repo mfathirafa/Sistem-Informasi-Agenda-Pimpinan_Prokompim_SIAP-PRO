@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon, ArrowUp, ArrowUpDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
-import type { KegiatanFilter } from '@/lib/queries/kegiatan';
+import type { KegiatanFilter, KegiatanSortKey, KegiatanSortDir } from '@/lib/queries/kegiatan';
 import KegiatanModal from './kegiatan-modal';
 import type { KegiatanRow } from '@/lib/worksheet';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -34,6 +34,43 @@ function allCrewSummary(allCrew: boolean, names: string[]): string {
   if (!allCrew) return petugasSummary(names);
   const pj = petugasSummary(names);
   return pj === '-' ? 'Semua crew' : `Semua crew (PJ: ${pj})`;
+}
+
+// Header kolom yang bisa di-klik untuk sort. Toggle asc <-> desc; reset ke halaman 1.
+function SortableTh({
+  label,
+  sortKey,
+  current,
+  dir, 
+  onSort,
+  className,
+}: {
+  label: string;
+  sortKey: KegiatanSortKey;
+  current?: KegiatanSortKey;
+  dir?: KegiatanSortDir;
+  onSort: (key: KegiatanSortKey) => void;
+  className?: string;
+}) {
+  const active = current === sortKey;
+  return (
+    <th className={className ?? 'px-4 py-3 font-medium'}
+    aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1 hover:text-navy"
+      >
+        {label}
+        {active ? (
+          <ArrowUp size={12} className={`transition-transform ${dir === 'desc' ? 'rotate-180' : ''}`} />
+        ) : (
+          <ArrowUpDown size={12} className="text-muted" />
+        )}
+      </button>
+    </th>
+  );
 }
 
 export default function WorksheetClient({
@@ -89,6 +126,18 @@ export default function WorksheetClient({
       router.replace(`/worksheet?${params.toString()}`);
     });
   };
+
+  // Sort kolom: klik header toggle asc <->, kembali ke halaman 1.
+  const setSort = (key: KegiatanSortKey) => {
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      const nextDir: KegiatanSortDir = filters.sort === key && filters.dir === 'asc' ? 'desc' : 'asc';
+      params.set('sort', key);
+      params.set('dir', nextDir);
+      params.delete('page'); // <- reset ke halaman 1
+      router.replace(`/worksheet?${params.toString()}`);
+    });
+  }
 
   const openAdd = () => {
     setEditingItem(null);
@@ -217,7 +266,7 @@ export default function WorksheetClient({
             params.delete('page');
             router.replace(`/worksheet?${params.toString()}`);
           }}
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="">Semua Tahun</option>
             {tahunOptions.map((t) => (
@@ -230,7 +279,7 @@ export default function WorksheetClient({
             const tahun = filters.tahun || String(new Date().getFullYear());
             setFilter('bulan', m ===0 ? undefined : `${tahun}-${String(m).padStart(2, '0')}`);
           }}
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value={0}>Semua Bulan</option>
             {BULAN_NAMA.map((nama, i) => (
@@ -239,7 +288,7 @@ export default function WorksheetClient({
           </select>
           <select value={filters.status || 'Semua'}
           onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Sambutan</option>
             <option value="SUDAH">Sudah Sambutan</option>
@@ -247,7 +296,7 @@ export default function WorksheetClient({
           </select>
           <select value={filters.statusKegiatan || 'Semua'}
           onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Status Kegiatan</option>
             {STATUS_KEGIATAN_OPTIONS.map((s) => (
@@ -256,7 +305,7 @@ export default function WorksheetClient({
           </select>
           <select value={filters.pejabat || 'Semua'}
           onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Pejabat</option>
             {PEJABAT_OPTIONS.map((p) => (
@@ -265,14 +314,14 @@ export default function WorksheetClient({
           </select>
           <select value={filters.penugasan || 'Semua'}
           onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
           >
             <option value="Semua">Semua Jenis Tugas</option>
             {JENIS_PENUGASAN_OPTIONS.map((j) => (
               <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
             ))}
           </select>
-          <div className="w-full sm:w-48">
+          <div className="w-full col-span-2 sm:w-48">
             <SearchableSelect options={leadingSectorOptions}
             value={filters.sektor || null}
             onChange={(v) => setFilter('sektor', v || undefined)}
@@ -280,13 +329,13 @@ export default function WorksheetClient({
           />
           </div>
           <button onClick={exportExcel}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
+          className="col-span-2 justify-center flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
           >
             <Download size={15} /> Excel
           </button>
           {canEdit && (
             <button onClick={openAdd}
-            className="btn-primary flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium"
+            className="btn-primary col-span-2 justify-center flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium"
             >
               <Plus size={15} /> Tambah Kegiatan
             </button>
@@ -299,8 +348,8 @@ export default function WorksheetClient({
           <table className="w-full min-w-[480px] sm:min-w-[640px] md:min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
-                <th className="sticky left-0 z-10 bg-app border-r border-app px-4 py-3 font-medium">Tanggal Pelaksanaan</th>
-                <th className="px-4 py-3 font-medium">Kegiatan</th>
+                <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="sticky left-0 z-10 bg-app border-r border-app px-4 py-3 font-medium" />
+                <SortableTh label="Kegiatan" sortKey="namaKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Perihal Surat</th>
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Nomor Surat</th>
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Dresscode</th>
@@ -309,7 +358,7 @@ export default function WorksheetClient({
                 <th className="hidden md:table-cell px-4 py-3 font-medium">No. HP PIC</th>
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Leading Sector</th>
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Sambutan</th>
-                <th className="px-4 py-3 font-medium">Status Kegiatan</th>
+                <SortableTh  label="Status Kegiatan" sortKey="statusKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Petugas Protokol</th>
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Petugas Liputan</th>
                 <th className="hidden md:table-cell px-4 py-3 font-medium">Dokumentasi</th>

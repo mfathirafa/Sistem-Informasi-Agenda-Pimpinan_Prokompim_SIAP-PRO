@@ -96,25 +96,188 @@
 
 **Verifikasi:** review OLD→NEW per item. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
 
-### 11 Agustus 2026 — QC Batch3: Dashboard UX ✅ SELESAI (sebagian)
+### 11 Agustus 2026 — QC Batch3: Dashboard + Kalender + Sort Worksheet + Activity Log ✅ SELESAI
 
-> **Status: 🚧 Partial** — Batch3 item pertama (Dashboard) selesai 11 Agustus 2026. Murni UX/UI — tanpa perubahan data/schema/behavior.
+> **Status: ✅ Selesai** — Batch3 QC selesai 12 Agustus 2026 (item1 Dashboard 11 Agt; Kalender, sort worksheet, activity log 12 Agt). Murni UX/UI — tanpa perubahan data/schema/behavior.
 
 | # | Item | Status | Catatan |
 |---|------|--------|---------|
 | P16 | Kegiatan Terdekat clickable | ✅ Selesai | Setiap item di "Kegiatan Terdekat" dibungkus `Link href="/worksheet"` — user bisa langsung klik ke halaman Worksheet. `hover:bg-app transition-colors`. `page.tsx` |
 | P17 | Hero banner mobile padding | ✅ Selesai | Padding hero `p-6` → `p-5` di mobile (hemat ~16px vertikal). Desktop tetap `sm:p-8`. `page.tsx` |
+| P18 | Kalender: nav + today + weekend | ✅ Selesai | Prev/Next jadi icon-only (`ChevronLeft`/`ChevronRight`), nomor tanggal hari ini jadi badge `bg-navy text-white`, akhir pekan diberi tint `bg-slate-50/50`. Murni tampilan — grid & query tidak berubah. `kalender/page.tsx` |
+| P19 | Worksheet: sort kolom server-side | ✅ Selesai | 3 kolom sortable (Tanggal/Kegiatan/Status) via URL `?sort=&dir=` — klik header toggle asc↔desc, klik kolom lain reset asc, reset ke halaman1. Tie-break `{tanggal:'asc'}` agar urutan stabil. Export XLSX ikut urutan tabel. Default tanpa param = `[{tanggal:'asc'}]` (perilaku lama). `queries/kegiatan.ts`, `worksheet/page.tsx`, `actions/kegiatan.ts`, `worksheet-client.tsx` |
+| P20 | Activity log: konsistensi UI + responsive | ✅ Selesai | Halaman diselaraskan dengan design language app: container/header, filter bar app-style (hapus label, self-describing), tabel card `min-w-[640px]` (scroll horizontal HP), badge aksi `rounded-full`, pagination "Menampilkan X–Y dari Z", modal detail jadi bottom-sheet di mobile (pola 24E). `activity-log-client.tsx` |
 
 **Decisions:**
 - P16: Link ke `/worksheet` (bukan `/worksheet/[id]`) karena tidak ada halaman detail terpisah yang sesuai; user bisa filter/navigasi dari situ.
 - P17: Perubahan minimal — hanya padding mobile, tidak mengubah struktur hero.
+- P18: K1-K3 tanpa mengubah logika grid/query — murni tampilan sel kalender.
+- P19: Sort **harus server-side** via URL searchParams (konsisten keputusan Sprint21: filter client + pagination server = kontradiksi). `buildKegiatanOrderBy()` jadi single source untuk tabel + export ("hasil filter tabel == hasil export"). Whitelist sort key — param invalid fallback ke default.
+- P20: Modal detail adopsi pola bottom-sheet 24E (`items-end sm:items-center`, `rounded-t-2xl sm:rounded-2xl`). Warna Before/After (red/green) dipertahankan karena semantik diff. `page.tsx` activity-log tidak berubah (struktur server sudah benar).
+
+**Files (7):**
+- `src/app/(protected)/dashboard/page.tsx` — P16-P17
+- `src/app/(protected)/kalender/page.tsx` — P18
+- `src/lib/queries/kegiatan.ts` — P19 (helper `buildKegiatanOrderBy` + tipe sort)
+- `src/app/(protected)/worksheet/page.tsx` — P19 (parse sort/dir + orderBy)
+- `src/app/actions/kegiatan.ts` — P19 (export ikut sort)
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — P19 (`SortableTh` + `setSort`)
+- `src/app/(protected)/activity-log/activity-log-client.tsx` — P20
+
+**Verifikasi:** diagnostics IDE bersih ✅ untuk semua file yang diubah (kecuali hint unused import `kMaxLength` & deprecation `baseUrl` tsconfig yang pra-ada/tidak terkait). Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+### 12 Agustus 2026 — QC Full-Review: Perbaikan Kecil (Batch1) ✅ SELESAI
+
+> **Status: ✅ Selesai** — Putaran pertama feedback QC menyeluruh dari user (dibuka dengan "emang progress udah selesai semua?"). Beberapa item ternyata sudah ada di kode (Petugas #/sort/scroll, label "PIC (LS)" di modal kalender, label filter worksheet, loading skeleton) — sisanya dikerjakan di batch ini. Murni UI/layout + 1 query order — tanpa perubahan schema.
+
+| # | Item | Status | Catatan |
+|---|------|--------|---------|
+| Q1 | Leading Sector: urutan mobile | ✅ Selesai | Form "Tambah" pindah ke bawah, data di atas di mobile (hapus `order-1`/`order-2` mobile, pertahankan `lg:order-1/2` desktop). `master-leading-sector-client.tsx` |
+| Q2 | Kelola Pengguna: urutan mobile | ✅ Selesai | Sama — data dulu, form "Tambah" di bawah. `users-client.tsx` |
+| Q3 | Worksheet: default urutan | ✅ Selesai | Tie-break `createdAt: 'desc'` setelah `tanggal` di semua branch `buildKegiatanOrderBy` → default "tanggal pelaksanaan, lalu tanggal pembuatan data". `lib/queries/kegiatan.ts` |
+| Q4 | Detail kegiatan: typo + PIC (LS) | ✅ Selesai | "Leading Secto" → "Leading Sector"; tambah baris "PIC (LS)" (nilai `picNama`, sudah di-select di `page.tsx`). `worksheet/[id]/detail-client.tsx` |
+| Q5 | Dashboard: hapus card Perlu Perhatian | ✅ Selesai | Card redundan (duplikat "Progress Dokumen SPJ") dihapus; daftar nama kegiatan belum lengkap dipindah ke dalam card progress. `dashboard/page.tsx` + `dashboard-stats.tsx` |
+| Q6 | Dashboard: foto gedung KPT | ✅ Selesai | Foto disalin `references/foto kpt/gedung kpt.jpg` → `public/gedung-kpt.jpg`; hero banner (sudah ada di kode) kini menampilkan foto. `public/` |
+
+**Decisions:**
+- Q1/Q2: menghapus `order-1`/`order-2` (bukan membalik nilainya) — hapus saja kelas mobile-nya, `lg:order-*` tetap mengatur desktop (form kanan di desktop).
+- Q3: `createdAt` adalah kolom yang sudah ada di schema `Kegiatan` — tanpa migration.
+- Q5: `perluPerhatianList` tetap dihitung di server dan diteruskan ke `DashboardStats` (bukan dihapus total) supaya informasi kegiatan belum lengkap tidak hilang.
+
+**Files (6):**
+- `src/app/(protected)/master-leading-sector/master-leading-sector-client.tsx` — Q1
+- `src/app/(protected)/users/users-client.tsx` — Q2
+- `src/lib/queries/kegiatan.ts` — Q3
+- `src/app/(protected)/worksheet/[id]/detail-client.tsx` — Q4
+- `src/app/(protected)/dashboard/page.tsx` + `src/app/(protected)/dashboard/dashboard-stats.tsx` — Q5
+- `public/gedung-kpt.jpg` — Q6 (NEW, salinan foto)
+
+**Verifikasi:** diagnostics IDE bersih ✅ untuk semua file yang diubah. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+**Belum dikerjakan (menunggu batch berikut):** Worksheet form "Tidak Dipilih" (butuh schema nullable + migration), Worksheet filter mobile, Kalender grid mobile `+n`, Reset password semua staff, Activity Log filter, Navbar mobile polish.
+
+### 12 Agustus 2026 — QC Full-Review Batch2: Laporan column picker ✅ SELESAI
+
+> **Status: ✅ Selesai** — Fix bug column picker di halaman Laporan. Sebelumnya `activeColumns` hanya mengontrol export XLSX; tabel layar, kartu mobile, dan print/PDF tetap menampilkan 16 kolom penuh (keluhan user: "tanggal pelaksanaan ga kucentang tapi masih muncul"). Kini kolom yang dicentang mengontrol **semua** tampilan. Murni UI — tanpa perubahan data/query.
+
+| # | Item | Status | Catatan |
+|---|------|--------|---------|
+| L1 | Column picker → tabel layar | ✅ Selesai | `COLUMNS` diubah jadi `ColumnDef[]` dengan `render()` (JSX, termasuk badge status) + `tdClass`; thead/tbody tabel render dari `activeColumns`. Status badge & truncate dipertahankan identik. `laporan-client.tsx` |
+| L1 | Column picker → kartu mobile | ✅ Selesai | Kartu mobile kini render kolom aktif (urutan sesuai pilihan); `namaKegiatan` tetap judul kartu, badge `statusKegiatan` muncul hanya jika dicentang; `col-span-2` untuk field panjang (perihal/nomor surat, petugas). |
+| L1 | Column picker → print/PDF | ✅ Selesai | Print memakai tabel yang sama → otomatis menghormati kolom aktif. |
+| L2 | Rename label | ✅ Selesai | Tombol "Kolom Export" → "Atur Kolom"; judul panel "Kolom Export (n/16)" → "Kolom Tampilan (n/16)". |
+| L3 | PDF landscape | ✅ Selesai | Tambah `@page { size: A4 landscape; margin: 12mm; }` di print styles. |
+| L4 | Export XLSX | ✅ Tetap | `exportXlsx()` sudah pakai `activeColumns` (tidak berubah; `get()` string tetap ada untuk XLSX). |
+
+**Decisions:**
+- `COLUMNS` tetap satu sumber kebenaran: `get()` (string) untuk XLSX, `render()` (JSX) untuk layar/mobile/print, `tdClass` untuk styling sel — tidak ada duplikasi header/sel hardcoded.
+- Kartu mobile: `namaKegiatan` sengaja tetap di-judul-kan meski tidak dicentang (kartu tanpa judul tidak terbaca); `statusKegiatan` badge hanya tampil jika aktif. Perilaku sama dengan tabel di layar lebar.
+- **Urutan kolom tetap (follow-up user):** render tabel/kartu/XLSX memakai `COLUMNS.filter((c) => activeColumns.includes(c.key))` — urutan selalu mengikuti `COLUMNS` (urutan worksheet), bukan urutan saat dicentang. `activeColumns` berperilaku sebagai set (order tidak relevan), jadi centang-ulang kolom tidak memindah posisinya. `COLUMN_MAP` dihapus (tak terpakai lagi).
 
 **Files (1):**
-- `src/app/(protected)/dashboard/page.tsx` — P16-P17
+- `src/app/(protected)/laporan/laporan-client.tsx` — L1–L3 (COLUMNS refactor, tabel/kartu data-driven, @page landscape, rename label) + follow-up urutan kolom tetap
 
 **Verifikasi:** diagnostics IDE bersih ✅. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
 
-**Belum dikerjakan (Batch3 sisa):** Kalender UX, sort worksheet, activity log UX.
+### 12 Agustus 2026 — QC Full-Review Batch3a: Worksheet filter mobile ✅ SELESAI
+
+> **Status: ✅ Selesai** — Rapikan layout filter worksheet di mobile (grid 2 kolom yang rapi). Murni UI — tanpa perubahan schema/query/logika.
+
+| Perubahan | Detail |
+|-----------|--------|
+| 6 select filter | Tambah `min-w-0` → tidak overflow di kolom grid sempit (mencegah teks panjang seperti "Semua Status Kegiatan" meluber). **Tanpa `w-full`** — di mobile grid `justify-items: stretch` sudah bikin select lebar penuh; `w-full` justru memaksa 100% lebar di desktop (`sm:flex`) dan merusak layout. `worksheet-client.tsx` |
+| Searchable Leading Sector | `col-span-2` → lebar penuh di mobile (sebelumnya hanya setengah kolom), tetap `sm:w-48` di desktop |
+| Tombol Excel & Tambah Kegiatan | `col-span-2 justify-center` → lebar penuh & konten di tengah di mobile; di desktop (`sm:flex`) tetap inline natural (col-span diabaikan) |
+
+**Files (1):**
+- `src/app/(protected)/worksheet/worksheet-client.tsx` — W3
+
+**Verifikasi:** diagnostics IDE bersih ✅. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+**W2 (form "Tidak Dipilih") — DITUNDA:** butuh 4 field nullable (`pejabat`, `statusSambutan`, `statusPublikasi`, `jenisPenugasan`) + Prisma migration + dampak ke tabel/filter/laporan/export/detail. Menunggu keputusan user — user memilih kerjakan filter mobile dulu.
+
+**A1 (Activity Log filter) — SKIP:** dicek ulang 12 Agustus — filter entity (dropdown) + user (dropdown) + aksi + search sudah ada di `page.tsx` (Sesi 9). Tidak ada gap yang perlu diperbaiki.
+
+### 12 Agustus 2026 — QC Full-Review Batch3b: Kalender mobile + Navbar ✅ SELESAI
+
+> **Status: ✅ Selesai** — Fix overflow indikator mobile di grid kalender + polish navbar. Murni UI — tanpa schema/migration/query.
+
+| Perubahan | Detail |
+|-----------|--------|
+| **K1 — Kalender grid mobile** | Indikator per sel sebelumnya `flex items-center justify-between` memaksa nomor tanggal + dots + "+N" sejajar horizontal dalam kolom sempit (~51px) → overflow. Dipecah jadi 2 baris bertumpuk: baris tanggal (`flex justify-between` untuk luas penuh), lalu baris dots + "+N" di bawah (`mt-0.5`). Desktop tidak berubah (`sm:hidden`). `kalender/page.tsx` |
+| **N1 — Navbar mobile** | Tambah `snap-x snap-mandatory` pada container nav + `snap-start` per link → scroll horizontal berhenti presisi per item (bukan di tengah-tengah), terasa lebih halus di mobile. Desktop tidak terpengaruh (nav muat, tidak scroll). `app-shell.tsx` |
+
+**Files (2):**
+- `src/app/(protected)/kalender/page.tsx` — K1
+- `src/app/(protected)/app-shell.tsx` — N1
+
+**Verifikasi:** diagnostics IDE bersih ✅. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+### 12 Agustus 2026 — QC Full-Review U2: Kelola Pengguna — Reset Password Semua Staf ✅ SELESAI
+
+> **Status: ✅ Selesai** — Bulk reset password untuk semua staf (role `STAFF`). Hash bcrypt sekali, `updateMany` satu query, log per-staf di satu transaction. Murni action + UI — tanpa schema/migration.
+
+| Perubahan | Detail |
+|-----------|--------|
+| **Server Action baru** | `resetAllStaffPassword(password)` di `actions/users.ts` — hash sekali → `updateMany` → `logActivity` per-staf (masker `********`, nilai asli tidak disimpan). Proteksi `ADMIN` (hanya admin). |
+| **UI** | Tombol "Reset Password Semua Staf" di filter bar + modal konfirmasi (password baru minimal 6 karakter, peringatan semua staf pakai password sama). Reuse pola modal edit yang sudah ada. |
+
+**Files (2):**
+- `src/app/actions/users.ts` — action `resetAllStaffPassword`
+- `src/app/(protected)/users/users-client.tsx` — import, state, handler, tombol, modal, success/error toast
+
+**Verifikasi:** diagnostics IDE bersih ✅ (hanya hint `FormEvent` deprecated kode lama + pre-existing). Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+### 12 Agustus 2026 — Revisi Laporan: selaraskan UI ke design language app ✅ SELESAI
+
+> **Status: ✅ Selesai** — roadmap:217 "Revisi tampilan hasil & data" (Laporan). Murni UI — tanpa perubahan data/query/logika export.
+
+| Item | Perubahan |
+|------|-----------|
+| Header h1 | `text-2xl font-bold` → `font-display text-xl font-semibold text-navy` |
+| Label tanggal filter | `text-gray-500` → `text-muted` |
+| Input `type="date"` (2x) | `border rounded px-3 py-1.5` → `px-3 py-2 rounded-lg border border-app` |
+| Tombol "Tampilkan" | `bg-blue-600` → `btn-primary` (bg-navy) |
+| Tombol Export XLSX / PDF / Kolom | `border rounded hover:bg-gray-100` → `rounded-lg border border-app hover:bg-app`; toggle aktif `bg-app` |
+| Panel Column Picker | `border rounded-lg` → `bg-white rounded-2xl border border-app p-4`; "Pilih Semua" `text-navy` |
+| Summary cards | `bg-blue-50/gray-50 border-blue-200` → `bg-white rounded-2xl border border-app`, angka `text-navy`, label `text-muted` |
+| Container tabel | `overflow-x-auto border rounded-lg` → outer `bg-white rounded-2xl border border-app overflow-hidden` + inner `overflow-x-auto` (pola sama Activity Log) |
+| Thead | `bg-gray-50 border-b`, th `text-gray-600` → `bg-app text-muted uppercase tracking-wide`, th `px-4 p-3 font-medium` |
+| Baris tabel | `border-b hover:bg-gray-50` → `border-t border-app hover:bg-slate-50`; td `p-2.5` → `px-4 py-3` |
+| Empty state | `p-6 text-gray-400` → `px-4 py-10 text-muted` (tabel + mobile) |
+| Fix class invalid | mobile dl `text-grey-600` (tidak ada di Tailwind, tidak ke-render) → `text-muted` |
+
+**Tidak diubah:** print header/print styles, logika filter/export/column picker/localStorage, data & query server, badge `badge-sudah`/`badge-belum`. `text-gray-500` pada td sengaja dipertahankan (hex identik `text-muted`).
+
+**Files (1):** `src/app/(protected)/laporan/laporan-client.tsx`
+
+**Verifikasi:** diagnostics IDE bersih ✅. Command belum dijalankan — `npx tsc --noEmit` & `npm run build` menyusul.
+
+### 12 Agustus 2026 — Data Entry: NIP 21 Pegawai Bagian Prokompim ✅ SELESAI
+
+> **Status: ✅ Selesai** — 21/21 NIP terisi dari PDF referensi. Satu kali pakai, hanya data — tanpa perubahan schema/UI/query.
+
+**Apa yang dilakukan:**
+- Script `scripts/set-nip.ts` (baru) mengisi `nip` untuk 21 pegawai dari `references/database/Data Pegawai Bagian Prokompim.pdf` (halaman 1).
+- Matching nama via `normalizeKey()` (kata pertama nama, case-insensitive) — unik untuk 21 pegawai.
+- NIP dinormalisasi dari format PDF yang terpisah-pisah (`YYYYMMDD YYYYMM G NNN`) ke 18 digit tanpa spasi.
+
+**Bug data quality yang ikut diperbaiki:**
+- 5 pegawai (SUPENDI, INAYAH, FAJAR, NUR, SHARON) punya spasi di awal/akhir `nama` di DB (sisa input manual Sprint23 carryover) → `normalizeKey` menghasilkan string kosong sehingga tidak ter-match.
+- Fix: `normalizeKey()` pakai `.trim()`, dan baris update sekaligus membersihkan `nama: p.nama.trim()` (akar masalah, bukan cuma gejala).
+
+**Hasil run:**
+```
+⊘ SKIP 16× (NIP sudah sesuai)
+✓ UPDATE 5× (Supendi, Inayah, Fajar, Nur, Sharon)
+Selesai: 5 diperbarui, 16 dilewati, 0 tidak ditemukan
+```
+
+**Files:**
+- `scripts/set-nip.ts` — NEW, satu kali pakai
+- `scripts/debug-nip.ts` — file diagnosa sementara, **dihapus** setelah selesai
+
+**Verifikasi:** output script ✅ 21/21 cocok tanpa "tidak ditemukan". NIP diverifikasi unik (21 nilai berbeda).
 
 ### 5 Agustus 2026 — Sprint24: Revisi UAT Klien — Penyempurnaan UX/UI & Workflow ✅ SELESAI
 
@@ -178,7 +341,7 @@
 | Column picker (pilih kolom yang diextract) | ✅ Selesai | 24J: toggle panel "Kolom Export" + persist `localStorage` (`laporan.exportColumns`) — export XLSX hanya kolom aktif, urutan mengikuti tabel. Default semua aktif → perilaku user lama tidak berubah |
 | Default date range = 1 s.d. terakhir bulan berjalan | ✅ Selesai | 24H: `endDate` default = akhir bulan (`new Date(y, m+1, 0)`); fix bug timezone — `toISOString().split('T')[0]` (UTC, mundur 1 hari di WIB) → `toDateInput()` (komponen lokal) |
 | Rename "Sector" → "Leading Sector" | ✅ Selesai | 24D-2 |
-| Revisi tampilan hasil & data | 🚧 Planned | |
+| Revisi tampilan hasil & data | ✅ Selesai | 12 Agt: Laporan diselaraskan ke design language app (navy/app/rounded-2xl/font-display) — header, filter, tombol, summary, tabel, column picker. Murni UI, tanpa ubah data/query/export |
 
 #### Petugas
 

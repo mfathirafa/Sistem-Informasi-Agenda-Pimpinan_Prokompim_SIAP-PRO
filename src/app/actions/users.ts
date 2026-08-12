@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hashPassword, type ActionResult } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
+import { after, before } from 'node:test';
 
 export type CreateUserInput = {
   username: string;
@@ -154,5 +155,42 @@ export async function deleteUser(id: string): Promise<ActionResult> {
     return { ok: true };
   } catch {
     return { ok: false, error: 'Gagal menghapus pengguna.' };
+  }
+}
+
+
+export async function resetAllStaffPassword(password: string): Promise<ActionResult> {
+  const current = await getCurrentUser();
+  if (current?.role !== 'ADMIN') {
+    return { ok: false, error: 'Hanya admin yang bisa mengelola pengguna.' };
+  }
+  if (password.length < 6) {
+    return { ok: false, error: 'Kata sandi minimal 6 karakter.' };
+  }
+
+  try {
+    const hashed = await hashPassword(password);
+    const staff = await prisma.user.findMany({
+      where: { role: 'STAFF' },
+      select: { id: true, nama: true },
+    });
+    if (staff.length === 0) return { ok: false, error: 'Tidak ada staf yang terdaftar.' };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.updateMany({ where: { role: 'STAFF' }, data: { password: hashed } });
+      for (const s of staff) {
+        await logActivity({
+          entity: 'USER',
+          entityId: s.id,
+          action: 'UPDATE',
+          userId: current!.id,
+          changes: { before: { password: PASSWORD_MASK }, after: { password: PASSWORD_MASK }, meta: { entityName: s.nama }},
+        }, tx);
+      }
+    });
+    revalidatePath('/users');
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'Gagal mereset password staf.' };
   }
 }

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { buildKegiatanWhere, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter } from '@/lib/queries/kegiatan';
+import { buildKegiatanWhere, buildKegiatanOrderBy, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter, type KegiatanSortKey, type KegiatanSortDir } from '@/lib/queries/kegiatan';
 import WorksheetClient from './worksheet-client';
 
 const PAGE_SIZE = 20;
@@ -18,6 +18,12 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const rawPage = Number(params.page);
     const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
 
+    const sort: KegiatanSortKey | undefined =
+      params.sort === 'tanggal' || params.sort === 'namaKegiatan' || params.sort === 'statusKegiatan'
+        ? params.sort
+        : undefined;
+    const dir: KegiatanSortDir = params.dir === 'desc' ? 'desc' : 'asc';
+
     const filters: KegiatanFilter = {
       q: typeof params.q === 'string' ? params.q : undefined,
       tahun: typeof params.tahun === 'string' ? params.tahun : undefined,
@@ -28,6 +34,8 @@ export default async function WorksheetPage({ searchParams }: Props) {
       penugasan: typeof params.penugasan === 'string' ? params.penugasan : undefined,
       sektor: typeof params.sektor === 'string' ? params.sektor : undefined,
       pic: typeof params.pic === 'string' ? params.pic : undefined,
+      sort,
+      dir,
     };
 
     // Opsional: Batasi data agar tidak menarik ribuan histori dari tahun-tahun lama
@@ -45,7 +53,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const [kegiatan, dates, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
         where,
-        orderBy: { tanggal: 'asc' },
+        orderBy: buildKegiatanOrderBy(sort, dir),
         include: kegiatanInclude,
         skip: (safePage - 1) * PAGE_SIZE,
         take: PAGE_SIZE,

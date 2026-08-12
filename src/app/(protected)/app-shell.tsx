@@ -67,14 +67,14 @@ export default function AppShell({
             </button>
           </div>
         </div>
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-x-1 border-t border-white/10 overflow-x-auto">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-x-1 border-t border-white/10 overflow-x-auto snap-x snap-mandatory">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 whitespace-nowrap transition-colors snap-start ${
                   active ? 'border-gold text-white' : 'border-transparent text-white/60 hover:text-white'
                 }`}
               >

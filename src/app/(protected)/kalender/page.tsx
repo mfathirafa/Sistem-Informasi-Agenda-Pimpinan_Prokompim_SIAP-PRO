@@ -91,9 +91,9 @@ export default async function KalenderPage({
                         <Link
                             href={`/kalender?bulan=${fmtBulan(prev)}`}
                             aria-label="Bulan sebelumnya"
-                            className="btn-primary rounded-lg px-3 py-1.5 text-sm inline-flex items-center gap-1"
+                            className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center "
                         >
-                            <ChevronLeft size={16} /> Prev
+                            <ChevronLeft size={16} />
                         </Link>
                         <span className="text-base font-medium text-navy min-w-[150px] text-center">
                             {periode.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
@@ -101,9 +101,9 @@ export default async function KalenderPage({
                         <Link
                             href={`/kalender?bulan=${fmtBulan(next)}`}
                             aria-label="Bulan berikutnya"
-                            className="btn-primary rounded-lg px-3 py-1.5 text-sm inline-flex items-center gap-1"
+                            className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center"
                         >
-                            Next <ChevronRight size={16} />
+                            <ChevronRight size={16} />
                         </Link>
                     </div>
                 </div>
@@ -133,32 +133,38 @@ export default async function KalenderPage({
                                 const key = `${tanggal.getFullYear()}-${tanggal.getMonth()}-${tanggal.getDate()}`;
                                 const list = byTanggal.get(key) ?? [];
                                 const isToday = tanggal.getTime() === today.getTime();
+                                const isWeekend = tanggal.getDay() === 0 || tanggal.getDay() === 6;
+                                const nomorTanggal = (
+                                    <span className={`inline-flex items-center justify-center ${
+                                        isToday ? 'w-5 h-5 rounded-full bg-navy text-white' : ''
+                                    }`}>
+                                        {tanggal.getDate()}
+                                    </span>
+                                );
 
                                 return (
                                     <div
                                         key={di}
                                         className={`min-h-[72px] sm:min-h-[92px] border-b border-r border-app p-1.5 ${
-                                            isToday ? 'bg-amber-50' : ''
+                                            isToday ? 'bg-amber-50' : isWeekend ? 'bg-slate-50/50' : ''
                                         }`}
                                     >
-                                        <div 
-                                           className={`flex items-center justify-between text-xs mb-1 ${
-                                                isToday ? 'text-navy font-semibold' : 'text-muted'
-                                           }`} 
-                                        >
-                                            {list.length > 0 ? (
-                                                <button
-                                                    type="button"
-                                                    data-open-tanggal={key}
-                                                    aria-label={`Lihat agenda tanggal ${tanggal.getDate()}`}
-                                                    className="hover:underline underline-offset-2"
-                                                >
-                                                    {tanggal.getDate()}
-                                                </button>
-                                            ) : (
-                                                <span>{tanggal.getDate()}</span>
-                                            )}
-                                            <span className="sm:hidden flex items-center gap-1">
+                                        <div className="text-xs mb-1 text-muted">
+                                            <div className="flex items-center justify-between">
+                                                {list.length > 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        data-open-tanggal={key}
+                                                        aria-label={`Lihat agenda tanggal ${tanggal.getDate()}`}
+                                                        className="hover:underline underline-offset-2"
+                                                    >
+                                                        {nomorTanggal}
+                                                    </button>
+                                                ) : (
+                                                    <span>{nomorTanggal}</span>
+                                                )}
+                                            </div>
+                                            <span className="sm:hidden flex items-center gap-1 mt-0.5">
                                                 {list.slice(0, 3).map((k) => (
                                                     <span
                                                         key={k.id}
