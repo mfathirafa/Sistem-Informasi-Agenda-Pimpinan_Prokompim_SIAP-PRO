@@ -1,22 +1,24 @@
 'use client';
 
 import { useState, useEffect, useTransition, useMemo } from 'react';
-import { Trash2, Pencil, X, Search } from 'lucide-react';
+import { Trash2, Pencil, X, Search, Eye, EyeOff } from 'lucide-react';
 import { createUser, updateUser, deleteUser, resetAllStaffPassword } from '@/app/actions/users';
 import ConfirmDialog from '@/components/confirm-dialog';
+import { useRouter } from 'next/navigation';
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', KEPALA_BAGIAN: 'Kepala Bagian' };
 type UserRow = { id: string; username: string; nama: string; role: string };
 
 export default function UsersClient({ users: initialUsers, currentUserId }: { users: UserRow[]; currentUserId: string }) {
+  const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
-  const [form, setForm] = useState({ username: '', password: '', nama: ''});
+  const [form, setForm] = useState({ username: '', password: '', confirmPassword: '', nama: ''})
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
-  const [editForm, setEditForm] = useState({ nama: '', role: 'STAFF' as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '' });
+  const [editForm, setEditForm] = useState({ nama: '', role: 'STAFF' as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '', confirmPassword: '' });
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
@@ -24,6 +26,10 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const [resetPassword, setResetPassword] = useState('');
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [showEditConfirmPassword, setShowEditConfirmPassword] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -46,20 +52,24 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.username.trim() || !form.password.trim() || !form.nama.trim()) { setError('Semua kolom wajib diisi'); return; }
+    if (form.password !== form.confirmPassword) { setError('Konfirmasi kata sandi tidak cocok'); return; }
     setError('');
     startTransition(async () => {
       const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: 'STAFF' });
       if (res.ok) {
         setUsers((prev) => [...prev, { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: 'STAFF' }]);
-        setForm({ username: '', password: '', nama: ''});
+        setShowPassword(false);
+        setShowConfirmPassword(false);
       } else { setError(res.error || 'Gagal menambah pengguna.'); }
     });
   };
 
   const openEdit = (u: UserRow) => {
     setEditingUser(u);
-    setEditForm({ nama: u.nama, role: u.role as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '' });
+    setEditForm({ nama: u.nama, role: u.role as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN', password: '', confirmPassword: '' });
     setEditError('');
+    setShowEditPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const submitEdit = (e: React.FormEvent) => {
@@ -67,7 +77,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
     if (!editingUser) return;
     if (!editForm.nama.trim()) { setEditError('Nama wajib diisi.'); return; }
     if (editForm.password && editForm.password.length < 6) { setEditError('Kata sandi minimal 6 karakter.'); return; }
+    if (editForm.password && editForm.password !== editForm.confirmPassword) { setEditError('Konfirmasi kata sandi tidak cocok'); return; }
     setEditError('');
+    const isEditingSelf = editingUser.id === currentUserId;
     startTransition(async () => {
       const res = await updateUser(editingUser.id, {
         nama: editForm.nama.trim(),
@@ -76,6 +88,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
       });
       if (res.ok) {
         setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, nama: editForm.nama.trim(), role: editForm.role } : u)));
+        if (isEditingSelf) {
+          router.refresh(); // NEW: refresh session agar nama terupdate di header
+        }
         setEditingUser(null);
       } else { setEditError(res.error || 'Gagal menyimpan.'); }
     });
@@ -187,11 +202,42 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
       <div className="lg:order-2 bg-white rounded-2xl border border-app p-5 self-start">
         <h3 className="font-display text-base font-semibold text-navy mb-4">Tambah Pengguna</h3>
         <form onSubmit={submit} className="space-y-3">
-          <input placeholder="Nama lengkap" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
-          <input placeholder="Nama pengguna" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
-          <input placeholder="Kata sandi" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
-          {error && <p className="text-xs text-red-600">{error}</p>}
-          <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Tambah'}</button>
+          <input placeholder="Nama Lengkap" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+          <input placeholder="Nama Pengguna" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+          <div className="relative">
+            <input placeholder="Kata sandi"
+              type={showPassword ? 'text' : 'password'}
+              value={form.password}
+              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+              className="w-full px-3 py-2 rounded-lg border border-app text-sm pr-10"
+           />
+           <button 
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy"
+              aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+            >
+              {showPassword ? <EyeOff size={16} /> :<Eye size={16} />}
+            </button>
+          </div>
+          <div className="relative">
+            <input placeholder="Konfirmasi kata sandi"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={form.confirmPassword}
+              onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+              className="w-full px-3 py-2 rounded-lg border border-app text-sm pr-10"
+            />
+            <button 
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy"
+              aria-label={showConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}  
+            >
+              {showConfirmPassword ?<EyeOff size={16} /> :<Eye size={16} />}
+            </button>
+          </div>
+          {error &&<p className="text-xs text-red-600">{error}</p>}
+          <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan' : 'Tambah'}</button>
         </form>
       </div>
 
@@ -239,15 +285,46 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Kata sandi baru (opsional)</label>
-                <input type="password" placeholder="Kosongkan jika tidak diganti" value={editForm.password} onChange={(e) => setEditForm((f) => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+             <div>
+              <label className='block text-sm font-medium mb-1.5'>Kata sandi baru (opsional)</label>
+              <div className='relative'>
+                <input 
+                  type={showEditPassword ? 'text' : 'password'}
+                  placeholder='Kosongkan jika tidak diganti'
+                  value={editForm.password}
+                  onChange={(e) => setEditForm((f) => ({ ...f, password: e.target.value }))}
+                  className='w-full px-3 py-2 rounded-lg border border-app text-sm pr-10'
+                 />
+                 <button
+                  type="button"
+                  onClick={() => setShowEditPassword(!showEditPassword)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy'
+                  aria-label={showEditPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                 >
+                  {showEditPassword ?<EyeOff size={16} /> :<Eye size={16} />}
+                 </button>
               </div>
-              {editError && <p className="text-xs text-red-600">{editError}</p>}
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium">Batal</button>
-                <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">{isPending ? 'Menyimpan...' : 'Simpan'}</button>
+             </div>
+             <div>
+              <label className='block text-sm font-medium mb-1.5'>Konfimasi kata sandi baru</label>
+              <div className='relative'>
+                <input 
+                  type={showEditConfirmPassword ? 'text' : 'password'}
+                  placeholder='Konfirmasi kata sandi baru'
+                  value={editForm.confirmPassword}
+                  onChange={(e) => setEditForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                  className='w-full px-3 py-2 rounded-lg border border-app text-sm pr-10' 
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowEditConfirmPassword(!showEditConfirmPassword)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy'
+                  aria-label={showEditConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                >
+                  {showEditConfirmPassword ?<EyeOff size={16} /> :<Eye size={16} />}
+                </button>
               </div>
+             </div>
             </form>
           </div>
         </div>
@@ -278,7 +355,10 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               </div>
               {resetError && <p className="text-xs text-red-600">{resetError}</p>}
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setResetAllOpen(false)} className='flex-1 py-2.5 rounded-lg border border-app text-sm font-medium'>
+                <button 
+                  type="button" onClick={() => { setEditingUser(null); setShowEditPassword(false); setShowEditConfirmPassword(false); }} 
+                  className='flex-1 py-2.5 rounded-lg border border-app text-sm font-medium'
+                >
                   Batal
                 </button>
                 <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">

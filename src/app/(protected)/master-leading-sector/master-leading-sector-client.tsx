@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Trash2, Plus, Pencil, X } from 'lucide-react';
+import { Trash2, Plus, Pencil, X, EyeOff, Eye } from 'lucide-react';
 import { createLeadingSector, updateLeadingSector, deleteLeadingSector } from '@/app/actions/leading-sector';
 import { KATEGORI_LEADING_SECTOR_OPTIONS } from '@/lib/constants/kategori-leading-sector';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -203,52 +203,50 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
         confirmLabel="Hapus"
         loading={isPending}
         onConfirm={confirmDeleteAction}
-        onCancel={() => setConfirmDelete(null)}
+        onCancel={() => {setConfirmDelete(null); setDeleteError(''); }}
+        error={deleteError}
       />
 
       {editingItem && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+        <div 
+          className='fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50'
           onClick={() => setEditingItem(null)}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="sektor-edit-title"
+          aria-labelledby='sektor-edit-title'
         >
-          <div className="bg-white rounded-2xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-app">
-              <h3 id="sektor-edit-title" className="font-display text-lg font-semibold text-navy">Edit Leading Sector</h3>
-              <button onClick={() => setEditingItem(null)} aria-label="Tutup" className="p-1 rounded-md hover:bg-app">
+          <div className='bg-white rounded-2xl max-w-sm w-full' onClick={(e) => e.stopPropagation()}>
+            <div className='flex items-center justify-between px-5 py-4 border-b border-app'>
+              <h3 id="sektor-edit-title" className='font-display text-lg font-semibold text-navy'>Edit Leading Sector</h3>
+              <button onClick={() => setEditingItem(null)} aria-label='Tutup' className='p-1 rounded-md hover:bg-app'>
                 <X size={18} />
-              </button>  
-          </div>
-          <form onSubmit={submitEdit} className="px-5 py-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Nama</label>
-              <input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="cth. Dinas Pendidikan" />
-            </div> 
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Kategori</label>
-              <select value={editKategori} onChange={(e) => setEditKategori(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-app text-sm bg-white">
-                  <option value="">Belum Dikategorikan</option>
-                  {KATEGORI_LEADING_SECTOR_OPTIONS.map((k) => (
-                    <option key={k} value={k}>{k}</option>
-                  ))}
-                </select>
+              </button>
             </div>
-            {editError && <p className="text-xs text-red-600">{editError}</p>} 
-            <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setEditingItem(null)} className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium">
-                Batal
-              </button>
-              <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">
-                {isPending ? 'Menyimpan...' : 'Simpan'}
-              </button>
-            </div>  
-          </form>
+            <form onSubmit={submitEdit} className='px-5 py-4 space-y-4'>
+              <div>
+                <label className='block text-sm font-medium mb-1.5'>Nama</label>
+                <input value={editNama} onChange={(e) => setEditNama(e.target.value)} className='w-full px-3 py-2 rounded-lg border border-app text-sm' placeholder='cth. Dinas Pendidikan' />
+              </div>
+              <div>
+            <label className="block text-sm font-medium mb-1.5">Kategori</label>
+            <select value={editKategori} onChange={(e) => setEditKategori(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-app text-sm bg-white">
+            <option value="">Belum Dikategorikan</option>
+            {KATEGORI_LEADING_SECTOR_OPTIONS.map((k) => (
+            <option key={k} value={k}>{k}</option>
+            ))}
+            </select>
+            </div>
+            {editError &&<p className="text-xs text-red-600">{editError}</p>}<div className="flex gap-2 pt-2">
+            <button type="button" onClick={() => setEditingItem(null)} className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium">
+            Batal</button>
+            <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">
+            {isPending ? 'Menyimpan...' : 'Simpan'}
+            </button>
+            </div></form>
+          </div>
         </div>
-      </div>
-      )}
+        )}
     </div>
   );
 }
