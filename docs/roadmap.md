@@ -1089,3 +1089,151 @@ Menggantikan desain flat-list 6 Agustus (tiap baris punya input link + tombol Si
 - `src/app/actions/users.ts` — MODIFIED: meta
 - `src/app/actions/dokumen.ts` — MODIFIED: hasDiff guard, meta via nama kegiatan
 - `src/app/(protected)/activity-log/activity-log-client.tsx` — MODIFIED: `getEntityName(log.changes)`
+
+---
+
+## Sprint25: Fitur Operasional (18 Agustus 2026)
+
+> **Status: 🚧 Berjalan** — Fokus pada fitur operasional, bukan performance optimization.
+
+### Task List
+
+| # | Task | Status | Temuan |
+|---|------|--------|--------|
+| 1 | Sambungkan getKegiatanExport() ke UI Laporan | ⏭️ Skip | Export lokal di `laporan-client.tsx` sudah bekerja, hasil sama dengan server action. Tidak perlu dihubungkan. |
+| 2 | Integrasikan saveDokumenKegiatan ke Detail Kegiatan | ✅ Sudah | `saveDokumenKegiatan` sudah terintegrasi di `detail-client.tsx`. 7 dokumen + link folder sudah berfungsi. |
+| 3 | UI/behavior allCrewProtokol dan allCrewLiputan | ⏳ Pending | Checkbox + picker sudah ada di `kegiatan-modal.tsx`. Perlu verifikasi behavior simpan. |
+| 4 | Activity Log di Detail Kegiatan | ⏳ Pending | Perlu query log per kegiatan + timeline component. |
+| 5 | Ganti window.alert() dengan toast | ⏳ Pending | 3 alert di `worksheet-client.tsx`. Perlu install `sonner`. |
+| 6 | Copy foto gedung KPT ke public/ | ✅ Sudah | `gedung-kpt.jpg` sudah ada di `public/`. Dashboard sudah pakai. |
+| 7 | Hapus import tidak terpakai | ⏳ Pending | `import { before } from "node:test"` di `dokumen.ts:8` dan `users.ts:7`. |
+| 8 | Redesign Print/PDF Laporan | ⏳ Pending | Butuh redesign lengkap: kop surat resmi, kolom optimal, no ellipsis, header repeat, footer. |
+
+### Detail Task
+
+#### Task 7: Hapus Unused Imports
+
+**File yang diubah:**
+
+##### `src/app/actions/dokumen.ts` — Line 8
+
+**BEFORE:**
+```typescript
+import { logActivity } from "@/lib/activity-log";
+import { before } from "node:test";
+
+type DokumenUpdateInput = {
+```
+
+**AFTER:**
+```typescript
+import { logActivity } from "@/lib/activity-log";
+
+type DokumenUpdateInput = {
+```
+
+##### `src/app/actions/users.ts` — Line 7
+
+**BEFORE:**
+```typescript
+import { logActivity } from '@/lib/activity-log';
+import { after, before } from 'node:test';
+
+export type CreateUserInput = {
+```
+
+**AFTER:**
+```typescript
+import { logActivity } from '@/lib/activity-log';
+
+export type CreateUserInput = {
+```
+
+---
+
+#### Task 5: Ganti window.alert() dengan Toast
+
+**Langkah:**
+1. Install `sonner`: `npm install sonner`
+2. Tambahkan `<Toaster />` di `src/app/layout.tsx`
+3. Ganti 3 `alert()` di `worksheet-client.tsx` dengan `toast()`
+
+**Lokasi alert():**
+- `worksheet-client.tsx:157` — warning duplikat
+- `worksheet-client.tsx:159` — error simpan
+- `worksheet-client.tsx:185` — error export
+
+---
+
+#### Task 4: Activity Log di Detail Kegiatan
+
+**Langkah:**
+1. Tambah query `getActivityLogByEntity(entityId)` di `lib/activity-log.ts`
+2. Buat timeline component sederhana
+3. Tambahkan section di `detail-client.tsx`
+
+---
+
+#### Task 3: Verifikasi allCrew Behavior
+
+**Yang sudah ada:**
+- Checkbox "Semua crew Protokol/Liputan" di form
+- Label picker berubah saat checkbox aktif
+- Field `allCrewProtokol`/`allCrewLiputan` di schema
+
+**Perlu verifikasi:**
+- Apakah flag tersimpan ke database saat create/update
+- Apakah display di worksheet/laporan sudah benar
+
+---
+
+#### Task 8: Redesign Print/PDF Laporan
+
+**Masalah saat ini:**
+- Row terlalu tinggi, whitespace berlebih
+- 16 kolom terlalu banyak, semua sempit
+- Data terpotong ellipsis
+- Header/footer belum resmi
+- Browser timestamp muncul
+
+**Target desain:**
+- A4 Landscape
+- Kop surat resmi (Pemkab Brebes)
+- Pilihan: Laporan Ringkas (kolom inti) vs Laporan Detail
+- Header tabel repeat setiap halaman
+- No ellipsis, wrap natural
+- Footer dengan nama sistem + nomor halaman
+- Format tanggal Indonesia
+
+**Kolom kandidat (16 saat ini):**
+- Tanggal Pelaksanaan, Nama Kegiatan, Perihal Surat, Nomor Surat, Dresscode
+- Waktu, Tempat, Pejabat, No. HP PIC, Leading Sector
+- Status Sambutan, Status Kegiatan, Petugas Protokol, Petugas Liputan
+- Jenis Penugasan, Status Publikasi
+
+**Usulan Laporan Ringkas (9 kolom):**
+1. Tanggal Pelaksanaan
+2. Nama Kegiatan
+3. Tempat
+4. Pejabat
+5. Waktu
+6. Leading Sector
+7. Petugas Protokol
+8. Petugas Liputan
+9. Status Kegiatan
+
+---
+
+### Decisions
+
+- **Task 1 & 2 tidak perlu dikerjakan** — sudah berfungsi dengan baik
+- **Task 6 tidak perlu dikerjakan** — foto sudah ada
+- **Urutan pengerjaan**: Task 7 → Task 5 → Task 3 → Task 4 → Task 8
+
+---
+
+### Verifikasi
+
+- [ ] `npx tsc --noEmit`
+- [ ] `npm run build`
+- [ ] Manual test per fitur
