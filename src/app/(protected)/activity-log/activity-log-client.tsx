@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { getEntityName } from "@/lib/activity-log";
 import Pagination from "@/components/pagination";
 import { KATEGORI_PETUGAS_LABEL, type KategoriPetugasValue } from "@/lib/constants/kategori-petugas";
+import { useModalScrollLock } from "@/hooks/use-modal-scroll-lock";
 
 // -- Label Maps --
 
@@ -141,6 +142,9 @@ function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () =>
   const changes = log.changes;
   const before = changes?.before as Record<string, unknown> | undefined;
   const after = changes?.after as Record<string, unknown> | undefined;
+
+  // Lock scroll saat modal terbuka
+  useModalScrollLock(true);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -389,17 +393,21 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
 
       {/* Pagination + Info */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">Menampilkan {pageStart}-{pageEnd} dari {total} log</span>
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={(p) => {
-              const params = new URLSearchParams(searchParams.toString());
-              params.set('page', String(p));
-              router.push(`/activity-log?${params.toString()}`);
-            }}
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+          <span className="text-muted text-center sm:text-left">
+            Menampilkan {pageStart}-{pageEnd} dari {total} log
+          </span>
+          <div className="flex justify-center">
+            <Pagination 
+              page={page}
+              totalPages={totalPages}
+              onPageChange={(p) => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('page', String(p));
+                router.push(`/activity-log?${params.toString()}`);
+              }}  
+            />
+          </div>
         </div>
       )}
 

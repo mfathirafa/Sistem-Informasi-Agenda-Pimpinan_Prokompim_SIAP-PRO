@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Fraunces, Inter, IBM_Plex_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
-import GlobalLoading from '@/components/global-loading';
+import { GlobalLoading } from '@/components/global-loading';
 import './globals.css';
 
 const fraunces = Fraunces({

@@ -16,6 +16,7 @@ import type { KegiatanRow } from '@/lib/worksheet';
 import ConfirmDialog from '@/components/confirm-dialog';
 import Pagination from '@/components/pagination';
 import { toDateInput } from '@/lib/format';
+import { setGlobalLoading } from '@/components/global-loading';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -111,6 +112,7 @@ export default function WorksheetClient({
 
   /** Terapkan satu filter (sinkron ke URL), selalu kembali ke halaman 1. */
   const setFilter = (key: string, value: string | undefined) => {
+    setGlobalLoading(true); 
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
       if (value) params.set(key, value);
@@ -121,6 +123,7 @@ export default function WorksheetClient({
   };
 
   const handlePageChange = (p: number) => {
+    setGlobalLoading(true);
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('page', String(p));
@@ -130,6 +133,7 @@ export default function WorksheetClient({
 
   // Sort kolom: klik header toggle asc <->, kembali ke halaman 1.
   const setSort = (key: KegiatanSortKey) => {
+    setGlobalLoading(true);
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
       const nextDir: KegiatanSortDir = filters.sort === key && filters.dir === 'asc' ? 'desc' : 'asc';
@@ -181,11 +185,13 @@ export default function WorksheetClient({
   };
 
   const exportExcel = async () => {
+    setGlobalLoading(true);
     // Show loading toast for export
     const loadingToast = toast.loading('Menyiapkan export Excel...');
     try{
     const res = await getKegiatanExport(filters);
     if (!res.ok) {
+      setGlobalLoading(false);
       toast.error(res.error || 'Gagal mengekspor.', { id: loadingToast} );
       return;
     }
@@ -246,7 +252,9 @@ export default function WorksheetClient({
     XLSX.writeFile(wb, `worksheet-spj-${toDateInput(new Date())}.xlsx`);
 
     toast.success('Export berhasil', { id: loadingToast });
+    setGlobalLoading(false);
     } catch (err) {
+      setGlobalLoading(false);
       toast.error('Gagal mengekspor.', { id: loadingToast });
     }
   };
@@ -359,20 +367,20 @@ export default function WorksheetClient({
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                 <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="sticky left-0 z-10 bg-app border-r border-app px-4 py-3 font-medium" />
                 <SortableTh label="Kegiatan" sortKey="namaKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Perihal Surat</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Nomor Surat</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Dresscode</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Tempat</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Pejabat</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">No. HP PIC</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Leading Sector</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Sambutan</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Perihal Surat</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Nomor Surat</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Dresscode</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Tempat</th>
+                <th className="px-4 py-3 font-medium">Pejabat</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">No. HP PIC</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Leading Sector</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Sambutan</th>
                 <SortableTh  label="Status Kegiatan" sortKey="statusKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Petugas Protokol</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Petugas Liputan</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Dokumentasi</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Jenis Tugas</th>
-                <th className="hidden md:table-cell px-4 py-3 font-medium">Publikasi</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Petugas Protokol</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Petugas Liputan</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Dokumentasi</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Jenis Tugas</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Publikasi</th>
                 {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
               </tr>
             </thead>
@@ -394,14 +402,14 @@ export default function WorksheetClient({
                       })}
                     </td>
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted">{k.tempat}</td>
-                    <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap">{k.pejabat}</td>
-                    <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted">{k.leadingSectorNama}</td>
-                    <td className="hidden md:table-cell px-4 py-3">
+                    <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
+                    <td className="px-4 py-3 text-muted text-xs">{k.tempat}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-xs">{k.pejabat}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-muted">{k.leadingSectorNama}</td>
+                    <td className="hidden sm:table-cell px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'

@@ -3,30 +3,35 @@
 import { useEffect } from "react";
 
 /**
- * Hook untuk mengunci scroll body saat modal terbuka.
- * Gunakan di component modal: `useModalScrollLock(isOpen)`.
+ * Lock scroll pada body saat modal/dialog terbuka.
+ * Mengatur overflow: hidden pada html dan body
+ * Kompensasi scrollbar untuk mencegah layout shift.
+ * Cleanup otomatis saat unmount atau open=false
  */
-export function useModalScrollLock(isOpen: boolean) {
+export function useModalScrollLock(open: boolean) {
     useEffect(() => {
-        if (!isOpen) return;
+        if (!open) return;
 
-        // simpan overflow asli
-        const originalOverflow = document.body.style.overflow;
-        const originalPaddingRight = document.body.style.paddingRight;
+        const html = document.documentElement;
+        const body = document.body;
+        const prevHtml = html.style.overflow;
+        const prevBody = body.style.overflow;
+        const prevPaddingRight = body.style.paddingRight;
 
         // Hitung scrollbar width untuk mencegah layout shift
-        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        const scrollbarWidth = window.innerWidth - html.clientWidth;
 
-        // Kunci Scroll
-        document.body.style.overflow = 'hidden';
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
         if (scrollbarWidth > 0) {
-            document.body.style.paddingRight = `${scrollbarWidth}px`;
+            body.style.paddingRight = `${scrollbarWidth}px`;
         }
 
-        // Cleanup saat unmount atau isOpen berubah jadi false
         return () => {
-            document.body.style.overflow = originalOverflow;
-            document.body.style.paddingRight = originalPaddingRight;
-        };
-    }, [isOpen]);
+            html.style.overflow = prevHtml;
+            body.style.overflow = prevBody;
+            body.style.paddingRight = prevPaddingRight;
+        }
+    }, [open])
 }

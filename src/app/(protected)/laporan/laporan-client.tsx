@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
-import { Download, FileDown, Settings2, FileText, Table } from "lucide-react";
+import { Download, Settings2, FileText, Table } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
 import { formatTanggal } from '@/lib/format';
@@ -20,16 +20,6 @@ function formatTanggalIndonesia(dateStr: string): string {
     });
 }
 
-function formatDateTimeIndonesia(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 type KegiatanItem = {
     id: string;
     namaKegiatan: string;
@@ -226,21 +216,26 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
         <div className="space-y-4">
             {/* Header khusus cetak/PDF - tersembunyi di layar */}
             <div className="hidden print:block">
-                {/* Kop Surat */}
-                <div className="text-center border-b-2 border-black pb-3 mb-4">
-                    <p className="text-xs font-medium tracking-wide">PEMERINTAH KABUPATEN BREBES</p>
-                    <p className="text-xs font-medium tracking-wide">SEKRETARIAT DAERAH</p>
-                    <p className="text-xs font-bold tracking-wide">BAGIAN PROTOKOL DAN KOMUNIKASI PIMPINAN</p>
+                {/* Kop Surat Resmi */}
+                <div className="flex items-start gap-4 border-b-2 border-black pb-4 mb-4">
+                    {/* Logo placeholder - ganti dengan logo resmi jika ada */}
+                    <div className="w-16 h-16 flex-shrink-0 border border-gray-300 rounded-full flex items-center justify-center text-[8pt] text-gray-400 text-center leading-tight">
+                        Logo<br/>Pemkab
+                    </div>
+                    <div className="flex-1 text-center">
+                        <p className="text-[11pt] font-bold tracking-wider">PEMERINTAH KABUPATEN BREBES</p>
+                        <p className="text-[10pt] font-medium tracking-wide">SEKRETARIAT DAERAH</p>
+                        <p className="text-[11pt] font-bold tracking-wider">BAGIAN PROTOKOL DAN KOMUNIKASI PIMPINAN</p>
+                        <p className="text-[9pt] text-gray-600 mt-1">Jl. Proklamasi No. 77 Brebes 52212</p>
+                    </div>
+                    <div className="w-16 h-16 flex-shrink-0" /> {/* Spacer untuk center judul */}
                 </div>
 
                 {/* Judul Laporan */}
-                <div className="text-center mb-4">
-                    <h1 className="text-base font-bold underline">LAPORAN KEGIATAN PROTOKOL</h1>
-                    <p className="text-xs mt-1">
+                <div className="text-center mb-3">
+                    <h1 className="text-[12pt] font-bold underline">LAPORAN KEGIATAN PROTOKOL</h1>
+                    <p className="text-[10pt] mt-1">
                         Periode: {formatTanggalIndonesia(localStart)} s.d. {formatTanggalIndonesia(localEnd)}
-                    </p>
-                    <p className="text-xs mt-0.5">
-                        Total: {data.length} kegiatan
                     </p>
                 </div>
             </div>
@@ -294,7 +289,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 </button>
                 <button
                     onClick={() => setShowColumnPicker((v) => !v)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app ${showColumnPicker ? 'bg-app' : ''}`}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${showColumnPicker ? 'bg-navy text-white border-navy' : 'border-app hover:bg-app text-navy'}`}
                 >
                     <Settings2 size={14} /> Atur Kolom
                 </button>
@@ -411,7 +406,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     <thead>
                         <tr className="bg-gray-100">
                             {printColumns.map((col) => (
-                                <th key={col.key} className="border border-gray-400 px-2 py-1.5 text-left text-[8pt] font-semibold">
+                                <th key={col.key} className="border border-gray-400 px-1.5 py-1 text-left text-[8pt] font-semibold">
                                     {col.label}
                                 </th>
                             ))}
@@ -421,7 +416,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                         {data.map((k, idx) => (
                             <tr key={k.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                 {printColumns.map((col) => (
-                                    <td key={col.key} className="border border-gray-300 px-2 py-1 align-top">
+                                    <td key={col.key} className="border border-gray-300 px-1.5 py-0.5 align-top leading-tight">
                                         {col.key === 'statusKegiatan'
                                             ? STATUS_KEGIATAN_LABEL[k.statusKegiatan]
                                             : col.key === 'statusSambutan'
@@ -450,24 +445,33 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     </tbody>
                 </table>
 
-                {/* Print styles -- landscape + header repeat + no ellipsis */}
+                {/* Print styles -- landscape + header repeat + no ellipsis + footer */}
                 <style>
                     {`
                     @page {
                         size: A4 landscape;
-                        margin: 15mm 12mm;
+                        margin: 18mm 12mm 22mm 12mm;
                     }
+
+                    /* Footer dengan nomor halaman - @page @bottom-center di luar @media print */
+                    @page {
+                        @bottom-center {
+                            content: "SIAP-PRO - Sistem Informasi Agenda Prokompim | Halaman " counter(page) " dari " counter(pages);
+                            font-size: 8pt;
+                            color: #666;
+                        }
+                    }
+
                     @media print {
                         nav, header, button, .no-print { display: none !important; }
                         body { font-size: 10pt; }
-                        .overflow-x-auto { overflow: visivle !important; }
+                        .overflow-x-auto { overflow: visible !important; }
 
                         /* Hide screen table, show print table */
                         .print\\:block { display: block !important; }
                         table { page-break-after: auto; }
                         thead { display: table-header-group; }
                         tr { page-break-inside: avoid; }
-                        tfoot { display: table-foter-group; }
 
                         /* Compact cells */
                         th, td {
@@ -479,12 +483,29 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
                         /* Remove truncate */
                         .truncate {
-                            overflow: visivle !important;
+                            overflow: visible !important;
                             text-overflow: unset !important;
                             white-space: normal !important;
                         }
+
+                        /* Fallback footer untuk browser yang tidak support @page @bottom-center */
+                        .print-footer {
+                            position: fixed;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            text-align: center;
+                            font-size: 8pt;
+                            color: #666;
+                            padding-bottom: 2mm;
+                        }
                     }`}
                 </style>
+
+                {/* Footer untuk print */}
+                <div className="hidden print:block print-footer">
+                        SIAP-PRO - Sistem Informasi Agenda Pimpinan Prokompim | Halaman <span className="page-number"></span>
+                </div>
             </div>
         </div>
     );

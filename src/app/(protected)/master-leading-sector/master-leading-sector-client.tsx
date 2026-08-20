@@ -196,10 +196,6 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
       </div>
       )}
 
-      {deleteError && (
-        <p className="lg:col-span-3 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>
-      )}
-
       <ConfirmDialog
         open={Boolean(confirmDelete)}
         title="Hapus leading sector ini?"

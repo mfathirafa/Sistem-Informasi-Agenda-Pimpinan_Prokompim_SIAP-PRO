@@ -104,11 +104,11 @@ function KegiatanItem({
               <dd className="font-medium">{k.dresscode || '-'}</dd>
             </div>
             <div>
-              <dt className="text-muted text-xs">No. HP PIC</dt>
+              <dt className="text-muted text-xs">No. HP PIC (LS)</dt>
               <dd className="font-medium">{k.picNoHp || '-'}</dd>
             </div>
             <div>
-              <dt className="text-muted text-xs">Leading Sector</dt>
+              <dt className="text-muted text-xs">Leading Sector (LS)</dt>
               <dd className="font-medium">{k.leadingSector.nama}</dd>
             </div>
             <div>

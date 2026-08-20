@@ -54,7 +54,7 @@ export function buildKegiatanOrderBy(
 ) : Prisma.KegiatanOrderByWithRelationInput[] {
     if (sort === 'namaKegiatan') return [{ namaKegiatan: dir }, { tanggal: 'asc' }, { createdAt: 'asc' }];
     if (sort === 'statusKegiatan') return [{ statusKegiatan: dir }, { tanggal: 'asc' }, { createdAt: 'asc' }];
-    return [{ tanggal: dir }, { createdAt: dir }];
+    return [{ tanggal: dir }, { createdAt: 'asc' }];
 }
 
 /**
