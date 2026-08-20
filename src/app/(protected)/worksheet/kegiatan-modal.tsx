@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from '@/lib/worksheet';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
@@ -10,6 +10,7 @@ import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/
 import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL } from '@/lib/constants/status-publikasi';
 import { toDateInput } from '@/lib/format';
+import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -83,6 +84,10 @@ export default function KegiatanModal({
   const [isCustomPejabat, setIsCustomPejabat] = useState(
     () => item != null && !PEJABAT_OPTIONS.includes(item.pejabat),
   );
+  const [showTempatError, setShowTempatError] = useState(false);
+
+  // 🔒 Lock scroll backgound saat modal terbuka
+  useModalScrollLock(true); // komponen hanya dirender saat modal terbuka (parent conditional render)
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -100,7 +105,10 @@ export default function KegiatanModal({
     const errs: Record<string, string> = {};
     if (!form.namaKegiatan.trim()) errs.namaKegiatan = 'Wajib diisi';
     if (!form.tanggal.trim()) errs.tanggal = 'Wajib diisi';
-    if (!form.tempat.trim()) errs.tempat = 'Wajib diisi';
+    if (!form.tempat.trim()) {
+      setShowTempatError(true); // New: buka modal validasi
+      return;
+    }
     if (!form.leadingSectorId) errs.leadingSectorId = 'Wajib dipilih';
     if (isCustomPejabat && !form.pejabat.trim()) errs.pejabat = 'Nama pejabat wajib diisi';
     if (Object.keys(errs).length) {
@@ -180,11 +188,10 @@ export default function KegiatanModal({
             <label className="block text-sm font-medium mb-1.5">Tempat</label>
             <input
               value={form.tempat}
-              onChange={(e) => update('tempat', e.target.value)}
+              onChange={(e) => { update('tempat', e.target.value); setShowTempatError(false); }} // NEW: clear error saat ketik
               className="w-full px-3 py-2 rounded-lg border border-app text-sm"
               placeholder="cth. Pendopo Kabupaten Brebes"
             />
-            {errors.tempat && <p className="text-xs text-red-600 mt-1">{errors.tempat}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Perihal Surat</label>
@@ -371,6 +378,43 @@ export default function KegiatanModal({
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
+
+          {/* Modal validasi Tempat - R4 */}
+          {showTempatError && (
+            <div
+              className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
+              onClick={() => setShowTempatError(false)}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="tempat-error-title"
+            >
+              <div
+                className="bg-white rounded-2xl max-w-full animate-dialog-in"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-5 pt-5 pb-4 flex flex-col items-center text-center">
+                  <div className="rounded-full bg-amber-50 p-3 mb-3">
+                    <AlertTriangle size={24} className="text-amber-600" />
+                  </div>
+                  <h3 id="tempat-error-title" className="font-display text-lg font-semibold tex-navy">
+                    Tempat Wajib Diisi
+                  </h3>
+                  <p className="text-sm text-muted mt-1">
+                    Silahkan isi tempat pelaksanaan kegiatan sebelum menyimpan.
+                  </p>
+                </div>
+                <div className="flex gap-2 px-5 pb-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowTempatError(false)}
+                    className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
 type ConfirmDialogVariant = 'danger' | 'primary';
 
@@ -21,7 +22,7 @@ export default function ConfirmDialog({
     title: string;
     message: string;
     variant?: ConfirmDialogVariant;
-    loading: boolean;
+    loading?: boolean;
     cancelLabel?: string;
     confirmLabel?: string;
     onConfirm: () => void;
@@ -30,6 +31,9 @@ export default function ConfirmDialog({
 }) {
     const id = useId();
     const confirmRef = useRef<HTMLButtonElement>(null);
+
+    // 🔒 Lock scroll background saat confirm dialog terbuka
+    useModalScrollLock(open); 
     
     useEffect(() => {
         if (open) confirmRef.current?.focus();

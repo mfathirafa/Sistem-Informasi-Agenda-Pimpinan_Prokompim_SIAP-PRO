@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
-import { Download, FileDown, Settings2 } from "lucide-react";
+import { Download, FileDown, Settings2, FileText, Table } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
 import { formatTanggal } from '@/lib/format';
@@ -10,6 +10,26 @@ import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from "@/lib/constants
 import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from "@/lib/constants/status-publikasi";
 import type { StatusKegiatan } from "@prisma/client";
 
+// Format tanggal Indonesia untuk print
+function formatTanggalIndonesia(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
+function formatDateTimeIndonesia(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
 type KegiatanItem = {
     id: string;
     namaKegiatan: string;
@@ -94,6 +114,12 @@ const COLUMNS: ColumnDef[] = [
     { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], render: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], tdClass: 'text-gray-500' },
 ];
 
+// Kolom untuk Laporan Ringkas (print-friendly, 9 kolom)
+const RINGKAS_COLUMN_KEYS: ColumnKey[] = [
+    'tanggal', 'namaKegiatan', 'tempat', 'pejabat', 'waktu',
+    'leadingSector', 'petugasProtokol', 'petugasLiputan', 'statusKegiatan'
+];
+
 const ALL_COLUMN_KEYS: ColumnKey[] = COLUMNS.map((c) => c.key);
 const STORAGE_KEY = 'laporan.exportColumns';
 
@@ -113,6 +139,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
     const [activeColumns, setActiveColumns] = useState<ColumnKey[]>(ALL_COLUMN_KEYS);
     const [showColumnPicker, setShowColumnPicker] = useState(false)
     const [hydrated, setHydrated] = useState(false);
+    const [printMode, setPrintMode] = useState<'ringkas' | 'detail'>('ringkas');
 
     // Baca pilihan setela mount (render awal selalu semua kolom -> tanpa hydration mismatch).
     useEffect (() => {
@@ -157,6 +184,14 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
         return { total: data.length, perStatus };
     }, [data]);
 
+    // Kolom yang digunakan untuk print (tergantung mode)
+    const printColumns = useMemo(() => {
+        if (printMode === 'ringkas') {
+            return COLUMNS.filter((c) => RINGKAS_COLUMN_KEYS.includes(c.key));
+        }
+        return COLUMNS.filter((c) => activeColumns.includes(c.key));
+    }, [printMode, activeColumns]);
+
     const applyFilter = () => {
         startTransition(() => {
             const params = new URLSearchParams();
@@ -189,10 +224,25 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
 
     return (
         <div className="space-y-4">
-            {/* Header khusus cetak/PDF — tersembunyi di layar */}
-            <div className="hidden print:block text-center mb-4">
-                <h1 className="text-lg font-bold">LAPORAN KEGIATAN PROTOKOL</h1>
-                <p className="text-sm">Periode: {formatTanggal(localStart)} s.d. {formatTanggal(localEnd)}</p>
+            {/* Header khusus cetak/PDF - tersembunyi di layar */}
+            <div className="hidden print:block">
+                {/* Kop Surat */}
+                <div className="text-center border-b-2 border-black pb-3 mb-4">
+                    <p className="text-xs font-medium tracking-wide">PEMERINTAH KABUPATEN BREBES</p>
+                    <p className="text-xs font-medium tracking-wide">SEKRETARIAT DAERAH</p>
+                    <p className="text-xs font-bold tracking-wide">BAGIAN PROTOKOL DAN KOMUNIKASI PIMPINAN</p>
+                </div>
+
+                {/* Judul Laporan */}
+                <div className="text-center mb-4">
+                    <h1 className="text-base font-bold underline">LAPORAN KEGIATAN PROTOKOL</h1>
+                    <p className="text-xs mt-1">
+                        Periode: {formatTanggalIndonesia(localStart)} s.d. {formatTanggalIndonesia(localEnd)}
+                    </p>
+                    <p className="text-xs mt-0.5">
+                        Total: {data.length} kegiatan
+                    </p>
+                </div>
             </div>
 
             <h1 className="font-display text-xl font-semibold text-navy no-print">Laporan Kegiatan</h1>
@@ -231,10 +281,16 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     <Download size={14} /> Export XLSX
                 </button>
                 <button
-                    onClick={() => window.print()}
+                    onClick={() => { setPrintMode('ringkas'); setTimeout(() => window.print(), 0); }}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
                 >
-                    <FileDown size={14} /> Export PDF
+                    <FileText size={14} /> PDF Ringkas
+                </button>
+                <button
+                    onClick={() => { setPrintMode('detail'); setTimeout(() => window.print(), 0); }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
+                >
+                    <Table size={14} /> PDF Detail
                 </button>
                 <button
                     onClick={() => setShowColumnPicker((v) => !v)}
@@ -320,7 +376,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
             </div>
             
             {/* Table -- kolom mengikuti pilihan user (activeColumns) */}
-            <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
+            <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity print:hidden ${isPending ? 'opacity-50' : ''}`}>
                 <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead className="bg-app text-left text-xs text-muted uppercase tracking-wide">
@@ -349,18 +405,87 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 </div>
             </div>
 
-            {/* Print styles -- landscape + kolom mengikuti pilihan user */}
-            <style>{`
-                @page { size: A4 landscape; margin: 12mm; }
-                @media print {
-                    nav, header, button, .no-print { display: none !important; }
-                    body { font-size: 10pt; }
-                    table { page-break-after: auto; }
-                    tr { page-break-inside: avoid; }
-                    .overflow-x-auto { overflow: visible !important; }
-                    table th, table td { display: table-cell !important; }
-                }
-            `}</style>
+            {/* Print Table - tabel khusus untuk print dengan kolom ringkas/detail */}
+            <div className="hidden print:block">
+                <table className="w-full text-[9pt] border-collapse">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            {printColumns.map((col) => (
+                                <th key={col.key} className="border border-gray-400 px-2 py-1.5 text-left text-[8pt] font-semibold">
+                                    {col.label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((k, idx) => (
+                            <tr key={k.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                {printColumns.map((col) => (
+                                    <td key={col.key} className="border border-gray-300 px-2 py-1 align-top">
+                                        {col.key === 'statusKegiatan'
+                                            ? STATUS_KEGIATAN_LABEL[k.statusKegiatan]
+                                            : col.key === 'statusSambutan'
+                                            ? (k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum')
+                                            : col.key === 'jenisPenugasan'
+                                            ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan]
+                                            : col.key === 'statusPublikasi'
+                                            ? STATUS_PUBLIKASI_LABEL[k.statusPublikasi]
+                                            : col.key === 'petugasProtokol'
+                                            ? crewLabel(k.allCrewProtokol, k.petugasProtokolNama)
+                                            : col.key === 'petugasLiputan'
+                                            ? crewLabel(k.allCrewLiputan, k.petugasLiputanNama)
+                                            : col.get(k) || '-'
+                                        }
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        {data.length === 0 && (
+                            <tr>
+                                <td colSpan={printColumns.length} className="border border-gray-300 px-2 py-4 text-center text-gray-500">
+                                    Tidak ada data.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+
+                {/* Print styles -- landscape + header repeat + no ellipsis */}
+                <style>
+                    {`
+                    @page {
+                        size: A4 landscape;
+                        margin: 15mm 12mm;
+                    }
+                    @media print {
+                        nav, header, button, .no-print { display: none !important; }
+                        body { font-size: 10pt; }
+                        .overflow-x-auto { overflow: visivle !important; }
+
+                        /* Hide screen table, show print table */
+                        .print\\:block { display: block !important; }
+                        table { page-break-after: auto; }
+                        thead { display: table-header-group; }
+                        tr { page-break-inside: avoid; }
+                        tfoot { display: table-foter-group; }
+
+                        /* Compact cells */
+                        th, td {
+                            display: table-cell !important;
+                            overflow: visible !important;
+                            text-overflow: unset !important;
+                            white-space: normal !important;
+                        }
+
+                        /* Remove truncate */
+                        .truncate {
+                            overflow: visivle !important;
+                            text-overflow: unset !important;
+                            white-space: normal !important;
+                        }
+                    }`}
+                </style>
+            </div>
         </div>
     );
 }

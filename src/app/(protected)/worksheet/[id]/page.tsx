@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getKegiatanDetail } from "@/lib/queries/kegiatan";
+import { getActivityLogByEntity } from "@/lib/activity-log";
 import { JENIS_DOKUMEN_OPTIONS } from "@/lib/constants/status-dokumen";
 import DetailClient from "./detail-client";
 
@@ -13,6 +14,9 @@ export default async function DetailKegiatanPage({ params }: { params: Promise<{
   const dokumenSorted = JENIS_DOKUMEN_OPTIONS
     .map((jenis) => dokumenMap.get(jenis))
     .filter((d): d is NonNullable<typeof d> => Boolean(d));
+
+    // Ambil activity log untuk kegiatan ini
+    const activityLog = await getActivityLogByEntity(id);
 
     return (
       <DetailClient
@@ -32,13 +36,20 @@ export default async function DetailKegiatanPage({ params }: { params: Promise<{
           jenisPenugasan: kegiatan.jenisPenugasan,
           statusPublikasi: kegiatan.statusPublikasi,
         }}
-        dokumen={dokumenSorted.map((d) => ({
-          id: d.id,
-          jenis: d.jenis,
-          status: d.status,
-          link: d.link,
-          catatan: d.catatan,
-        }))}
-      />
+          dokumen={dokumenSorted.map((d) => ({
+            id: d.id,
+            jenis: d.jenis,
+            status: d.status,
+            link: d.link,
+            catatan: d.catatan,
+          }))}
+          activityLog={activityLog.map((log) => ({
+            id: log.id,
+            action: log.action,
+            userName: log.userName,
+            changes: log.changes,
+            createdAt: log.createdAt.toISOString(),
+          }))}
+        />
     );
 }

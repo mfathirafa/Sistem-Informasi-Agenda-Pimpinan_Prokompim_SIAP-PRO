@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon, ArrowUp, ArrowUpDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
@@ -154,9 +155,9 @@ export default function WorksheetClient({
       if (res.ok) {
         setModalOpen(false);
         router.refresh(); // sinkronkan ulang data + total dengan server
-        if (res.warning) alert(res.warning);
+        if (res.warning) toast.warning(res.warning);
       } else {
-        alert(res.error || 'Gagal menyimpan.');
+        toast.error(res.error || 'Gagal menyimpan.');
       }
     });
   };
@@ -180,9 +181,12 @@ export default function WorksheetClient({
   };
 
   const exportExcel = async () => {
+    // Show loading toast for export
+    const loadingToast = toast.loading('Menyiapkan export Excel...');
+    try{
     const res = await getKegiatanExport(filters);
     if (!res.ok) {
-      alert(res.error || 'Gagal mengekspor.');
+      toast.error(res.error || 'Gagal mengekspor.', { id: loadingToast} );
       return;
     }
     const data = res.data;
@@ -240,6 +244,11 @@ export default function WorksheetClient({
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Worksheet');
     XLSX.writeFile(wb, `worksheet-spj-${toDateInput(new Date())}.xlsx`);
+
+    toast.success('Export berhasil', { id: loadingToast });
+    } catch (err) {
+      toast.error('Gagal mengekspor.', { id: loadingToast });
+    }
   };
 
   return (

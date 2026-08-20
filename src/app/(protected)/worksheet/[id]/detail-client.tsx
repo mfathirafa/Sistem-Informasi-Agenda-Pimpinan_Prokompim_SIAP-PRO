@@ -40,12 +40,54 @@ type DokumenDetail = {
   catatan: string | null;
 };
 
+type ActivityLogItem = {
+  id: string;
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  userName: string;
+  changes: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+const ACTION_LABEL: Record<string, string> = {
+  CREATE: 'Dibuat',
+  UPDATE: 'Diperbarui',
+  DELETE: 'Dihapus',
+};
+
+const ACTION_ICON: Record<string, string> = {
+  CREATE: 'bg-green-100 text-green-700',
+  UPDATE: 'bg-blue-100 text-blue-700',
+  DELETE: 'bg-red-100 text-red-700',
+};
+
+function formatChanges(changes: Record<string, unknown> | null): string {
+  if (!changes) return '-';
+  const after = changes.after as Record<string, unknown> | undefined;
+  const before = changes.before as Record<string, unknown> | undefined;
+  
+  if (after && !before) {
+    // CREATE
+    return 'Data kegiatan dibuat';
+  }
+  if (before && after) {
+    // UPDATE - list changed fields
+    const changedKeys = Object.keys(before).filter(
+      (k) => String(before[k] ?? '') !== String(after[k] ?? '')
+    );
+    if (changedKeys.length === 0) return 'Data diperbarui';
+    return `Perubahan: ${changedKeys.slice(0, 3).join(', ')}${changedKeys.length > 3 ? ` (+${changedKeys.length - 3} lainnya)` : ''}`;
+  }
+  return 'Data diperbarui';
+}
+
 export default function DetailClient({
   kegiatan,
   dokumen,
+  activityLog,
 }: {
   kegiatan: KegiatanDetail;
   dokumen: DokumenDetail[];
+  activityLog: ActivityLogItem[];
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -265,6 +307,38 @@ export default function DetailClient({
             </div>
           </div>
       </div>
+      
+      {/* Activity Log */}
+      {activityLog.length > 0 && (
+        <div className="bg-white rounded-2xl border border-app p-5">
+          <h2 className="font-display text-sm font-semibold text-navy uppercase tracking-wide mb-4">
+            Riwayat Perubahan
+          </h2>
+          <div className="space-y-3">
+            {activityLog.map((log) => (
+              <div key={log.id} className="flex items-start gap-3">
+                <div className={`mt-0.5 px-2 rounded text-xs font-medium ${ACTION_ICON[log.action]}`}>
+                  {ACTION_LABEL[log.action]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-navy">
+                    {formatChanges(log.changes)}
+                  </p>
+                  <p className="text-xs text-muted mt-0.5">
+                    oleh {log.userName} • {new Date(log.createdAt).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

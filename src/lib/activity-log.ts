@@ -88,3 +88,20 @@ export function getEntityName(changes: Record<string, unknown> | null | undefine
     const data = (changes.after ?? changes.before ?? {}) as Record<string, unknown>;
     return String(data.namaKegiatan ?? data.nama ?? data.username ?? '-');
 }
+
+export async function getActivityLogByEntity(entityId: string) {
+    const logs = await prisma.activityLog.findMany({
+        where: { entityId },
+        include: {
+            user: { select: { nama: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+    return logs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        userName: log.user.nama,
+        changes: log.changes as Record<string, unknown> | null,
+        createdAt: log.createdAt,
+    }));
+}

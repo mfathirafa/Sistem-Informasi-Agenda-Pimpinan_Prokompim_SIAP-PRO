@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hashPassword, type ActionResult } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
-import { after, before } from 'node:test';
 
 export type CreateUserInput = {
   username: string;

@@ -6,6 +6,7 @@ import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '
 import { KategoriPetugas } from '@prisma/client';
 import { KATEGORI_PETUGAS_OPTIONS, KATEGORI_PETUGAS_LABEL } from '@/lib/constants/kategori-petugas';
 import ConfirmDialog from '@/components/confirm-dialog';
+import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
 export type PetugasRow = {
   id: string;
@@ -33,6 +34,9 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [filterKategori, setFilterKategori] = useState<'ALL' | KategoriPetugas>('ALL');
   const [sortKey, setSortKey] = useState<'nama' | 'jabatan'>('nama');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  // 🔒 Lock scroll background saat modal buka
+  useModalScrollLock(modalOpen);
 
   const toggleSort = (key: 'nama' | 'jabatan') => {
     if (sortKey === key) {

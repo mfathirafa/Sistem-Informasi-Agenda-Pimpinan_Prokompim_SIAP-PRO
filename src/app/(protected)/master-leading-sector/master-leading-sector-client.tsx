@@ -6,6 +6,7 @@ import { createLeadingSector, updateLeadingSector, deleteLeadingSector } from '@
 import { KATEGORI_LEADING_SECTOR_OPTIONS } from '@/lib/constants/kategori-leading-sector';
 import ConfirmDialog from '@/components/confirm-dialog';
 import Pagination from '@/components/pagination';
+import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
 export type LeadingSectorRow = { id: string, nama: string, kategori: string | null };
 
@@ -28,6 +29,9 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState(FILTER_SEMUA);
   const [page, setPage] = useState(1);
+
+  // 🔒 Lock scroll background untuk kedua modal  
+  useModalScrollLock(!!editingItem); // Edit modal
 
   useEffect(() => {
     if (!editingItem) return;
