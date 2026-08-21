@@ -34,10 +34,11 @@ type KalenderEvent = {
   dresscode: string | null;
   picNama: string | null;
   picNoHp: string | null;
-  leadingSector: { nama: string };
+  leadingSector: { nama: string } | null;
   jenisPenugasan: JenisPenugasanValue;
   statusPublikasi: StatusPublikasiValue;
   dokumen: KalenderDokumen[];
+  createdAt: Date;
 };
 
 // Key harus sama persis dengan server (kalender/page.tsx) agar data-open-tanggal cocok.
@@ -109,7 +110,7 @@ function KegiatanItem({
             </div>
             <div>
               <dt className="text-muted text-xs">Leading Sector (LS)</dt>
-              <dd className="font-medium">{k.leadingSector.nama}</dd>
+              <dd className="font-medium">{k.leadingSector?.nama ?? '-'}</dd>
             </div>
             <div>
               <dt className="text-muted text-xs">PIC (LS)</dt>
@@ -209,8 +210,14 @@ export default function KalenderClient({
   const sorted = [...list].sort((a, b) => {
     const wa = a.waktu ?? '';
     const wb = b.waktu ?? '';
+    const aHasWaktu = wa !== '';
+    const bHasWaktu = wb !== '';
+    // Data dengan waktu di atas, tanpa waktu di bawah
+    if (aHasWaktu !== bHasWaktu) return aHasWaktu ? -1 : 1;
+    // Keduanya punya waktu: urut ASC
     if (wa !== wb) return wa < wb ? -1 : 1;
-    return a.namaKegiatan.localeCompare(b.namaKegiatan);
+    // Tie-break: createdAt ASC (data lama di atas) - konsisten dengan worksheet
+    return a.createdAt.getTime() - b.createdAt.getTime();
   });
 
   const headerDate = openKey

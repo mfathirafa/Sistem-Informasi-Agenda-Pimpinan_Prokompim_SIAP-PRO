@@ -46,15 +46,20 @@ export type KegiatanFilter = {
 export type KegiatanSortKey = 'tanggal' | 'namaKegiatan' | 'statusKegiatan';
 export type KegiatanSortDir = 'asc' | 'desc';
 
-/** OrderBy Prisma dari pilihan sort. Default tanggal asc (perilaku lama).
- * Tie-break tanggal asc agar urutan stabil saat sort non-tanggal. */
+/** OrderBy Prisma dari pilihan sort. Default tanggal asc.
+ * Untuk sort tanggal: data DENGAN waktu urut ASC, data TANPA waktu di BAWAH, lali createdAt ASC */
 export function buildKegiatanOrderBy(
     sort?: KegiatanSortKey,
     dir: KegiatanSortDir = 'asc',
 ) : Prisma.KegiatanOrderByWithRelationInput[] {
     if (sort === 'namaKegiatan') return [{ namaKegiatan: dir }, { tanggal: 'asc' }, { createdAt: 'asc' }];
     if (sort === 'statusKegiatan') return [{ statusKegiatan: dir }, { tanggal: 'asc' }, { createdAt: 'asc' }];
-    return [{ tanggal: dir }, { createdAt: 'asc' }];
+    // Sort default: tanggal (dir), lalu waktu (NULLS LAST), lalu createdAt ASC
+    return [
+        { tanggal: dir },
+        { waktu: 'asc' },
+        { createdAt: 'asc' },
+    ];
 }
 
 /**
@@ -130,8 +135,8 @@ export function mapKegiatanToRow(k: KegiatanWithRelations): KegiatanRow {
         dresscode: k.dresscode,
         picNama: k.picNama,
         picNoHp: k.picNoHp,
-        leadingSectorId: k.leadingSectorId,
-        leadingSectorNama: k.leadingSector.nama,
+        leadingSectorId: k.leadingSectorId ?? '',
+        leadingSectorNama: k.leadingSector?.nama ?? '-',
         statusSambutan: k.statusSambutan,
         statusKegiatan: k.statusKegiatan,
         petugasProtokolIds: k.petugas.filter((p) => p.petugas.kategori === 'PROTOKOL').map((p) => p.petugas.id),

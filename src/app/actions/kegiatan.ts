@@ -75,13 +75,6 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
     if (!data.namaKegiatan.trim()) return { ok: false, error: 'Nama kegiatan wajib diisi.' };
     if (!data.tanggal) return { ok: false, error: 'Tanggal wajib diisi.' };
     if (!data.tempat.trim()) return { ok: false, error: 'Tempat wajib diisi.' };
-    if (!data.leadingSectorId) return { ok: false, error: 'Leading sector wajib dipilih.' };
-
-    // Validasi leading sector ada di database
-    const leadingExists = await prisma.leadingSector.count({
-      where: { id: data.leadingSectorId },
-    });
-    if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
     
     const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
 
@@ -178,10 +171,13 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     if (!data.leadingSectorId) return { ok: false, error: 'Leading sector wajib dipilih.' };
 
     // Validasi leading sector ada di database
-  const leadingExists = await prisma.leadingSector.count({
-    where: { id: data.leadingSectorId },
-  });
-  if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
+    if (data.leadingSectorId) {
+      const leadingExists = await prisma.leadingSector.count({
+        where: { id: data.leadingSectorId },
+      });
+      if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
+    }
+
 
   const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
 

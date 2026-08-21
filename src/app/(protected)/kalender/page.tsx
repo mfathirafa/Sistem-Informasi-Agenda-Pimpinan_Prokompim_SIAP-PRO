@@ -68,6 +68,7 @@ export default async function KalenderPage({
                 statusPublikasi: true,
                 leadingSector: { select: { nama: true } },
                 dokumen: { select: { jenis: true, status: true, link: true, catatan: true } }, 
+                createdAt: true, 
             },
         });
 

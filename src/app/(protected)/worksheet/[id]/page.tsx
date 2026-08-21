@@ -32,7 +32,7 @@ export default async function DetailKegiatanPage({ params }: { params: Promise<{
           dresscode: kegiatan.dresscode,
           picNama: kegiatan.picNama,
           picNoHp: kegiatan.picNoHp,
-          leadingSectorNama: kegiatan.leadingSector.nama,
+          leadingSectorNama: kegiatan.leadingSector?.nama ?? '-',
           jenisPenugasan: kegiatan.jenisPenugasan,
           statusPublikasi: kegiatan.statusPublikasi,
         }}

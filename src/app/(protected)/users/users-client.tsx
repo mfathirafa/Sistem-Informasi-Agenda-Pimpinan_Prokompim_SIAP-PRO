@@ -336,7 +336,21 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
                   </button>
                 </div>
               </div>
-              </form>
+
+              {editError && <p className="text-xs text-red-600">{editError}</p>}
+              <div className="flex gap-2 pt-4 border-t border-app">
+                <button
+                  type="button"
+                  onClick={() => { setEditingUser(null); setShowEditPassword(false); setShowEditConfirmPassword(false); }}
+                  className="flex-1 py-2.5 rounded-lg border border-app text-sm font-medium"
+                >
+                  Batal
+                </button>
+                <button type="submit" disabled={isPending} className="btn-primary flex-1 py-2.5 rounded-lg text-sm font-medium">
+                  { isPending ? 'Menyimpan...' : 'Simpan' }
+                </button>
+              </div>
+            </form>
             </div>
           </div>
         )}

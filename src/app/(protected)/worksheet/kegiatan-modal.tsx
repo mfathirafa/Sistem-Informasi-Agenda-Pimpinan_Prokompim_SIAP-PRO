@@ -44,7 +44,7 @@ export default function KegiatanModal({
           dresscode: item.dresscode || '',
           picNama: item.picNama || '',
           picNoHp: item.picNoHp || '',
-          leadingSectorId: item.leadingSectorId,
+          leadingSectorId: item.leadingSectorId === '-' ? 'none' : item.leadingSectorId,
           statusSambutan: item.statusSambutan,
           statusKegiatan: item.statusKegiatan,
           petugasProtokolIds: item.petugasProtokolIds,
@@ -67,7 +67,7 @@ export default function KegiatanModal({
           dresscode: '',
           picNama: '',
           picNoHp: '',
-          leadingSectorId: leadingSectorOptions[0]?.id || '',
+          leadingSectorId: 'none',
           statusSambutan: 'BELUM',
           statusKegiatan: 'ACARA_MASUK',
           petugasProtokolIds: [],
@@ -109,7 +109,6 @@ export default function KegiatanModal({
       setShowTempatError(true); // New: buka modal validasi
       return;
     }
-    if (!form.leadingSectorId) errs.leadingSectorId = 'Wajib dipilih';
     if (isCustomPejabat && !form.pejabat.trim()) errs.pejabat = 'Nama pejabat wajib diisi';
     if (Object.keys(errs).length) {
       setErrors(errs);
@@ -277,14 +276,18 @@ export default function KegiatanModal({
           <div>
             <label className="block text-sm font-medium mb-1.5">Leading Sector</label>
             <SearchableSelect options={leadingSectorOptions}
-            value={form.leadingSectorId || null}
-            onChange={(v) => update('leadingSectorId', v || '')}
-            placeholder="Pilih leading sector..."
+              value={form.leadingSectorId || null}
+              onChange={(v) => update('leadingSectorId', v || '')}
+              placeholder="Pilih leading sector..."
             />
-            {errors.leadingSectorId && <p className="text-xs text-red-600 mt-1">{errors.leadingSectorId}</p>}
-            {leadingSectorOptions.length === 0 && (
+            {leadingSectorOptions.length === 0 && !form.leadingSectorId && (
               <p className="text-xs text-muted mt-1">
                 Belum ada data leading sector — tambahkan dulu lewat menu Master Leading Sector.
+              </p>
+            )}
+            {leadingSectorOptions.length > 0 && form.leadingSectorId && !leadingSectorOptions.some(o => o.id === form.leadingSectorId) && (
+              <p className="text-xs text-amber-600 mt-1">
+                Leading sector yang dipilih tidak ditemukan di daftar - mungkin sudah dihapus. Silahkan pilih yang lain.
               </p>
             )}
           </div>

@@ -53,10 +53,11 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const [kegiatan, dates, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
         where,
-        orderBy: buildKegiatanOrderBy(sort, dir),
+        orderBy: buildKegiatanOrderBy(sort, dir), // default: tanggal asc, createdAt asc
         include: kegiatanInclude,
+        // Ambil lebih banyak untuk sort manual yang benar, lalu slice
         skip: (safePage - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
+        take: PAGE_SIZE + 50, // buffer untuk sort
       }),
       prisma.kegiatan.findMany({
         select: { tanggal: true },
@@ -73,7 +74,16 @@ export default async function WorksheetPage({ searchParams }: Props) {
         orderBy: { nama: 'asc' }
       }),
     ]);
-
+    
+    const sortedKegiatan = [...kegiatan].sort((a,b) => {
+      const wa = a.waktu ?? '';
+      const wb = b.waktu ?? '';
+      const aHasWaktu = wa !== '';
+      const bHasWaktu = wb !== '';
+      if (aHasWaktu !== bHasWaktu) return aHasWaktu ? -1 : 1;
+      if (wa !== wb) return wa < wb ? -1 : 1;
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    })
     const data = kegiatan.map(mapKegiatanToRow);
 
     // opsi filter tahun dari seluruh data di database (bukan hanya halaman aktif).

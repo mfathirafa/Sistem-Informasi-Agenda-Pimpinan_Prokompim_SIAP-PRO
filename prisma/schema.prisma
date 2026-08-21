@@ -118,8 +118,8 @@ model Kegiatan {
   tempat          String
   pejabat         String
   nomorSurat      String?
-  leadingSectorId String
-  leadingSector   LeadingSector     @relation(fields: [leadingSectorId], references: [id])
+  leadingSectorId String?
+  leadingSector   LeadingSector?     @relation(fields: [leadingSectorId], references: [id])
   statusSambutan  StatusSambutan    @default(BELUM)
   statusKegiatan  StatusKegiatan    @default(ACARA_MASUK)
   statusPublikasi StatusPublikasi   @default(BELUM_DIRILIS)

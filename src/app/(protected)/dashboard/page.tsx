@@ -98,7 +98,7 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
       });
 
       // --- Top 5 leading sector
-      const topSektorIds = topSektorRaw.map((t) => t.leadingSectorId);
+      const topSektorIds = topSektorRaw.map((t) => t.leadingSectorId).filter((id): id is string => Boolean(id));
       const sektorNama = topSektorIds.length > 0
         ? await prisma.leadingSector.findMany({
             where: { id: { in: topSektorIds } },

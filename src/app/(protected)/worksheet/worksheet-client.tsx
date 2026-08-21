@@ -119,6 +119,8 @@ export default function WorksheetClient({
       else params.delete(key);
       params.delete('page');
       router.replace(`/worksheet?${params.toString()}`);
+      // Loading direset setelah navigasi selesai (searchParams berubah tapi pathnae sama)
+      setGlobalLoading(false);
     });
   };
 
@@ -128,6 +130,7 @@ export default function WorksheetClient({
       const params = new URLSearchParams(searchParams.toString());
       params.set('page', String(p));
       router.replace(`/worksheet?${params.toString()}`);
+      setGlobalLoading(false);
     });
   };
 
@@ -141,6 +144,7 @@ export default function WorksheetClient({
       params.set('dir', nextDir);
       params.delete('page'); // <- reset ke halaman 1
       router.replace(`/worksheet?${params.toString()}`);
+      setGlobalLoading(false);
     });
   }
 
@@ -281,6 +285,7 @@ export default function WorksheetClient({
             else params.delete('tahun');
             params.delete('bulan'); // bulan mengikuti tahun - reset saat tahun berubah
             params.delete('page');
+            // Pakai setFilter biar loading direset otomatis
             router.replace(`/worksheet?${params.toString()}`);
           }}
           className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
@@ -365,7 +370,8 @@ export default function WorksheetClient({
           <table className="w-full min-w-[480px] sm:min-w-[640px] md:min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
-                <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="sticky left-0 z-10 bg-app border-r border-app px-4 py-3 font-medium" />
+                <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="bg-app border-r border-app px-4 py-3 font-medium" />
+                <th className="hidden sm:table-cell px-4 py-3 font-medium">Waktu</th>
                 <SortableTh label="Kegiatan" sortKey="namaKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
                 <th className="hidden sm:table-cell px-4 py-3 font-medium">Perihal Surat</th>
                 <th className="hidden sm:table-cell px-4 py-3 font-medium">Nomor Surat</th>
@@ -387,20 +393,21 @@ export default function WorksheetClient({
             <tbody>
               {initialData.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 17 : 16} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 18 : 17} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
               ) : (
                 initialData.map((k) => (
                   <tr key={k.id} className="border-t border-app hover:bg-slate-50">
-                    <td className="sticky left-0 z-10 bg-white hover:bg-slate-50 border-r border-app px-4 py-3 font-mono text-xs whitespace-nowrap">
+                    <td className="bg-white hover:bg-slate-50 border-r border-app px-4 py-3 font-mono text-xs whitespace-nowrap">
                       {new Date(k.tanggal).toLocaleDateString('id-ID', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
                       })}
                     </td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-muted text-xs whitespace-nowrap">{k.waktu || '-'}</td>
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
                     <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
                     <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
