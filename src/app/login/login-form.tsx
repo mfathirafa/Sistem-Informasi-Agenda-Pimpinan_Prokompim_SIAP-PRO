@@ -1,14 +1,20 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { loginAction, type LoginState } from '../actions/auth';
+import { setGlobalLoading } from '@/components/global-loading';
 
 const initialState: LoginState = {};
 
 export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
   const [showPw, setShowPw] = useState(false);
+
+  // Trigger global loading saat submit login
+  useEffect(() => {
+    setGlobalLoading(isPending);
+  }, [isPending]);
 
   return (
     <form action={formAction} className="bg-white rounded-2xl border border-app shadow-sm p-6">

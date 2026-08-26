@@ -44,7 +44,7 @@ export default function KegiatanModal({
           dresscode: item.dresscode || '',
           picNama: item.picNama || '',
           picNoHp: item.picNoHp || '',
-          leadingSectorId: item.leadingSectorId === '-' ? 'none' : item.leadingSectorId,
+          leadingSectorId: item.leadingSectorId === '-' ? '' : item.leadingSectorId,
           statusSambutan: item.statusSambutan,
           statusKegiatan: item.statusKegiatan,
           petugasProtokolIds: item.petugasProtokolIds,
@@ -67,7 +67,7 @@ export default function KegiatanModal({
           dresscode: '',
           picNama: '',
           picNoHp: '',
-          leadingSectorId: 'none',
+          leadingSectorId: '',
           statusSambutan: 'BELUM',
           statusKegiatan: 'ACARA_MASUK',
           petugasProtokolIds: [],
@@ -278,7 +278,7 @@ export default function KegiatanModal({
             <SearchableSelect options={leadingSectorOptions}
               value={form.leadingSectorId || null}
               onChange={(v) => update('leadingSectorId', v || '')}
-              placeholder="Pilih leading sector..."
+              placeholder="Pilih leading sector (opsional)..."
             />
             {leadingSectorOptions.length === 0 && !form.leadingSectorId && (
               <p className="text-xs text-muted mt-1">

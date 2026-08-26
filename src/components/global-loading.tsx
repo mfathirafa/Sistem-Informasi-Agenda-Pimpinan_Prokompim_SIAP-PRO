@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 /**
  * Global loading spinner yang muncul saat:
@@ -12,22 +12,52 @@ import { usePathname } from "next/navigation";
  */
 export function GlobalLoading() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
+    const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    // Detect route change (pathname berubah) -> tampilan loading
+    const showLoading = () => {
+        setLoading(true);
+        if (loadingTimeout) clearTimeout(loadingTimeout);
+        // Auto hide setelah 10 detik (fallback jika navigation gagal)
+        const t = setTimeout(() => setLoading(false), 10000);
+        setLoadingTimeout(t);
+    };
+
+    const hideLoading = () => {
+        setLoading(false);
+        if (loadingTimeout) {
+            clearTimeout(loadingTimeout);
+            setLoadingTimeout(null);
+        }
+    };
+
+    // 1. Route change (pathname) -> loading sebentar
     useEffect(() => {
-        setLoading(false); // reset saat pathname berubah (navigasi selesai)
+        showLoading();
+        // Hide setelah router selesai (Next.js 15 App Router tidak punya event built in)
+        // Pakai timeout pendek sebagai fallback
+        const t = setTimeout(() => hideLoading(), 2000);
+        return () => clearTimeout(t);
     }, [pathname]);
 
-    // Listen untuk event custom dari export/action
+    // 2. SearchParams change (filter/sort/page) -> loading
+    useEffect(() => {
+        showLoading();
+        const t = setTimeout(() => hideLoading(), 2000);
+        return () => clearTimeout(t);
+    }, [searchParams?.toString()]);
+
+    // 3. Manual trigger (login, logout, export, dll)
     useEffect(() => {
         const handleLoading = (e: CustomEvent<boolean>) => {
-            setLoading(e.detail);
+            if (e.detail) showLoading();
+            else hideLoading();
         };
         window.addEventListener('global-loading', handleLoading as EventListener);
         return () => {
             window.removeEventListener('global-loading', handleLoading as EventListener);
-        }
+        };
     }, []);
 
     if (!loading) return null;
@@ -40,8 +70,11 @@ export function GlobalLoading() {
 }
 
 /**
- * Helper untuk trigger global loading dari manapun.
+ * Helper trigger global loading dari manapun (Server Actionss, dll).
+ * Usage: setGlobalLoading(true) -> proses -> setGlobalLoading(false)
  */
 export function setGlobalLoading(isLoading: boolean) {
-    window.dispatchEvent(new CustomEvent('global-loading', { detail: isLoading }));
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('global-loading', { detail: isLoading }));
+    }
 }

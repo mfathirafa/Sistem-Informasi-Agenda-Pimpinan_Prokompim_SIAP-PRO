@@ -218,10 +218,12 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
             <div className="hidden print:block">
                 {/* Kop Surat Resmi */}
                 <div className="flex items-start gap-4 border-b-2 border-black pb-4 mb-4">
-                    {/* Logo placeholder - ganti dengan logo resmi jika ada */}
-                    <div className="w-16 h-16 flex-shrink-0 border border-gray-300 rounded-full flex items-center justify-center text-[8pt] text-gray-400 text-center leading-tight">
-                        Logo<br/>Pemkab
-                    </div>
+                    {/* Logo resmi - taruh file logo di public/logo-pemkab.png */}
+                    <img 
+                        src="/logo-pemkab.png" 
+                        alt="Logo Pemkab"
+                        className="w-16 h-16 flex-shrink-0 rounded-full object-cover" 
+                    />
                     <div className="flex-1 text-center">
                         <p className="text-[11pt] font-bold tracking-wider">PEMERINTAH KABUPATEN BREBES</p>
                         <p className="text-[10pt] font-medium tracking-wide">SEKRETARIAT DAERAH</p>
@@ -449,7 +451,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 <style>
                     {`
                     @page {
-                        size: A4 landscape;
+                        size: A4 ${printMode === 'ringkas' ? 'landscape' : 'portrait'};
                         margin: 18mm 12mm 22mm 12mm;
                     }
 

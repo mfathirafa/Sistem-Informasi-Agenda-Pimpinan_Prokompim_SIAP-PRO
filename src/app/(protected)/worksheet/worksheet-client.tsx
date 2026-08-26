@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon, ArrowUp, ArrowUpDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -17,6 +17,8 @@ import ConfirmDialog from '@/components/confirm-dialog';
 import Pagination from '@/components/pagination';
 import { toDateInput } from '@/lib/format';
 import { setGlobalLoading } from '@/components/global-loading';
+import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
+import { validateTransition } from '@/lib/workflow';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -106,6 +108,12 @@ export default function WorksheetClient({
   const [deleteError, setDeleteError] = useState('');
   const [isPending, startTransition] = useTransition();
 
+  // Auto reset loading pas searchParams berubah (filter/sort/page)
+  // pathname ga berubah, jadi GlobalLoading.params.usePathname() ga ketriggre
+  useEffect(() => {
+    setGlobalLoading(false);
+  }, [searchParams.toString()]);
+
   const totalPages = Math.ceil(total / pageSize);
   const pageStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const pageEnd = Math.min(page * pageSize, total);
@@ -119,8 +127,6 @@ export default function WorksheetClient({
       else params.delete(key);
       params.delete('page');
       router.replace(`/worksheet?${params.toString()}`);
-      // Loading direset setelah navigasi selesai (searchParams berubah tapi pathnae sama)
-      setGlobalLoading(false);
     });
   };
 
@@ -130,7 +136,6 @@ export default function WorksheetClient({
       const params = new URLSearchParams(searchParams.toString());
       params.set('page', String(p));
       router.replace(`/worksheet?${params.toString()}`);
-      setGlobalLoading(false);
     });
   };
 
@@ -144,9 +149,32 @@ export default function WorksheetClient({
       params.set('dir', nextDir);
       params.delete('page'); // <- reset ke halaman 1
       router.replace(`/worksheet?${params.toString()}`);
-      setGlobalLoading(false);
     });
   }
+
+  const toKegiatnInput = (row: KegiatanRow, overrideStatus?: StatusKegiatanValue): KegiatanInput => ({
+    namaKegiatan: row.namaKegiatan,
+    tanggal: row.tanggal,
+    waktu: row.waktu ?? undefined,
+    tempat: row.tempat,
+    pejabat: row.pejabat,
+    perihalSurat: row.perihalSurat ?? undefined,
+    nomorSurat: row.nomorSurat ?? undefined,
+    dresscode: row.dresscode ?? undefined,
+    picNama: row.picNama ?? undefined,
+    picNoHp: row.picNoHp ?? undefined,
+    leadingSectorId: row.leadingSectorId,
+    statusSambutan: row.statusSambutan,
+    statusKegiatan: overrideStatus ?? row.statusKegiatan,
+    petugasProtokolIds: row.petugasProtokolIds,
+    petugasLiputanIds: row.petugasLiputanIds,
+    allCrewProtokol: row.allCrewProtokol,
+    allCrewLiputan: row.allCrewLiputan,
+    linkUpload: row.linkUpload ?? undefined,
+    catatan: row.catatan ?? undefined,
+    jenisPenugasan: row.jenisPenugasan,
+    statusPublikasi: row.statusPublikasi,
+  });
 
   const openAdd = () => {
     setEditingItem(null);
@@ -184,6 +212,30 @@ export default function WorksheetClient({
         router.refresh();
       } else {
         setDeleteError(res.error || 'Gagal menghapus.');
+      }
+    });
+  };
+
+  // --- Inline Status Change ---
+  const handleInlineStatusChange = (id: string, newStatus: StatusKegiatanValue) => {
+    startTransition(async () => {
+      // Validasi transisi dulu
+      const item = initialData.find((d) => d.id === id);
+      if (!item) return;
+
+      const error = validateTransition(item.statusKegiatan, newStatus);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      const res = await updateKegiatan(id, toKegiatnInput(item, newStatus));
+      if (res.ok) {
+        router.refresh();
+        if (res.warning) toast.warning(res.warning);
+        else toast.success('Status diperbarui');
+      } else {
+        toast.error(res.error || 'Gagal memperbarui status.');
       }
     });
   };
@@ -370,24 +422,24 @@ export default function WorksheetClient({
           <table className="w-full min-w-[480px] sm:min-w-[640px] md:min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
-                <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="bg-app border-r border-app px-4 py-3 font-medium" />
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Waktu</th>
-                <SortableTh label="Kegiatan" sortKey="namaKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Perihal Surat</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Nomor Surat</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Dresscode</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Tempat</th>
-                <th className="px-4 py-3 font-medium">Pejabat</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">No. HP PIC</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Leading Sector</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Sambutan</th>
-                <SortableTh  label="Status Kegiatan" sortKey="statusKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} />
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Petugas Protokol</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Petugas Liputan</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Dokumentasi</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Jenis Tugas</th>
-                <th className="hidden sm:table-cell px-4 py-3 font-medium">Publikasi</th>
-                {canEdit && <th className="px-4 py-3 font-medium">Aksi</th>}
+                <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="bg-app border-r border-app px-2 py-2 font-medium" />
+                <th className="px-2 py-2 font-medium">Waktu</th>
+                <SortableTh label="Kegiatan" sortKey="namaKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} className="px-2 py-2" />
+                <th className="px-2 py-2 font-medium">Perihal Surat</th>
+                <th className="px-2 py-2 font-medium">Nomor Surat</th>
+                <th className="px-2 py-2 font-medium">Dresscode</th>
+                <th className="px-2 py-2 font-medium">Tempat</th>
+                <th className="px-2 py-2 font-medium">Pejabat</th>
+                <th className="px-2 py-2 font-medium">No. HP PIC</th>
+                <th className="px-2 py-2 font-medium">Leading Sector</th>
+                <th className="px-2 py-2 font-medium">Sambutan</th>
+                <SortableTh  label="Status Kegiatan" sortKey="statusKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} className="px-2 py-2" />
+                <th className="px-2 py-2 font-medium">Petugas Protokol</th>
+                <th className="px-2 py-2 font-medium">Petugas Liputan</th>
+                <th className="px-2 py-2 font-medium">Dokumentasi</th>
+                <th className="px-2 py-2 font-medium">Jenis Tugas</th>
+                <th className="px-2 py-2 font-medium">Publikasi</th>
+                {canEdit && <th className="px-2 py-2 font-medium">Aksi</th>}
               </tr>
             </thead>
             <tbody>
@@ -407,16 +459,16 @@ export default function WorksheetClient({
                         year: 'numeric',
                       })}
                     </td>
-                    <td className="hidden sm:table-cell px-4 py-3 text-muted text-xs whitespace-nowrap">{k.waktu || '-'}</td>
+                    <td className="px-4 py-3 text-muted text-xs whitespace-nowrap">{k.waktu || '-'}</td>
                     <td className="px-4 py-3 font-medium">{k.namaKegiatan}</td>
-                    <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
-                    <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
-                    <td className="hidden sm:table-cell px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
+                    <td className="px-4 py-3 text-muted max-w-[200px] truncate">{k.perihalSurat || '-'}</td>
+                    <td className="px-4 py-3 text-muted max-w-[180px] truncate">{k.nomorSurat || '-'}</td>
+                    <td className="px-4 py-3 text-muted max-w-[120px] truncate">{k.dresscode || '-'}</td>
                     <td className="px-4 py-3 text-muted text-xs">{k.tempat}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs">{k.pejabat}</td>
-                    <td className="hidden sm:table-cell px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
-                    <td className="hidden sm:table-cell px-4 py-3 text-muted">{k.leadingSectorNama}</td>
-                    <td className="hidden sm:table-cell px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
+                    <td className="px-4 py-3 text-muted">{k.leadingSectorNama}</td>
+                    <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'
@@ -426,13 +478,19 @@ export default function WorksheetClient({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]}`}>
-                        {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
-                      </span>
+                        <select
+                          value={k.statusKegiatan}
+                          onChange={(e) => handleInlineStatusChange(k.id, e.target.value as StatusKegiatanValue)}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]} bg-transparent border-none cursor-pointer`}
+                        >
+                          {STATUS_KEGIATAN_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{STATUS_KEGIATAN_LABEL[s]}</option>
+                          ))}
+                        </select>
                     </td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
-                    <td className="hidden md:table-cell px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
-                    <td className="hidden md:table-cell px-4 py-3">
+                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
+                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
+                    <td className="px-4 py-3">
                       {k.linkUpload ? (
                         <a
                           href={k.linkUpload}
@@ -446,12 +504,12 @@ export default function WorksheetClient({
                         <span className="text-muted">-</span>
                       )}
                     </td>
-                    <td className="hidden md:table-cell px-4 py-3">
+                    <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]}`}>
                         {JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}
                       </span>
                     </td>
-                    <td className="hidden md:table-cell px-4 py-3">
+                    <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_PUBLIKASI_BADGE_CLASS[k.statusPublikasi]}`}>
                         {STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}
                       </span>

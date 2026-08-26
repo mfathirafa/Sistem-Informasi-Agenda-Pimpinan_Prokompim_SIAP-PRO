@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/confirm-dialog';
 import SealLogo from '@/components/seal-logo';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionPayload } from '@/lib/auth';
+import { setGlobalLoading } from '@/components/global-loading';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
@@ -40,6 +41,12 @@ export default function AppShell({
   if (user.role === 'ADMIN' || user.role === 'STAFF') {
     navItems.push({ href: '/activity-log', label: 'Activity Log', icon: <History size={16} /> });
   }
+
+  const handleLogout = () => {
+    setShowLogoutConfirm(false);
+    setGlobalLoading(true);
+    logoutFormRef.current?.requestSubmit();
+  };
 
   return (
     <div className="min-h-screen bg-app">
@@ -91,10 +98,7 @@ export default function AppShell({
         title="Keluar dari akun?"
         message="Anda akan dikembalikan ke halaman login."
         confirmLabel="Keluar"
-        onConfirm={() => {
-          setShowLogoutConfirm(false);
-          logoutFormRef.current?.requestSubmit();
-        }}
+        onConfirm={handleLogout} // GANTI inline jadi handleLogout
         onCancel={() => setShowLogoutConfirm(false)}
         />
         <form 

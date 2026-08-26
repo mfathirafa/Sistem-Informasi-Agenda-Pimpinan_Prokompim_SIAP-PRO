@@ -62,6 +62,8 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
       const res = await createUser({ username: form.username.trim(), password: form.password, nama: form.nama.trim(), role: 'STAFF' });
       if (res.ok) {
         setUsers((prev) => [...prev, { id: 'temp-' + Date.now(), username: form.username.trim(), nama: form.nama.trim(), role: 'STAFF' }]);
+        // Reset form setelah berhasil
+        setForm({ username: '', password: '', confirmPassword: '', nama: '' });
         setShowPassword(false);
         setShowConfirmPassword(false);
       } else { setError(res.error || 'Gagal menambah pengguna.'); }

@@ -32,13 +32,13 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState<'ALL' | KategoriPetugas>('ALL');
-  const [sortKey, setSortKey] = useState<'nama' | 'jabatan'>('nama');
+  const [sortKey, setSortKey] = useState<'nama' | 'jabatan' | 'nip'>('nama');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // 🔒 Lock scroll background saat modal buka
   useModalScrollLock(modalOpen);
 
-  const toggleSort = (key: 'nama' | 'jabatan') => {
+  const toggleSort = (key: 'nama' | 'jabatan' | 'nip') => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -169,6 +169,11 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
               <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'jabatan' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <button type="button" onClick={() => toggleSort('jabatan')} className="inline-flex items-center gap-1 hover:text-navy">
                   Jabatan {sortKey === 'jabatan' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                </button>
+              </th>
+              <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'nip' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('nip')} className="inline-flex items-center gap-1 hover:text-navy">
+                  NIP {sortKey === 'nip' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                 </button>
               </th>
               <th className="px-4 py-3 font-medium">Kategori</th>
