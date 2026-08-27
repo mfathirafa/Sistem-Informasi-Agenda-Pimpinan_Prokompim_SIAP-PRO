@@ -10,19 +10,18 @@ const WORKFLOW_ORDER = [
 
 type Status = (typeof WORKFLOW_ORDER)[number];
 
-/** Cek apakah transisi dari `from` ke `to` valid (hanya maju, boleh lompat langkah). */
+/** Cek apakah transisi dari `from` ke `to` valid (bisa maju atau mundur kapan saja). */
 export function canTransition(from: Status, to: Status): boolean {
-    const fromIdx = WORKFLOW_ORDER.indexOf(from);
-    const toIdx = WORKFLOW_ORDER.indexOf(to);
-    if (fromIdx === -1 || toIdx === -1) return false;
-    return toIdx > fromIdx; // boleh maju berapa langkah saja
+  const fromIdx = WORKFLOW_ORDER.indexOf(from);
+  const toIdx = WORKFLOW_ORDER.indexOf(to);
+  return fromIdx !== -1 && toIdx !== -1;
 }
 
-/** Pesan error jika transisi tidak valid. Null jika valid. */
+/** Pesan error jika transisi tidak valid. Null jika valid */
 export function validateTransition(from: Status, to: Status): string | null {
   if (from === to) return null;
   if (!canTransition(from, to)) {
-    return `Status tidak bisa berubah dari "${from}" ke "${to}". Status hanya bisa maju: ${WORKFLOW_ORDER.join(' → ')}.`;
+    return `Status "${to}" tidak valid.`;
   }
   return null;
 }

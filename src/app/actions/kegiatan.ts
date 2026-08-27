@@ -10,6 +10,7 @@ import { StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import { validateTransition } from '@/lib/workflow';
 import { logActivity } from '@/lib/activity-log';
 import { buildKegiatanWhere, buildKegiatanOrderBy, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter } from '@/lib/queries/kegiatan';
+import { Coins } from 'lucide-react';
 
 export type KegiatanInput = {
   namaKegiatan: string;
@@ -22,7 +23,7 @@ export type KegiatanInput = {
   dresscode?: string;
   picNama?: string;
   picNoHp?: string;
-  leadingSectorId: string;
+  leadingSectorId: string | null;
   statusSambutan: 'SUDAH' | 'BELUM';
   statusKegiatan: StatusKegiatanValue;
   petugasProtokolIds: string[];
@@ -77,6 +78,20 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
     if (!data.tempat.trim()) return { ok: false, error: 'Tempat wajib diisi.' };
     
     const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
+    
+    // Normalisasi leading sector: kosong atau "-" -> null
+    const leadingSectorId =
+      data.leadingSectorId && data.leadingSectorId.trim() !== '' && data.leadingSectorId !== '-'
+        ? data.leadingSectorId.trim()
+        : null;
+      
+    // Validasi leading sector hnya jika diisi (opsional)
+    if (leadingSectorId) {
+      const leadingExists = await prisma.leadingSector.count({
+        where: { id: leadingSectorId },
+      });
+      if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
+    }
 
     // Validasi petugas sesuai kategori
     if (petugasProtokolIds.length > 0) {
@@ -117,6 +132,7 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
       const created = await tx.kegiatan.create({
         data: {
           ...kegiatanData,
+          leadingSectorId,
           nomorSurat,
           dresscode,
           tanggal: new Date(data.tanggal),
@@ -169,10 +185,16 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     if (!data.tanggal) return { ok: false, error: 'Tanggal wajib diisi.' };
     if (!data.tempat.trim()) return { ok: false, error: 'Tempat wajib diisi.' };
 
+    // Normalisasi leading sector: kosong atau "-" -> null
+    const leadingSectorId = 
+      data.leadingSectorId && data.leadingSectorId.trim() !== '' && data.leadingSectorId !== '-'
+        ? data.leadingSectorId.trim()
+        : null;
+    
     // Validasi leading sector hanya jika diisi (opsional)
-    if (data.leadingSectorId && data.leadingSectorId.trim() !== '') {
+    if (leadingSectorId) {
       const leadingExists = await prisma.leadingSector.count({
-        where: { id: data.leadingSectorId },
+        where: { id: leadingSectorId },
       });
       if (!leadingExists) return { ok: false, error: 'Leading sector tidak valid.' };
     }
@@ -199,7 +221,7 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   }
 
   // --- scalar diff ---
-  const dataForDiff = kegiatanData as Record<string, unknown>;
+  const dataForDiff = { ...kegiatanData, leadingSectorId } as Record<string, unknown>;
   const beforeSnapshot: Record<string, unknown> = {};
   const afterSnapshot: Record<string, unknown> = {};
   let hasDiff = false;
@@ -289,6 +311,7 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
       where: { id },
       data: {
         ...kegiatanData,
+        leadingSectorId,
         tanggal: new Date(data.tanggal),
         nomorSurat,
         dresscode,

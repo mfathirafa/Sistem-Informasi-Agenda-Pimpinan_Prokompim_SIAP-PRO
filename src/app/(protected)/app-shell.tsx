@@ -39,7 +39,7 @@ export default function AppShell({
     navItems.push({ href: '/users', label: 'Kelola Pengguna', icon: <UserCog size={16} /> });
   }
   if (user.role === 'ADMIN' || user.role === 'STAFF') {
-    navItems.push({ href: '/activity-log', label: 'Activity Log', icon: <History size={16} /> });
+    navItems.push({ href: '/activity-log', label: 'Riwayat Aktivitas', icon: <History size={16} /> });
   }
 
   const handleLogout = () => {
@@ -81,9 +81,10 @@ export default function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 whitespace-nowrap transition-colors snap-start ${
-                  active ? 'border-gold text-white' : 'border-transparent text-white/60 hover:text-white'
-                }`}
+                onClick={() => {
+                  if (pathname !== item.href) setGlobalLoading(true);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 whitespace-nowrap transition-colors snap-start ${active ? 'border-gold text-white' : 'border-transparent text-white/60 hover:text-white'}`}
               >
                 {item.icon} {item.label}
               </Link>

@@ -34,11 +34,7 @@ export function GlobalLoading() {
 
     // 1. Route change (pathname) -> loading sebentar
     useEffect(() => {
-        showLoading();
-        // Hide setelah router selesai (Next.js 15 App Router tidak punya event built in)
-        // Pakai timeout pendek sebagai fallback
-        const t = setTimeout(() => hideLoading(), 2000);
-        return () => clearTimeout(t);
+        hideLoading();
     }, [pathname]);
 
     // 2. SearchParams change (filter/sort/page) -> loading

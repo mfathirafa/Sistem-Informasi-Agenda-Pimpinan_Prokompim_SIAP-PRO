@@ -2,8 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
-import { Download, Settings2, FileText, Table } from "lucide-react";
+import { Download, Settings2, FileText, Table, Loader2 } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { toast } from "sonner";
+import { pdf } from "@react-pdf/renderer"; 
+import { LaporanPdfDocument } from "./laporan-pdf";
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
 import { formatTanggal } from '@/lib/format';
 import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from "@/lib/constants/status-penugasan";
@@ -130,6 +133,34 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
     const [showColumnPicker, setShowColumnPicker] = useState(false)
     const [hydrated, setHydrated] = useState(false);
     const [printMode, setPrintMode] = useState<'ringkas' | 'detail'>('ringkas');
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState<'ringkas' | 'detail' | null>(null);
+
+    const handleDownloadPdf = async (mode: 'ringkas' | 'detail') => {
+        if (data.length === 0) {
+            toast.error('Tidak ada data kegiatan untuk diexport.');
+            return;
+        }
+        setIsGeneratingPdf(mode);
+        const toastId = toast.loading(`Menyiapkan PDF ${mode === 'ringkas' ? 'Ringkas' : 'Detail'}...`);
+        try {
+            const doc = <LaporanPdfDocument data={data} startDate={localStart} endDate={localEnd} mode={mode} />;
+            const blob = await pdf(doc).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `laporan-kegiatan-${mode}-${localStart || 'awal'}-${localEnd || 'akhir'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success(`PDF ${mode === 'ringkas' ? 'Ringkas' : 'Detail'} berhasil diunduh.`, { id: toastId });
+        } catch (err) {
+            console.error(err);
+            toast.error('Gagal membuat file PDF.', { id: toastId });
+        } finally {
+            setIsGeneratingPdf(null);
+        }
+    };
 
     // Baca pilihan setela mount (render awal selalu semua kolom -> tanpa hydration mismatch).
     useEffect (() => {
@@ -278,16 +309,22 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     <Download size={14} /> Export XLSX
                 </button>
                 <button
-                    onClick={() => { setPrintMode('ringkas'); setTimeout(() => window.print(), 0); }}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
+                    type="button"
+                    onClick={() => handleDownloadPdf('ringkas')}
+                    disabled={isGeneratingPdf !== null}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app disabled:opacity-50"
                 >
-                    <FileText size={14} /> PDF Ringkas
+                    {isGeneratingPdf === 'ringkas' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                    PDF Ringkas
                 </button>
                 <button
-                    onClick={() => { setPrintMode('detail'); setTimeout(() => window.print(), 0); }}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
+                    type="button"
+                    onClick={() => handleDownloadPdf('detail')}
+                    disabled={isGeneratingPdf !== null}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app disabled:opacity-50"
                 >
-                    <Table size={14} /> PDF Detail
+                    {isGeneratingPdf === 'detail' ? <Loader2 size={14} className="animate-spin" /> : <Table size={14} />}
+                    PDF Detaiil
                 </button>
                 <button
                     onClick={() => setShowColumnPicker((v) => !v)}

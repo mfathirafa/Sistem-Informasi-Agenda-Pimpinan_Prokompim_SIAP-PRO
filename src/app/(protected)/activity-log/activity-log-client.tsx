@@ -265,7 +265,7 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-xl font-semibold text-navy">Activity Log</h1>
+      <h1 className="font-display text-xl font-semibold text-navy">Riwayat Aktivitas</h1>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
@@ -274,7 +274,7 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
           value={filters.entity || ''}
           onChange={(e) => setFilter('entity', e.target.value || undefined)}
         >
-          <option value="">Semua Entity</option>
+          <option value="">Semua Kategori</option>
           {Object.entries(ENTITY_LABEL).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
@@ -317,7 +317,7 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                 <th className="px-4 p-3 font-medium">Waktu</th>
-                <th className="px-4 p-3 font-medium">Entity</th>
+                <th className="px-4 p-3 font-medium">Kategori</th>
                 <th className="px-4 p-3 font-medium">Nama</th>
                 <th className="px-4 p-3 font-medium">Aksi</th>
                 <th className="px-4 p-3 font-medium">Oleh</th>

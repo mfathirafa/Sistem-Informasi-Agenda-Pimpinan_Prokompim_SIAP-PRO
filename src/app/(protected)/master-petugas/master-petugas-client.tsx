@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Trash2, Plus, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Plus, X, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '@/app/actions/petugas';
 import { KategoriPetugas } from '@prisma/client';
 import { KATEGORI_PETUGAS_OPTIONS, KATEGORI_PETUGAS_LABEL } from '@/lib/constants/kategori-petugas';
@@ -75,10 +75,13 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
     (p.nip ?? '').includes(q);
     return matchKategori && matchSearch;
   })
+
   .sort((a, b) => {
-    const av = (a[sortKey] ?? '').toLowerCase();
-    const bv = (b[sortKey] ?? '').toLowerCase();
-    const cmp = av.localeCompare(bv, 'id');
+    const av = a[sortKey] ?? '';
+    const bv = b[sortKey] ?? '';
+    if (!av && bv) return 1;
+    if (av && !bv) return -1;
+    const cmp = av.localeCompare(bv, 'id', { numeric: true, sensitivity: 'base' });
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
@@ -162,18 +165,17 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
               <th className="px-4 py-3 font-medium w-12 text-center">#</th>
               <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'nama' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <button type="button" onClick={() => toggleSort('nama')} className='inline-flex items-center gap-1 hover:text-navy'>
-                  Nama {sortKey === 'nama' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-                </button>
-              </th>
-              <th className="px-4 py-3 font-medium">NIP</th>
-              <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'jabatan' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-                <button type="button" onClick={() => toggleSort('jabatan')} className="inline-flex items-center gap-1 hover:text-navy">
-                  Jabatan {sortKey === 'jabatan' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                  Nama {sortKey === 'nama' ? (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="text-muted" />}
                 </button>
               </th>
               <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'nip' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <button type="button" onClick={() => toggleSort('nip')} className="inline-flex items-center gap-1 hover:text-navy">
-                  NIP {sortKey === 'nip' && (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                  NIP {sortKey === 'nip' ? (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12}/>): <ArrowUpDown size={12} className="text-muted" />}
+                </button>
+              </th>
+              <th className="px-4 py-3 font-medium" aria-sort={sortKey === 'jabatan' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('jabatan')} className="inline-flex items-center gap-1 hover:text-navy">
+                  Jabatan {sortKey === 'jabatan' ? (sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="text-muted" />}
                 </button>
               </th>
               <th className="px-4 py-3 font-medium">Kategori</th>

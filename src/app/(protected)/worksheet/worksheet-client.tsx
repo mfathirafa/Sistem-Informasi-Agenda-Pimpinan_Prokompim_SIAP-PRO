@@ -19,6 +19,7 @@ import { toDateInput } from '@/lib/format';
 import { setGlobalLoading } from '@/components/global-loading';
 import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
 import { validateTransition } from '@/lib/workflow';
+import { StatusKegiatan } from '@prisma/client';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -218,24 +219,28 @@ export default function WorksheetClient({
 
   // --- Inline Status Change ---
   const handleInlineStatusChange = (id: string, newStatus: StatusKegiatanValue) => {
+    const item = initialData.find((d) => d.id === id);
+    if (!item) return;
+
+    const error = validateTransition(item.statusKegiatan, newStatus);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    setGlobalLoading(true);
     startTransition(async () => {
-      // Validasi transisi dulu
-      const item = initialData.find((d) => d.id === id);
-      if (!item) return;
-
-      const error = validateTransition(item.statusKegiatan, newStatus);
-      if (error) {
-        toast.error(error);
-        return;
-      }
-
-      const res = await updateKegiatan(id, toKegiatnInput(item, newStatus));
-      if (res.ok) {
-        router.refresh();
-        if (res.warning) toast.warning(res.warning);
-        else toast.success('Status diperbarui');
-      } else {
-        toast.error(res.error || 'Gagal memperbarui status.');
+      try {
+        const res = await updateKegiatan(id, toKegiatnInput(item, newStatus));
+        if (res.ok) {
+          router.refresh();
+          if (res.warning) toast.warning(res.warning);
+          else toast.success('Status diperbarui');
+        } else {
+          toast.error(res.error || 'Gagal memperbarui status.');
+        }
+      } finally {
+        setGlobalLoading(false);
       }
     });
   };
