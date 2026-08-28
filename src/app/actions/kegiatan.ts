@@ -10,7 +10,6 @@ import { StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import { validateTransition } from '@/lib/workflow';
 import { logActivity } from '@/lib/activity-log';
 import { buildKegiatanWhere, buildKegiatanOrderBy, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter } from '@/lib/queries/kegiatan';
-import { Coins } from 'lucide-react';
 
 export type KegiatanInput = {
   namaKegiatan: string;

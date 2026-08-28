@@ -1,14 +1,17 @@
 'use client';
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
 import { Download, Settings2, FileText, Table, Loader2 } from "lucide-react";
+import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
 import { formatTanggal } from '@/lib/format';
 import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from "@/lib/constants/status-penugasan";
 import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from "@/lib/constants/status-publikasi";
 import type { StatusKegiatan } from "@prisma/client";
+import { LaporanPdfDocument } from "./laporan-pdf";
 
 // Format tanggal Indonesia untuk print
 function formatTanggalIndonesia(dateStr: string): string {
@@ -129,7 +132,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
     const [activeColumns, setActiveColumns] = useState<ColumnKey[]>(ALL_COLUMN_KEYS);
     const [showColumnPicker, setShowColumnPicker] = useState(false)
     const [hydrated, setHydrated] = useState(false);
-    const [printMode, setPrintMode] = useState<'ringkas' | 'detail'>('ringkas');
+    const [printMode] = useState<'ringkas' | 'detail'>('ringkas');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState<'ringkas' | 'detail' | null>(null);
 
     const handleDownloadPdf = async (mode: 'ringkas' | 'detail') => {
@@ -253,9 +256,11 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 {/* Kop Surat Resmi */}
                 <div className="flex items-start gap-4 border-b-2 border-black pb-4 mb-4">
                     {/* Logo resmi - taruh file logo di public/logo-pemkab.png */}
-                    <img 
+                    <Image 
                         src="/logo-pemkab.png" 
                         alt="Logo Pemkab"
+                        width={64}
+                        height={64}
                         className="w-16 h-16 flex-shrink-0 rounded-full object-cover" 
                     />
                     <div className="flex-1 text-center">

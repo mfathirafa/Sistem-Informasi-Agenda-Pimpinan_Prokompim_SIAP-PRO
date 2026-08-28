@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Trash2, Plus, Pencil, X, EyeOff, Eye } from 'lucide-react';
+import { Trash2, Plus, Pencil, X } from 'lucide-react';
 import { createLeadingSector, updateLeadingSector, deleteLeadingSector } from '@/app/actions/leading-sector';
 import { KATEGORI_LEADING_SECTOR_OPTIONS } from '@/lib/constants/kategori-leading-sector';
 import ConfirmDialog from '@/components/confirm-dialog';

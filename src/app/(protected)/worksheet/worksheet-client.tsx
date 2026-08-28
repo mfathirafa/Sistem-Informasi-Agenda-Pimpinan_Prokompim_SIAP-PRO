@@ -18,7 +18,6 @@ import { toDateInput } from '@/lib/format';
 import { setGlobalLoading } from '@/components/global-loading';
 import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
 import { validateTransition } from '@/lib/workflow';
-import { StatusKegiatan } from '@prisma/client';
 
 const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
 
@@ -110,9 +109,10 @@ export default function WorksheetClient({
 
   // Auto reset loading pas searchParams berubah (filter/sort/page)
   // pathname ga berubah, jadi GlobalLoading.params.usePathname() ga ketriggre
+  const searchParamsString = searchParams.toString();
   useEffect(() => {
     setGlobalLoading(false);
-  }, [searchParams.toString()]);
+  }, [searchParamsString]);
 
   const totalPages = Math.ceil(total / pageSize);
   const pageStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -314,7 +314,7 @@ export default function WorksheetClient({
 
     toast.success('Export berhasil', { id: loadingToast });
     setGlobalLoading(false);
-    } catch (err) {
+    } catch {
       setGlobalLoading(false);
       toast.error('Gagal mengekspor.', { id: loadingToast });
     }

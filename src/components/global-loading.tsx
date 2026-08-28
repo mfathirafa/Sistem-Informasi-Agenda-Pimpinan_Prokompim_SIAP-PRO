@@ -1,48 +1,42 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { time } from "console";
 
-/**
- * Global loading spinner yang muncul saat:
- * - Navigasi antar halaman (route change)
- * - Dipicu manual via setLoading(true)
- * 
- * Spinner lingkaran dengan animasi Tailwind animate-spin.
- */
-export function GlobalLoading() {
+export function GlobalLoading(){
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
-    const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
-
-    const showLoading = () => {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    
+    const showLoading = useCallback(() => {
         setLoading(true);
-        if (loadingTimeout) clearTimeout(loadingTimeout);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         // Auto hide setelah 10 detik (fallback jika navigation gagal)
-        const t = setTimeout(() => setLoading(false), 10000);
-        setLoadingTimeout(t);
-    };
+        timeoutRef.current = setTimeout(() => setLoading(false), 10000);
+    }, []);
 
-    const hideLoading = () => {
+    const hideLoading = useCallback(() => {
         setLoading(false);
-        if (loadingTimeout) {
-            clearTimeout(loadingTimeout);
-            setLoadingTimeout(null);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
         }
-    };
+    }, []);
 
     // 1. Route change (pathname) -> loading sebentar
     useEffect(() => {
         hideLoading();
-    }, [pathname]);
+    }, [pathname, hideLoading]);
 
     // 2. SearchParams change (filter/sort/page) -> loading
+    const searchParamsString = searchParams?.toString();
     useEffect(() => {
-        showLoading();
+        showLoading;
         const t = setTimeout(() => hideLoading(), 2000);
         return () => clearTimeout(t);
-    }, [searchParams?.toString()]);
+    }, [searchParamsString, showLoading, hideLoading]);
 
     // 3. Manual trigger (login, logout, export, dll)
     useEffect(() => {
@@ -54,7 +48,7 @@ export function GlobalLoading() {
         return () => {
             window.removeEventListener('global-loading', handleLoading as EventListener);
         };
-    }, []);
+    }, [showLoading, hideLoading]);
 
     if (!loading) return null;
 

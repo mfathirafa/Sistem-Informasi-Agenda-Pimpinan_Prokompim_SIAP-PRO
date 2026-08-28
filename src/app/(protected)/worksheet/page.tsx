@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { buildKegiatanWhere, buildKegiatanOrderBy, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter, type KegiatanSortKey, type KegiatanSortDir } from '@/lib/queries/kegiatan';
+import { buildKegiatanWhere, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter, type KegiatanSortKey, type KegiatanSortDir } from '@/lib/queries/kegiatan';
 import WorksheetClient from './worksheet-client';
 
 const PAGE_SIZE = 20;

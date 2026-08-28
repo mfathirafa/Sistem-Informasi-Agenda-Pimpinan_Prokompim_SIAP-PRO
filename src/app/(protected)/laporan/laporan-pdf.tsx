@@ -1,7 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
-import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from '@/lib/constants/status-penugasan';
-import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from '@/lib/constants/status-publikasi';
+import type { JenisPenugasanValue } from '@/lib/constants/status-penugasan';
+import type { StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import type { StatusKegiatan } from '@prisma/client';
 
 export type KegiatanItem = {
