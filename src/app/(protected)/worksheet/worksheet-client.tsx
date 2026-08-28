@@ -3,7 +3,6 @@
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon, ArrowUp, ArrowUpDown } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
@@ -296,6 +295,7 @@ export default function WorksheetClient({
       STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
     ]);
 
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
 
     // Auto-Width
@@ -306,7 +306,7 @@ export default function WorksheetClient({
       );
       return { wch: Math.min(maxLen + 2, 40) };
     });
-    ws['!cols'] = colWidths;
+    ws['!cols'] = colWidths
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Worksheet');

@@ -3,10 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
 import { Download, Settings2, FileText, Table, Loader2 } from "lucide-react";
-import * as XLSX from 'xlsx';
 import { toast } from "sonner";
-import { pdf } from "@react-pdf/renderer"; 
-import { LaporanPdfDocument } from "./laporan-pdf";
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
 import { formatTanggal } from '@/lib/format';
 import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from "@/lib/constants/status-penugasan";
@@ -222,25 +219,31 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
         });
     };
 
-    const exportXlsx = () => {
+    const exportXlsx = async () => {
         const active = COLUMNS.filter((c) => activeColumns.includes(c.key));
         if (active.length === 0) {
             alert('Pilih minimal satu kolom untuk diexport.');
             return;
         }
 
-        const header = active.map((c) => c.label);
-        const rows = data.map((k) => active.map((c) => c.get(k)));
+        try {
+            const XLSX = await import('xlsx');
+            const header = active.map((c) => c.label);
+            const rows = data.map((k) => active.map((c) => c.get(k)));
+            const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+            const colWidths = header.map((_, ci) => ({
+                wch: Math.min(Math.max(header[ci].length,
+                    ...rows.map((r) => String(r[ci] ?? '').length)
+                ) + 2, 40),
+            }));
+            ws['!cols'] = colWidths;
 
-        const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-        const colWidths = header.map((_, ci) => ({
-            wch: Math.min(Math.max(header[ci].length, ...rows.map((r) => String(r[ci] ?? '').length)) + 2, 40),
-        }));
-        ws['!cols'] = colWidths;
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
-        XLSX.writeFile(wb, `laporan-spj-${localStart || 'awal'}-${localEnd || 'akhir'}.xlsx`);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
+            XLSX.writeFile(wb, `laporan-spj-${localStart || 'awal'}-${localEnd || 'akhir'}.xlsx`);
+        } catch {
+            toast.error('Gagal mengekspor file Excel.');
+        }
     };
 
     return (

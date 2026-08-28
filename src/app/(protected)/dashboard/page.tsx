@@ -1,13 +1,21 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { CalendarDays, CheckCircle2, FileWarning } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { existsSync } from 'fs';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import DashboardCharts from './dashboard-charts';
-import DashboardStats from './dashboard-stats';
 import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
+
+const DashboardCharts = dynamic(() => import('./dashboard-charts'), {
+  loading: () => <div className="h-[220px] bg-slate-50 animate-pulse rounded-xl" />,
+});
+
+const DashboardStats = dynamic(() => import('./dashboard-stats'), {
+  loading: () => <div className="h-[200px] bg-slate-50 animate-pulse rounded-xl" />,
+});
 
   export default async function DashboardPage() {
     try {
@@ -145,15 +153,20 @@ import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
           {/* Hero Banner */}
           <div className='relative overflow-hidden rounded-2xl bg-navy text-white shadow-sm'>
             {showHeroFoto && (
-              <div className='absolute inset-0 opacity-40'
-              style={{
-                backgroundImage: "url('/gedung-kpt.jpg')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}></div>
+              <div className='absolute inset-0 opacity-40'>
+                <Image
+                  src="/gedung-kpt.jpg"
+                  alt="Gedung KPT"
+                  fill
+                  priority
+                  className="object-cover object-center"
+                  sizes="{max-width: 768px} 100vw, 1200px"
+                  quality={70}
+                />
+              </div>
             )}
-            <div className='absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/30' />
-            <div className='relative p-5 sm:p-8'>
+            <div className='absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/30 pointer-events-none' />
+            <div className='relative z-10 p-5 sm:p-8'>
               <p className='text-gold text-xs font-semibold uppercase tracking-wider'>Sistem Manajemen SPJ · Protokom</p>
               <h1 className='font-display text-2xl sm:text-3xl font-semibold mt-1'>
                 Selamat datang, {user?.nama ?? 'Pengguna'}
