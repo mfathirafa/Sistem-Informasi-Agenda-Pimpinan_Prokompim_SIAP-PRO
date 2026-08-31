@@ -12,7 +12,7 @@ import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL } from '@/lib/constant
 import { toDateInput } from '@/lib/format';
 import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
-const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Lainnya'];
+const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Belum Ditentukan', 'Lainnya'];
 
 export default function KegiatanModal({
   item,
@@ -61,7 +61,7 @@ export default function KegiatanModal({
           tanggal: toDateInput(new Date()),
           waktu: '',
           tempat: '',
-          pejabat: 'Bupati',
+          pejabat: 'Belum Ditentukan',
           perihalSurat: '',
           nomorSurat: '',
           dresscode: '',
