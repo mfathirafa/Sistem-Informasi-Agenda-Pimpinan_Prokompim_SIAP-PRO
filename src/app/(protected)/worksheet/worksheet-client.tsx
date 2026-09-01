@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_BADGE_CLASS } from '@/lib/constants/status-kegiatan';
-import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS } from '@/lib/constants/status-penugasan';
-import { STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS } from '@/lib/constants/status-publikasi';
+import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, JENIS_PENUGASAN_BADGE_CLASS, type JenisPenugasanValue } from '@/lib/constants/status-penugasan';
+import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL, STATUS_PUBLIKASI_BADGE_CLASS, type StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import type { KegiatanFilter, KegiatanSortKey, KegiatanSortDir } from '@/lib/queries/kegiatan';
 import KegiatanModal from './kegiatan-modal';
 import type { KegiatanRow } from '@/lib/worksheet';
@@ -152,7 +152,7 @@ export default function WorksheetClient({
     });
   }
 
-  const toKegiatnInput = (row: KegiatanRow, overrideStatus?: StatusKegiatanValue): KegiatanInput => ({
+  const toKegiatanInput = (row: KegiatanRow, overrideStatus?: StatusKegiatanValue): KegiatanInput => ({
     namaKegiatan: row.namaKegiatan,
     tanggal: row.tanggal,
     waktu: row.waktu ?? undefined,
@@ -230,13 +230,82 @@ export default function WorksheetClient({
     setGlobalLoading(true);
     startTransition(async () => {
       try {
-        const res = await updateKegiatan(id, toKegiatnInput(item, newStatus));
+        const res = await updateKegiatan(id, toKegiatanInput(item, newStatus));
         if (res.ok) {
           router.refresh();
           if (res.warning) toast.warning(res.warning);
           else toast.success('Status diperbarui');
         } else {
           toast.error(res.error || 'Gagal memperbarui status.');
+        }
+      } finally {
+        setGlobalLoading(false);
+      }
+    });
+  };
+
+  const handleInlineSambutanChange = (id: string, newSambutan: 'SUDAH' | 'BELUM') => {
+    const item = initialData.find((d) => d.id === id);
+    if (!item) return;
+
+    setGlobalLoading(true);
+    startTransition(async () => {
+      try {
+        const payload = toKegiatanInput(item);
+        payload.statusSambutan = newSambutan;
+        const res = await updateKegiatan(id, payload);
+        if (res.ok) {
+          router.refresh();
+          if (res.warning) toast.warning(res.warning);
+          else toast.success('Status sambutan diperbarui');
+        } else {
+          toast.error(res.error || 'Gagal memperbarui sambutan.');
+        }
+      } finally {
+        setGlobalLoading(false);
+      }
+    });
+  };
+
+  const handleInlinePenugasanChange = (id: string, newPenugasan: JenisPenugasanValue) => {
+    const item = initialData.find((d) => d.id === id);
+    if (!item) return;
+
+    setGlobalLoading(true);
+    startTransition(async () => {
+      try {
+        const payload = toKegiatanInput(item);
+        payload.jenisPenugasan = newPenugasan;
+        const res = await updateKegiatan(id, payload);
+        if (res.ok) {
+          router.refresh();
+          if (res.warning) toast.warning(res.warning);
+          else toast.success('Jenis tugas diperbarui');
+        } else {
+          toast.error(res.error || 'Gagal memperbarui jenis tugas.')
+        }
+      } finally {
+        setGlobalLoading(false);
+      }
+    });
+  };
+
+  const handleInlinePublikasiChange = (id: string, newPublikasi: StatusPublikasiValue) => {
+    const item = initialData.find((d) => d.id === id);
+    if (!item) return;
+
+    setGlobalLoading(true);
+    startTransition(async () => {
+      try {
+        const payload = toKegiatanInput(item);
+        payload.statusPublikasi = newPublikasi;
+        const res = await updateKegiatan(id, payload);
+        if (res.ok) {
+          router.refresh();
+          if (res.warning) toast.warning(res.warning);
+          else toast.success('Status publikasi diperbarui');
+        } else {
+          toast.error(res.error || 'Gagal memperbarui publikasi.');
         }
       } finally {
         setGlobalLoading(false);
@@ -474,15 +543,29 @@ export default function WorksheetClient({
                     <td className="px-4 py-3 whitespace-nowrap text-muted">{k.picNoHp || '-'}</td>
                     <td className="px-4 py-3 text-muted">{k.leadingSectorNama}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'
-                        }`}
-                      >
-                        {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
-                      </span>
+                      {canEdit ? (
+                        <select
+                          value={k.statusSambutan}
+                          onChange={(e) => handleInlineSambutanChange(k.id, e.target.value as 'SUDAH' | 'BELUM')}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'
+                          } bg-transparent border-none cursor-pointer`}
+                        >
+                          <option value="SUDAH">Sudah</option>
+                          <option value="BELUM">Belum</option>
+                        </select>
+                      ) : (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            k.statusSambutan === 'SUDAH' ? 'badge-sudah' : 'badge-belum'
+                          }`}
+                        >
+                          {k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
+                      {canEdit ? (
                         <select
                           value={k.statusKegiatan}
                           onChange={(e) => handleInlineStatusChange(k.id, e.target.value as StatusKegiatanValue)}
@@ -492,6 +575,11 @@ export default function WorksheetClient({
                             <option key={s} value={s}>{STATUS_KEGIATAN_LABEL[s]}</option>
                           ))}
                         </select>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]}`}>
+                          {STATUS_KEGIATAN_LABEL[k.statusKegiatan]}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
                     <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
@@ -503,21 +591,45 @@ export default function WorksheetClient({
                           rel="noopener noreferrer"
                           className="text-navy inline-flex items-center gap-1 hover:underline"
                         >
-                          <LinkIcon size={13} /> Buka
+                          <LinkIcon size={13} />
                         </a>
                       ) : (
                         <span className="text-muted">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]}`}>
-                        {JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}
-                      </span>
+                      {canEdit ? (
+                        <select
+                          value={k.jenisPenugasan}
+                          onChange={(e) => handleInlinePenugasanChange(k.id, e.target.value as JenisPenugasanValue)}
+                          className={`px-1 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]} bg-transparent border-none cursor-pointer`}
+                        >
+                          {JENIS_PENUGASAN_OPTIONS.map((j) => (
+                            <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]}`}>
+                          {JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_PUBLIKASI_BADGE_CLASS[k.statusPublikasi]}`}>
-                        {STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}
-                      </span>
+                      {canEdit ? (
+                        <select
+                          value={k.statusPublikasi}
+                          onChange={(e) => handleInlinePublikasiChange(k.id, e.target.value as StatusPublikasiValue)}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_PUBLIKASI_BADGE_CLASS[k.statusPublikasi]} bg-transparent border-none cursor-pointer`}
+                        >
+                          {STATUS_PUBLIKASI_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{STATUS_PUBLIKASI_LABEL[s]}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_PUBLIKASI_BADGE_CLASS[k.statusPublikasi]}`}>
+                          {STATUS_PUBLIKASI_LABEL[k.statusPublikasi]}
+                        </span>
+                      )}
                     </td>
                     {canEdit && (
                       <td className="px-4 py-3">

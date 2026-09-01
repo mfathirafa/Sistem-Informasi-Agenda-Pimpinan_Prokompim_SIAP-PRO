@@ -53,21 +53,32 @@ export default function DashboardStats({ progressLengkap, progressBelum, topSekt
  {topSektor.length ===0 ? (
  <p className="text-sm text-muted">Belum ada data.</p>
  ) : (
- <div style={{ height:200 }}>
- <ResponsiveContainer width="100%" height="100%">
- <BarChart data={topSektor} layout="vertical" margin={{ top:4, right:8, left:0, bottom:0 }}>
- <XAxis type="number" tick={{ fontSize:12, fill: '#6B7280' }} axisLine={false} tickLine={false} />
- <YAxis type="category"
- dataKey="nama"
- width={130}
- tick={{ fontSize:12, fill: '#6B7280' }}
- axisLine={false}
- tickLine={false}
- />
- <Tooltip />
- <Bar dataKey="count" fill="#16294D" radius={[0,6,6,0]} minPointSize={4} />
- </BarChart>
- </ResponsiveContainer>
+ <div style={{ height: 240 }}>
+    <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={topSektor} layout="vertical" margin={{ top: 4, right: 16, left: 10, bottom: 0 }}>
+            <XAxis type="number" tick={{ fontSize: 11, fill: '#6B7280' }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <YAxis 
+                type="category"
+                dataKey="nama"
+                width={160}
+                tick={{ fontSize: 11, fill: '#475569' }}
+                tickFormatter={(val: string) => {
+                    if (!val) return '';
+                    const match = val.match(/\(([^)]+)\)$/);
+                    if (match && val.length > 24) return match[1]; // Tampilkan singkatan jika nama terlalu panjang
+                    return val.length > 22 ? `${val.slice(0, 20)}...` : val;
+                }} 
+                axisLine={false}
+                tickLine={false}
+            />
+            <Tooltip
+                cursor={{ fill: '#F3F1EC' }}
+                formatter={(value: any) => [`${value} kegiatan`, 'Jumlah']}
+                labelFormatter={(label: any) => `${label}`}
+            />
+            <Bar dataKey="count" fill="#16294D" radius={[0, 6, 6, 0]} barSize={18} minPointSize={4} />
+        </BarChart>
+    </ResponsiveContainer>
  </div>
  )}
  </div>

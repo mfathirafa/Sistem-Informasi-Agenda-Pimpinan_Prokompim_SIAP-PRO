@@ -30,7 +30,7 @@ async function main() {
         'Dinas Komunikasi, Informatika dan Statistik (Diskominfo)',
         'Dinas Pekerjaan Umum dan Penataan Ruang (DPUPR)',
         'Dinas Pendidikan, Pemuda dan Olahraga (Dindikpora)',
-        'Dinas Kesehatan (Dinskes)',
+        'Dinas Kesehatan (Dinkes)',
         'Dinas Pertanian dan Ketahanan Pangan (DPKP)',
         'Dinas Koperasi, Usaha Mikro dan Perdagangan (Dinkopumdag)',
         'Dinas Sosial (Dinsos)',
@@ -59,7 +59,7 @@ async function main() {
         { nama: 'Siti Nurhaliza', jabatan: 'Staf Protokol Tamu', noHp: '081234567005', kategori: 'PROTOKOL' as const },
         { nama: 'Aron Prabowo', jabatan: 'Kamerawan & Fotografer Utama', noHp: '0812345670006', kategori: 'LIPUTAN' as const },
         { nama: 'Fajar Nugroho', jabatan: 'Videografer & Editor', noHp: '0812345670007', kategori: 'LIPUTAN' as const },
-        { nama: 'Dimas Prasetyo', jabatan: 'Staf Peliputan & Narasi Berita', noHP: '0812345670008', kategori: 'LIPUTAN' as const },
+        { nama: 'Dimas Prasetyo', jabatan: 'Staf Peliputan & Narasi Berita', noHp: '0812345670008', kategori: 'LIPUTAN' as const },
         { nama: 'Rizki Kurniawan', jabatan: 'Fotografer Humas', noHp: '0812345670009', kategori: 'LIPUTAN' as const },
         { nama: 'Eko Prasojo', jabatan: 'Operator Streaming & Dokumentasi', noHp: '081234567010', kategori: 'LIPUTAN' as const },
     ];
@@ -79,7 +79,7 @@ async function main() {
         }
     }
 
-    // 4. Daftar 50 Agenda Kegiatan Realistios Bulan September 2026
+    // 4. Daftar 50 Agenda Kegiatan Realistis Bulan September 2026
     const daftarKegiatanList = [
         // --- 1 September 2026 ---
         {
@@ -96,7 +96,7 @@ async function main() {
         {
             namaKegiatan: 'Penyerahan Bantuan Alat Mesin Pertanian (Alsintan) kepada Kelompok Tani',
             tanggal: '2026-09-01', waktu: '13:30', tempat: 'Balai Penyuluhan Pertanian (BPP) Kec. Larangan',
-            pejabat: ' wakil Bupati', nomorSurat: '520/0902/DPKP/2026', perihalSurat: 'Penyerehan Bantuan Alsintan APBD 2026',
+            pejabat: 'Wakil Bupati', nomorSurat: '520/0902/DPKP/2026', perihalSurat: 'Penyerehan Bantuan Alsintan APBD 2026',
             dresscode: 'Batik Brebesan', picNama: 'Ir. Hendra Gunawan', picNoHP: '08139011002',
             leadingSector: 'Dinas Pertanian dan Ketahanan Pangan (DPKP)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
@@ -104,7 +104,7 @@ async function main() {
             linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-02', catatan: 'Dihadiri 40 ketua gapoktan se-Kecamatan Larangan.',
             protokolCount: 1, liputanCount: 1,    
         },
-        // --- 2 September 206 ---
+        // --- 2 September 2026 ---
         {
             namaKegiatan: 'Sosialisasi Pencegahan Perkawinan Usia Anak dan Penurunan Angka Stunting',
             tanggal: '2026-09-02', waktu: '09:00', tempat: 'Pendopo Kecamatan Ketanggungan',
@@ -113,7 +113,7 @@ async function main() {
             leadingSector: 'Dinas Kesehatan (Dinkes)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.SPPD,
-            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-03', catatan: 'Kerjasama dengam TP PKK Kabupaten Brebes.',
+            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-03', catatan: 'Kerjasama dengan TP PKK Kabupaten Brebes.',
             protokolCount: 2, liputanCount: 1,
         },
         {
@@ -124,24 +124,24 @@ async function main() {
             leadingSector: 'Bagian Perekonomian dan SDA',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.TIDAK_DIRILIS, jenisPenugasan: JenisPenugasan.KEGIATAN,
-            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-04', catatan: 'Rapat Internal koordinasi ketersediaan pasokan  beras dan cabai.',
+            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-04', catatan:'Rapat Internal koordinasi ketersediaan pasokan beras dan cabai.',
             protokolCount: 1, liputanCount: 0,
         },
         // --- 3 September 2026 ---
         {
             namaKegiatan: 'Monitoring dan Evaluasi Peningkatan Mutu Jalan Ruas Banjarharjo - Salem',
             tanggal: '2026-09-03', waktu: '08:00', tempat: 'Ruas Jalan Banjarharjo - Bandungsari - Salem',
-            pejabat: 'Bupati dan Wakil Bupati', nomorSurat: '600/0905/DPUPR/2026', perihalSurat: 'Kunjungan Lapangan Proyek Jalan',
+            pejabat: 'Bupati & Wakil Bupati', nomorSurat: '600/0905/DPUPR/2026', perihalSurat: 'Kunjungan Lapangan Proyek Jalan',
             dresscode: 'Rompi Lapangan / Casual Rapih', picNama: 'Teguh Wibowo', picNoHP: '08139011005',
             leadingSector: 'Dinas Pekerjaan Umum dan Penataan Ruang (DPUPR)',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.SPPD,
-            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-05', catatan: 'Progress fisik ruas jalan telah mencapat 70%.',
+            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-05', catatan: 'Progress fisik ruas jalan telah mencapai 70%.',
             protokolCount: 2, liputanCount: 2,
         },
         {
             namaKegiatan: 'Pembukaan Pelatihan Wirausaha Digital Bagi UMKM Olahan Hasil Laut',
-            tanggal: '2026-09-03', waktu: '10:00', tempat: 'Aula Bali Desa Randusanga Kulon Kec. Brebes',
+            tanggal: '2026-09-03', waktu: '10:00', tempat: 'Aula Balai Desa Randusanga Kulon Kec. Brebes',
             pejabat: 'Wakil Bupati', nomorSurat: '560/0906/Dinkop/2026', perihalSurat: 'Pelatihan UMKM Go Digital',
             dresscode: 'Batik Brebesan', picNama: 'Sri Wahyuni, SE', picNoHP: '08139011006',
             leadingSector: 'Dinas Koperasi, Usaha Mikro dan Perdagangan (Dinkopumdag)',
@@ -151,14 +151,14 @@ async function main() {
             protokolCount: 1, liputanCount: 1,
         },
         {
-            namaKegiatan: 'Sosialisasi Program PErlindungan Jaminan Sosial Ketenagakerjaan Bagi Pekerja Rentan',
+            namaKegiatan: 'Sosialisasi Program Perlindungan Jaminan Sosial Ketenagakerjaan Bagi Pekerja Rentan',
             tanggal: '2026-09-03', waktu: '14:00', tempat: 'Aula Kantor Kecamatan Jatibarang',
             pejabat: 'Belum Ditentukan', nomorSurat: '560/0907/Disperinaker/2026', perihalSurat: 'Sosialisasi BPJS',
             dresscode: 'Batik Brebesan', picNama: 'Drs. H. Mulyono', picNoHP: '08139011046',
             leadingSector: 'Dinas Sosial (Dinsos)',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.KEGIATAN,
-            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-46', catatan: 'Penyerahan 100 kartu kepesertaan bagi buruh tani temabakau dan bawang.',
+            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-46', catatan: 'Penyerahan 100 kartu kepesertaan bagi buruh tani tembakau dan bawang.',
             protokolCount: 1, liputanCount: 1,
         },
         // --- 4 September 2026 ---
@@ -170,7 +170,7 @@ async function main() {
             leadingSector: 'Bagian Protokol dan Komunikasi Pimpinan',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.LEMBUR,
-            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-07', catatan: 'Kunjugan berjalan tertib dan lancar.',
+            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-07', catatan: 'Kunjungan berjalan tertib dan lancar.',
             protokolCount: 3, liputanCount: 2, allCrewProtokol: true,
         },
         {
@@ -214,7 +214,7 @@ async function main() {
             tanggal: '2026-09-07', waktu: '07:15', tempat: 'Halaman KPT (Kantor Pemerintahan Terpadu) Brebes',
             pejabat: 'Bupati', nomorSurat: '800/0912/BKPSDMD/2026', perihalSurat: 'Apel Luar Biasa & Penyerahan SK',
             dresscode: 'Kopri Lengkap / Peci Hitam', picNama: 'Drs. Yuli Purwanto', picNoHP: '08139011011',
-            leadingSector: 'Badan Kepegawaian dan Pengembanagan SDM Daerah (BKPSDMD)',
+            leadingSector: 'Badan Kepegawaian dan Pengembangan SDM Daerah (BKPSDMD)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.KEGIATAN,
             linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-11', catatan: 'Penyerahan SK bagi 145 PNS periode Oktober 2026.',
@@ -256,10 +256,10 @@ async function main() {
         },
         // --- 9 September 2026 (Hari Olahraga Nasional) ---
         {
-            namaKegiatan: 'Upacara Peringatan Hari Olahraga Nasioanl (Haornas) Ke-43 Tingkat Kabupaten Brebes',
+            namaKegiatan: 'Upacara Peringatan Hari Olahraga Nasional (Haornas) Ke-43 Tingkat Kabupaten Brebes',
             tanggal: '2026-09-09', waktu: '07:30', tempat: 'Stadion Karangbiarahi Brebes',
             pejabat: 'Bupati', nomorSurat: '429/0916/Dindikpora/2026', perihalSurat: 'Upacara Peringatan Haornas 2026',
-            dresscode: 'Training Olahraga Resmi Pemka', picNama: 'Kusuma Wardani, S. Pd', picNoHP: '08139011014',
+            dresscode: 'Training Olahraga Resmi Pemkab', picNama: 'Kusuma Wardani, S. Pd', picNoHP: '08139011014',
             leadingSector: 'Dinas Pendidikan, Pemuda dan Olahraga (Dindikpora)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.LEMBUR,
@@ -294,15 +294,15 @@ async function main() {
             tanggal: '2026-09-10', waktu: '13:30', tempat: 'Kompleks Pasar Batang Indah Jatibarang',
             pejabat: 'Bupati', nomorSurat: '511/0919/Dinkopumdag/2026', perihalSurat: 'Kunjungan Kerja Bupati di Pasar Jatibarang',
             dresscode: 'Kemeja Putih Lengan Panjang', picNama: 'Nanang Kosim, S.IP', picNoHP: '08139011017',
-            leadingSector: 'Dinas Koperasi, Usaha Mikro dan Perdagngan (Dinkopumdah)',
+            leadingSector: 'Dinas Koperasi, Usaha Mikro dan Perdagangan (Dinkopumdag)',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.SPJ_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.SPPD,
-            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-17', catatan: 'Dialog tatap muka dengan paguyubabn pedagang pasar.',
+            linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-17', catatan: 'Dialog tatap muka dengan paguyuban pedagang pasar.',
             protokolCount: 2, liputanCount: 2,
         },
         // --- 11 September 2026 --- 
         {
-            namaKegiatan: 'Workshop Tranformasi Sistem Pemerintahan Berbasis Elektronik (SPBE)',
+            namaKegiatan: 'Workshop Transformasi Sistem Pemerintahan Berbasis Elektronik (SPBE)',
             tanggal: '2026-09-11', waktu: '09:00', tempat: 'Aula Gedung Korpri Brebes',
             pejabat: 'Belum Ditentukan', nomorSurat: '060/0920/Diskominfo/2026', perihalSurat: 'Workshop SPBE Digital Kominfo',
             dresscode: 'Batik Motif Bebas', picNama: 'Arief Kurniawan S.Kom', picNoHP: '08139011018',
@@ -314,7 +314,7 @@ async function main() {
         },
         // --- 12 September 2026 ---
         {
-            namaKegiatan: 'Pembinaaan Kepala Desa dan Pengelolaan Dana Desa Se-Kecamatan Losari',
+            namaKegiatan: 'Pembinaan Kepala Desa dan Pengelolaan Dana Desa Se-Kecamatan Losari',
             tanggal: '2026-09-12', waktu: '09:30', tempat: 'Pendopo Kecamatan Losari',
             pejabat: 'Bupati', nomorSurat: '140/0921/Dinpermades/2026', perihalSurat: 'Pembinaan Pengelolaan Keuangan',
             dresscode: 'Batik Brebesan', picNama: 'Drs. Subagyo, M. Si', picNoHP: '08139011019',
@@ -326,7 +326,7 @@ async function main() {
         },
         {
             namaKegiatan: 'Monitoring Penanganan Darurat Longsor Tebing Jembatan Plompong Sirampog',
-            tanggal: '2026-09-12', waktu: '13:00', tempat: 'Desa Plompong Kec. Sirambog',
+            tanggal: '2026-09-12', waktu: '13:00', tempat: 'Desa Plompong Kec. Sirampog',
             pejabat: 'Bupati', nomorSurat: '600/0922/DPUPR/2026', perihalSurat: 'Peninjauan Jembatan Sirampog',
             dresscode: 'Casual Lapangan / Safety Shoes', picNama: 'Ir. Agus Pramono', picNoHP: '08139011048',
             leadingSector: 'Dinas Pekerjaan Umum dan Penataan Ruang (DPUPR)',
@@ -341,7 +341,7 @@ async function main() {
             tanggal: '2026-09-13', waktu: '08:00', tempat: 'Sanggar Bakti Kwarcab Pramuka Brebes',
             pejabat: 'Wakil Bupati', nomorSurat: '428/0923/Kwarcab/2026', perihalSurat: 'Pelepasan Kontingen Jamda Brebes',
             dresscode: 'Seragam Pramuka Lengkap', picNama: 'Kak Imron Rosyadi', picNoHP: '08139011020',
-            leadingSector: 'Dinas Pendidkan, Pemuda dan Olahraga (Dindikpora)',
+            leadingSector: 'Dinas Pendidikan, Pemuda dan Olahraga (Dindikpora)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.KEGIATAN_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.KEGIATAN,
             linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-20', catatan: 'Pelepasan 32 anggota pramuka penggalang berprestasi.',
@@ -364,7 +364,7 @@ async function main() {
             namaKegiatan: 'Peninjauan Progres Pembangunan Gedung Rawat Inap RSUD Ir. Soekarno Bumiayu',
             tanggal: '2026-09-15', waktu: '09:00', tempat: 'RSUD Ir. Soekarno Kec. Bumiayu',
             pejabat: 'Bupati & Wakil Bupati', nomorSurat: '445/0925/RSUD/2026', perihalSurat: 'Kunjungan Kerja Bupati di RSUD Bumiayu',
-            dresscode: 'Kemej Putih Lengan Panjang', picNama: 'dr. Hj. Farikha, M. Kes', picNoHP: '08139011022',
+            dresscode: 'Kemeja Putih Lengan Panjang', picNama: 'dr. Hj. Farikha, M. Kes', picNoHP: '08139011022',
             leadingSector: 'Dinas Kesehatan (Dinkes)',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.KEGIATAN_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.SPPD,
@@ -385,7 +385,7 @@ async function main() {
         // --- 16 September 2026 ---
         {
             namaKegiatan: 'Rembug Stunting Tingkat Kabupaten dan Penandatanganan Komitmen Lintas Sektor',
-            tanggal: '2026-09-16', waktu: '08:30', tempat: 'Convention Hall Granc Dian Hotel Brebes',
+            tanggal: '2026-09-16', waktu: '08:30', tempat: 'Convention Hall Grand Dian Hotel Brebes',
             pejabat: 'Bupati', nomorSurat: '050/0927/Bapeda/2026', perihalSurat: 'Undangan Rembug Stunting 2026',
             dresscode: 'Batik Brebesan', picNama: 'Drs. Endang Sulistyowati', picNoHP: '08139011023',
             leadingSector: 'Badan Perencanaan Pembangunan, Penelitian dan Pengembangan Daerah (Bappeda)',
@@ -419,7 +419,7 @@ async function main() {
         },
         // --- 18 September 2026 ---
         {
-            namaKegiatan: 'Gerakan Bersih Sungai dan Penamaan 1.000 Pohon Mangrove di Kawasan Pesisir',
+            namaKegiatan: 'Gerakan Bersih Sungai dan Penanaman 1.000 Pohon Mangrove di Kawasan Pesisir',
             tanggal: '2026-09-18', waktu: '07:00', tempat: 'Kawasan Hutan Mangrove Pandansari Kec. Brebes',
             pejabat: 'Bupati & Wakil Bupati', nomorSurat: '660/0930/DLHPS/2026', perihalSurat: 'Aksi Bersih Pantai dan Tanam Mangrove',
             dresscode: 'Kaos Olahraga Ramah Lingkungan', picNama: 'Laode M. Safaat, ST', picNoHP: '08139011026',
@@ -430,7 +430,7 @@ async function main() {
             protokolCount: 2, liputanCount: 2,
         },
         {
-            namaKegiatan: 'Pemnbinaan Karang Taruna dan Penyerahan Bantuan Sarana Olahraga Kepemudaan',
+            namaKegiatan: 'Pembinaan Karang Taruna dan Penyerahan Bantuan Sarana Olahraga Kepemudaan',
             tanggal: '2026-09-18', waktu: '14:30', tempat: 'Aula Kecamatan Bersama',
             pejabat: 'Belum Ditentukan', nomorSurat: '427/0931/Dindikpora/2026', perihalSurat: 'Pembinaan Kepemudaan Karang Taruna',
             dresscode: 'Batik Motif Bebas', picNama: 'Faisal Akbar, S.STP', picNoHP: '08139011050',
@@ -443,7 +443,7 @@ async function main() {
         // --- 19 September 2026 ---
         {
             namaKegiatan: 'Penyerahan Sertifikat Hak Atas Tanah Program PTSL Tahun 2026 di Desa Songgom Lor',
-            tanggal: '2026-09-19', waktu: '09:00', tempat: 'Aula Balai Desa Songgom Lor Kec. Songgo',
+            tanggal: '2026-09-19', waktu: '09:00', tempat: 'Aula Balai Desa Songgom Lor Kec. Songgom',
             pejabat: 'Bupati', nomorSurat: '590/0932/BPN/2026', perihalSurat: 'Penyerahan Simbolis 500 Sertifikat PTSL',
             dresscode: 'Batik Brebesan', picNama: 'Heru Triatmoko', picNoHP: '08139011027',
             leadingSector: 'Bagian Protokol dan Komunikasi Pimpinan',
@@ -453,7 +453,7 @@ async function main() {
             protokolCount: 2, liputanCount: 1,
         },
         {
-            namaKegiatan: 'Pengukuhan dan Pelantikan Dewan Pengurus Forum Anak Kabupaten Brebes Periode 2026-2928',
+            namaKegiatan: 'Pengukuhan dan Pelantikan Dewan Pengurus Forum Anak Kabupaten Brebes Periode 2026-2028',
             tanggal: '2026-09-19', waktu: '13:30', tempat: 'Pendopo Kantor Bupati Brebes',
             pejabat: 'Wakil Bupati', nomorSurat: '460/0933/DP3APPKB/2026', perihalSurat: 'Pelantikan Forum Anak Daerah',
             dresscode: 'Batik Bebas Rapi', picNama: 'Rina Wijayanti, S. Psi', picNoHP: '081390111028',
@@ -468,8 +468,8 @@ async function main() {
             namaKegiatan: 'Festival Kuliner Khas Brebes Sate Blengong dan Telur Asin Nusantara',
             tanggal: '2026-09-20', waktu: '08:00', tempat: 'Taman Edukasi Gandasuli Brebes',
             pejabat: 'Bupati & Wakil Bupati', nomorSurat: '556/0934/Dinbudpar/2026', perihalSurat: 'Festival Kuliner Tradisional Brebes',
-            dresscode: 'Busana Adat / Batik Brebesa', picNama: 'Wahyu Nugroho, S.SN', picNoHP: '081390111029',
-            leadingSector: 'Dinas Koperasi, Usaha Mikro dan Perdagangan (Diskopumdag)',
+            dresscode: 'Busana Adat / Batik Brebesan', picNama: 'Wahyu Nugroho, S.SN', picNoHP: '081390111029',
+            leadingSector: 'Dinas Koperasi, Usaha Mikro dan Perdagangan (Dinkopumdag)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.KEGIATAN_SELESAI,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.LEMBUR,
             linkUpload: 'https://drive.google.com/drive/folders/dummy-sep-29', catatan: 'Menampilkan 60 stand UMKM kulineran khas Brebesan.',
@@ -484,12 +484,12 @@ async function main() {
             leadingSector: 'Satuan Polisi Pamong Praja (Satpol PP)',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.MENUNGGU_PENUGASAN,
             statusPublikasi: StatusPublikasi.TIDAK_DIRILIS, jenisPenugasan: JenisPenugasan.KEGIATAN,
-            linkUpload: '', catatan: 'Penataan spanduk dan baliho lir di sepanjang Pantura.',
+            linkUpload: '', catatan: 'Penataan spanduk dan baliho liar di sepanjang Pantura.',
             protokolCount: 1, liputanCount: 0,
         },
         {
             namaKegiatan: 'Kunjungan Kerja Evaluasi Kinerja Penyelenggaraan Pelayanan Publik di RSUD Brebes',
-            tanggal: '2026-09-21', waktu: '13:00', tempat: 'Audiotarium RSUD Brebes Lt. 3',
+            tanggal: '2026-09-21', waktu: '13:00', tempat: 'Auditorium RSUD Brebes Lt. 3',
             pejabat: 'Bupati', nomorSurat: '445/0936/RSUD/2026', perihalSurat: 'Evaluasi SPM Layanan Kesehatan',
             dresscode: 'Batik Bebas Rapi', picNama: 'dr. Rasipin, M.Kes', picNoHP: '081390111031',
             leadingSector: 'Dinas Kesehatan (Dinkes)',
@@ -507,13 +507,13 @@ async function main() {
             leadingSector: 'Badan Pengelolaan Keuangan dan Aset Daerah (BPKAD)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.MENUNGGU_PENUGASAN,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.LEMBUR,
-            linkUpload: '', catatan: 'Menghadirkan narasumber dari BPKP Perwakiln Jateng.',
+            linkUpload: '', catatan: 'Menghadirkan narasumber dari BPKP Perwakilan Jateng.',
             protokolCount: 1, liputanCount: 1,
         },
         {
             namaKegiatan: 'Peninjauan Pelaksanaan Ujian Asesmen Nasional Berbasis Komputer (ANBK) Tingkat SMP',
             tanggal: '2026-09-22', waktu: '10:30', tempat: 'SMP Negeri 1 Brebes dan SMP Negeri 2 Wanasari',
-            pejabat: 'Wakil Bupati', nomorSurat: '421/0938/Dindikpora/2026', perihalSurat: 'Monitoring ANK Jenjang SMP',
+            pejabat: 'Wakil Bupati', nomorSurat: '421/0938/Dindikpora/2026', perihalSurat: 'Monitoring ANBK Jenjang SMP',
             dresscode: 'PDH Khaki', picNama: 'Drs. Caridin, M. Pd', picNoHP: '081390111033',
             leadingSector: 'Dinas Pendidikan, Pemuda dan Olahraga (Dindikpora)',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.MENUNGGU_PENUGASAN,
@@ -523,7 +523,7 @@ async function main() {
         },
         // --- 23 September 2026 ---
         {
-            namaKegiatan: 'Rapat Koordinasi Penataan Batas Wilayh Antar Desa dan Pemanfaaatan Tanah Kas Desa',
+            namaKegiatan: 'Rapat Koordinasi Penataan Batas Wilayah Antar Desa dan Pemanfaatan Tanah Kas Desa',
             tanggal: '2026-09-23', waktu: '09:00', tempat: 'Aula Bappeda Lt. 2 Kab. Brebes',
             pejabat: 'Belum Ditentukan', nomorSurat: '130/0939/TataPemerintahan/2026', perihalSurat: 'Penyelesaian Batas Desa',
             dresscode: 'PDH Khaki', picNama: 'Bambang Sudarmono, S.Sos', picNoHP: '081390111034',
@@ -533,12 +533,12 @@ async function main() {
             linkUpload: '', catatan: 'Fasilitasi mediasi batas tanah kas desa Kersana dan Cikandang.',
             protokolCount: 1, liputanCount: 0,
         },
-        // --- 24 Septembr 2026 (Hari Tani Nasional) ---
+        // --- 24 September 2026 (Hari Tani Nasional) ---
         {
             namaKegiatan: 'Peringatan Hari Tani Nasional (HTN) 2026 & Panen Raya Bawang Merah Varietas Bima Brebes',
             tanggal: '2026-09-24', waktu: '08:00', tempat: 'Lahan Pertanian Terpadu Desa Krasak Kec. Brebes',
             pejabat: 'Bupati & Wakil Bupati', nomorSurat: '520/0940/DPKP/2026', perihalSurat: 'Undangan Panen Raya Hari Tani',
-            dresscode: 'Batik Tani / Kemeja Putih', picNama: 'Ir. Yulia Rahmawait, MP', picNoHP: '081390111035',
+            dresscode: 'Batik Tani / Kemeja Putih', picNama: 'Ir. Yulia Rahmawati, MP', picNoHP: '081390111035',
             leadingSector: 'Dinas Pertanian dan Ketahanan Pangan (DPKP)',
             statusSambutan: StatusSambutan.SUDAH, statusKegiatan: StatusKegiatan.MENUNGGU_PENUGASAN,
             statusPublikasi: StatusPublikasi.DIRILIS, jenisPenugasan: JenisPenugasan.LEMBUR,
@@ -617,7 +617,7 @@ async function main() {
         },
         // --- 29 September 2026 ---
         {
-            namaKegiatan: 'Konsusltasi Publik Rancangan Peraturan Bupati tentang Tata Kelola Sampag Berkelanjutan',
+            namaKegiatan: 'Konsultasi Publik Rancangan Peraturan Bupati tentang Tata Kelola Sampah Berkelanjutan',
             tanggal: '2026-09-29', waktu: '09:00', tempat: 'Aula Gedung Korpri Brebes',
             pejabat: 'Belum Ditentukan', nomorSurat: '180/0947/Hukum/2026', perihalSurat: 'Uji Publik Raperbup Pengelolaan Sampah',
             dresscode: 'Batik Bebas Rapi', picNama: 'Moh. Ridwan, SH, MH', picNoHP: '081390111042',
@@ -628,7 +628,7 @@ async function main() {
             protokolCount: 1, liputanCount: 1,
         },
         {
-            namaKegiatan: 'Perancangan Gerakan Menanam Cabai di Pekarangan Rumah ASN Pemkab Brebes',
+            namaKegiatan: 'Pencanangan Gerakan Menanam Cabai di Pekarangan Rumah ASN Pemkab Brebes',
             tanggal: '2026-09-29', waktu: '13:30', tempat: 'Halaman Kompleks Kantor Setda Brebes',
             pejabat: 'Wakil Bupati', nomorSurat: '521/0948/DPKP/2026', perihalSurat: 'Gerakan Menanam Cabai Serentak',
             dresscode: 'PDH Khaki / Baju Tani', picNama: 'Ir. Ahmad Subhan', picNoHP: '081390111043',
@@ -647,13 +647,13 @@ async function main() {
             leadingSector: 'Bagian Protokol dan Komunikasi Pimpinan',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.ACARA_MASUK,
             statusPublikasi: StatusPublikasi.BELUM_DIRILIS, jenisPenugasan: JenisPenugasan.LEMBUR,
-            linkUpload: '', catatan: 'Penandatangan berita acara persutujuan bersama bupati dan pimpinan dewan.',
+            linkUpload: '', catatan: 'Penandatangan berita acara persetujuan bersama bupati dan pimpinan dewan.',
             protokolCount: 3, liputanCount: 2, allCrewProtokol: true,
         },
         {
             namaKegiatan: 'Malam Renungan dan Doa Bersama Akhir Bulan Lintas Agama',
             tanggal: '2026-09-30', waktu: '19:30', tempat: 'Pendopo Kabupaten Brebes',
-            pejabat: 'Bupati', nomorSurat: '450/0904/Kesra/2026', perihalSurat: 'Doa Bersama Kerukunan Umat Beragama',
+            pejabat: 'Bupati', nomorSurat: '450/0950/Kesra/2026', perihalSurat: 'Doa Bersama Kerukunan Umat Beragama',
             dresscode: 'Batik Brebesan / Pakaian Adat', picNama: 'H. Akhmad Zaini, S.Ag', picNoHP: '081390111045',
             leadingSector: 'Bagian Protokol dan Komunikasi Pimpinan',
             statusSambutan: StatusSambutan.BELUM, statusKegiatan: StatusKegiatan.ACARA_MASUK,
@@ -676,7 +676,6 @@ async function main() {
             StatusDokumen.SUDAH_UPLOAD,
         ],
         KEGIATAN_SELESAI: [
-            StatusDokumen.SUDAH_UPLOAD,
             StatusDokumen.SUDAH_UPLOAD,
             StatusDokumen.SUDAH_UPLOAD,
             StatusDokumen.SUDAH_UPLOAD,
@@ -728,7 +727,7 @@ async function main() {
         const createdKegiatan = await prisma.kegiatan.create({
             data: {
                 namaKegiatan: item.namaKegiatan,
-                tanggal: new Date(`${item.tanggal}T${item.waktu}:00.00Z`),
+                tanggal: new Date(`${item.tanggal}T00:00:00.00Z`),
                 waktu: item.waktu,
                 tempat: item.tempat,
                 pejabat: item.pejabat,
@@ -769,14 +768,14 @@ async function main() {
                 userId: adminUser.id,
                 changes: {
                     after: {
-                        namaKegitan: item.namaKegiatan,
+                        namaKegiatan: item.namaKegiatan,
                         tanggal: item.tanggal,
                         tempat: item.tempat,
                         pejabat: item.pejabat,
                     },
                     meta: { entityName: item.namaKegiatan },
                 },
-                createdAt: new Date(`${item.tanggal}T06:00:00.00Z`),
+                createdAt: new Date(`${item.tanggal}T00:00:00.00Z`),
             },
         });
 
@@ -796,3 +795,4 @@ main()
         await prisma.$disconnect();
         process.exit(1);
     });
+

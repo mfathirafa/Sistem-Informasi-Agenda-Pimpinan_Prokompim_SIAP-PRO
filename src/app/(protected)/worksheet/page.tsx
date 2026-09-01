@@ -1,6 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { buildKegiatanWhere, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter, type KegiatanSortKey, type KegiatanSortDir } from '@/lib/queries/kegiatan';
+import {
+  buildKegiatanWhere,
+  buildKegiatanOrderBy,
+  mapKegiatanToRow,
+  kegiatanInclude,
+  type KegiatanFilter,
+  type KegiatanSortKey,
+  type KegiatanSortDir,
+} from '@/lib/queries/kegiatan'
 import WorksheetClient from './worksheet-client';
 
 const PAGE_SIZE = 20;
@@ -53,11 +61,10 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const [kegiatan, dates, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
         where,
-        orderBy: [{ tanggal: 'asc' }, { createdAt: 'asc' }],
+        orderBy: buildKegiatanOrderBy(sort, dir),
         include: kegiatanInclude,
-        // Ambil lebih banyak untuk sort manual yang benar, lalu slice
         skip: (safePage - 1) * PAGE_SIZE,
-        take: PAGE_SIZE + 50, // buffer untuk sort
+        take: PAGE_SIZE,
       }),
       prisma.kegiatan.findMany({
         select: { tanggal: true },
