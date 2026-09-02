@@ -98,14 +98,18 @@ const styles = StyleSheet.create({
     },
     table: {
         width: '100%',
-        borderWidth: 0.5,
-        borderColor: '#94a3b8',
     },
     tableHeader: {
         flexDirection: 'row',
         backgroundColor: '#f1f5f9',
+        borderTopWidth: 0.5,
+        borderTopColor: '#94a3b8',
         borderBottomWidth: 0.5,
         borderBottomColor: '#94a3b8',
+        borderLeftWidth: 0.5,
+        borderLeftColor: '#94a3b8',
+        borderRightWidth: 0.5,
+        borderRightColor: '#94a3b8',
         fontFamily: 'Helvetica-Bold',
         fontSize: 7,
     },
@@ -113,6 +117,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         borderBottomWidth: 0.5,
         borderBottomColor: '#cbd5e1',
+        borderLeftWidth: 0.5,
+        borderLeftColor: '#cbd5e1',
+        borderRightWidth: 0.5,
+        borderRightColor: '#cbd5e1',
         minHeight: 16,
     },
     th: {
@@ -241,7 +249,7 @@ export function LaporanPdfDocument({
                                         <Text style={[styles.td, { width: '12%' }]}>{k.leadingSectorNama || '-'}</Text>
                                         <Text style={[styles.td, { width: '12%' }]}>{formatCrew(k.allCrewProtokol, k.petugasProtokolNama)}</Text>
                                         <Text style={[styles.td, { width: '12%' }]}>{formatCrew(k.allCrewLiputan, k.petugasLiputanNama)}</Text>
-                                        <Text style={[styles.td, { width: '8%' }]}>{STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}</Text>
+                                        <Text style={[styles.tdLast, { width: '8%' }]}>{STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}</Text>
                                     </>
                                 ): (
                                     <>

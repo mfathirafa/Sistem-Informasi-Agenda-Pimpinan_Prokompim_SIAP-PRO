@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { time } from "console";
 
 export function GlobalLoading(){
     const pathname = usePathname();
@@ -33,7 +32,7 @@ export function GlobalLoading(){
     // 2. SearchParams change (filter/sort/page) -> loading
     const searchParamsString = searchParams?.toString();
     useEffect(() => {
-        showLoading;
+        showLoading();
         const t = setTimeout(() => hideLoading(), 2000);
         return () => clearTimeout(t);
     }, [searchParamsString, showLoading, hideLoading]);

@@ -32,17 +32,20 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState<'ALL' | KategoriPetugas>('ALL');
-  const [sortKey, setSortKey] = useState<'nama' | 'jabatan' | 'nip'>('nama');
+  const [sortKey, setSortKey] = useState<'nama' | 'jabatan' | 'nip' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  // 🔒 Lock scroll background saat modal buka
+  // Lock scroll background saat modal buka
   useModalScrollLock(modalOpen);
 
   const toggleSort = (key: 'nama' | 'jabatan' | 'nip') => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
+    if (sortKey !== key) {
       setSortKey(key);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortKey(null);
       setSortDir('asc');
     }
   };
@@ -59,7 +62,14 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const openAdd = () => { setEditingItem(null); setForm(emptyForm); setError(''); setWarning(''); setModalOpen(true); };
   const openEdit = (item: PetugasRow) => {
     setEditingItem(item);
-    setForm({ nama: item.nama, nip: item.nip || '', jabatan: item.jabatan || '', noHp: item.noHp || '', statusAktif: item.statusAktif, kategori: item.kategori });
+    setForm({
+      nama: item.nama,
+      nip: item.nip || '',
+      jabatan: item.jabatan || '',
+      noHp: item.noHp || '',
+      statusAktif: item.statusAktif,
+      kategori: item.kategori
+    });
     setError('');
     setWarning('');
     setModalOpen(true);
@@ -67,23 +77,25 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
 
   const filtered = items.filter((p) => {
     const matchKategori = filterKategori === 'ALL' || p.kategori === filterKategori;
-    const q = search.trim().toLowerCase();
+    const q = search.trim().toLocaleLowerCase();
     const matchSearch = 
-    !q ||
-    p.nama.toLowerCase().includes(q) ||
-    (p.jabatan ?? '').toLowerCase().includes(q) ||
-    (p.nip ?? '').includes(q);
+      !q ||
+      p.nama.toLowerCase().includes(q) ||
+      (p.jabatan ?? '').toLowerCase().includes(q) ||
+      (p.nip ?? '').includes(q);
     return matchKategori && matchSearch;
-  })
-
-  .sort((a, b) => {
-    const av = a[sortKey] ?? '';
-    const bv = b[sortKey] ?? '';
-    if (!av && bv) return 1;
-    if (av && !bv) return -1;
-    const cmp = av.localeCompare(bv, 'id', { numeric: true, sensitivity: 'base' });
-    return sortDir === 'asc' ? cmp : -cmp;
   });
+
+  const displayData = sortKey
+    ? [...filtered].sort((a, b) => {
+      const av = a[sortKey] ?? '';
+      const bv = b[sortKey] ?? '';
+      if (!av && bv) return 1;
+      if (av && !bv) return -1;
+      const cmp = av.localeCompare(bv, 'id', { numeric: true, sensitivity: 'base' });
+      return sortDir === 'asc' ? cmp : -cmp;
+    })
+    : filtered;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,11 +197,11 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {displayData.length === 0 ? (
               <tr><td colSpan={canEdit ? 8 : 7} className="px-4 py-10 text-center text-muted">
                 {items.length === 0 ? 'Belum ada data petugas.' : 'Tidak ada petugas yang cocok.'}
               </td></tr>
-            ) : filtered.map((p, index) => (
+            ) : displayData.map((p, index) => (
               <tr key={p.id} className="border-t border-app hover:bg-slate-50">
                 <td className="px-4 py-3 text-center text-muted">{index + 1}</td>
                 <td className="px-4 py-3 font-medium">{p.nama}</td>

@@ -66,11 +66,14 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
         }),
         prisma.kegiatan.groupBy({
           by: ['leadingSectorId'],
+          where: {
+            leadingSectorId: { not: null },
+          },
           _count: true,
           orderBy: { _count: { leadingSectorId: 'desc' } },
-          take: 5,
+          take: 10,
         }),
-                prisma.kegiatan.findMany({
+        prisma.kegiatan.findMany({
           where: { tanggal: { gte: currentYearStart } },
           select: { id: true, namaKegiatan: true, dokumen: { select: { status: true } } },
         }),
@@ -109,14 +112,21 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
       const topSektorIds = topSektorRaw.map((t) => t.leadingSectorId).filter((id): id is string => Boolean(id));
       const sektorNama = topSektorIds.length > 0
         ? await prisma.leadingSector.findMany({
-            where: { id: { in: topSektorIds } },
-            select: { id: true, nama: true },
+          where: {
+            id: { in: topSektorIds },
+            nama: { not: '-' },
+          },
+          select: { id: true, nama: true },
         })
         : [];
-        const topSektorData = topSektorRaw.map((t) => {
-          const s = sektorNama.find((x) => x.id === t.leadingSectorId);
-          return { nama: s?.nama || '(dihapus)', count: t._count};
-        });
+        const topSektorData = topSektorRaw
+          .map((t) => {
+            const s = sektorNama.find((x) => x.id === t.leadingSectorId);
+            if (!s || !s.nama || s.nama.trim() === '-') return null;
+            return { nama: s.nama, count: t._count };
+          })
+          .filter((item): item is { nama: string; count: number } => item !== null)
+          .slice(0, 5);
 
         type Stat = {
           label: string;

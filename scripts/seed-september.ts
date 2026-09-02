@@ -731,6 +731,7 @@ async function main() {
                 waktu: item.waktu,
                 tempat: item.tempat,
                 pejabat: item.pejabat,
+                perihalSurat: item.perihalSurat,
                 nomorSurat: item.nomorSurat,
                 dresscode: item.dresscode,
                 picNama: item.picNama,

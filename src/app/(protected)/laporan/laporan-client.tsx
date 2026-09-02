@@ -382,45 +382,10 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 ))}
             </div>
 
-            {/* Mobile: card per kegiatan -- field sesuai kolom yang aktif */}
-            <div className="md:hidden print:hidden space-y-3">
-                {data.length === 0 ? (
-                    <p className="p-6 text-center text-muted text-sm">Tidak ada data.</p>
-                ) : (
-                    data.map((k) => {
-                        // namaKegiatan + statusKegiatan sudah jadi header kartu (identitas record).
-                        const cardColumns = COLUMNS.filter((c) => activeColumns.includes(c.key) && c.key !== 'namaKegiatan' && c.key !== 'statusKegiatan');
-                        return (
-                            <div key={k.id} className="bg-white border rounded-xl p-3.5 text-sm">
-                                <div className="flex items-start justify-between gap-2">
-                                    <p className="font-semibold text-navy">{k.namaKegiatan}</p>
-                                    {activeColumns.includes('statusKegiatan') && (
-                                        <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${STATUS_KEGIATAN_CELL_CLASS[k.statusKegiatan]}`}>
-                                            {STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}
-                                        </span>
-                                    )}
-                                </div>
-                                <dl className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted">
-                                    {cardColumns.map((col) => {
-                                        const long = col.key === 'perihalSurat' || col.key === 'nomorSurat' || col.key === 'petugasProtokol' || col.key === 'petugasLiputan';
-                                        return (
-                                            <div key={col.key} className={long ? 'col-span-2' : ''}>
-                                                <dt className="text-gray-400">{col.label}</dt>
-                                                <dd>{col.render(k)}</dd>
-                                            </div>
-                                        );
-                                    })}
-                                </dl>
-                            </div>
-                        );
-                    })
-                )}
-            </div>
-            
             {/* Table -- kolom mengikuti pilihan user (activeColumns) */}
             <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity print:hidden ${isPending ? 'opacity-50' : ''}`}>
                 <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[640px] md:min-w-[1000px] text-sm">
                     <thead className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                         <tr>
                             {/* Urutan kolom selalu tetap (urutan COLUMNS = urutan worksheet), activeColumns hanya filter. */}

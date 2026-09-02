@@ -73,8 +73,8 @@ export default function DashboardStats({ progressLengkap, progressBelum, topSekt
             />
             <Tooltip
                 cursor={{ fill: '#F3F1EC' }}
-                formatter={(value: any) => [`${value} kegiatan`, 'Jumlah']}
-                labelFormatter={(label: any) => `${label}`}
+                formatter={(value) => [`${value ?? 0} kegiatan`, 'Jumlah']}
+                labelFormatter={(label) => `${label}`}
             />
             <Bar dataKey="count" fill="#16294D" radius={[0, 6, 6, 0]} barSize={18} minPointSize={4} />
         </BarChart>
