@@ -288,7 +288,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               <form onSubmit={submitEdit} className="px-5 py-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Nama lengkap</label>
-                  <input value={editForm.nama} onChange={(e) => setEditForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
+                  <input autoFocus value={editForm.nama} onChange={(e) => setEditForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Peran</label>

@@ -262,7 +262,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             <form onSubmit={submit} className="px-5 py-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">Nama</label>
-                <input value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="Nama lengkap petugas" />
+                <input autoFocus value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="Nama lengkap petugas" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">NIP</label>

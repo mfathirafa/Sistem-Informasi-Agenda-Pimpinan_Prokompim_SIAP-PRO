@@ -210,7 +210,7 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
       {editingItem && (
         <div 
           className='fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50'
-          onClick={() => setEditingItem(null)}
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingItem(null); }}
           role="dialog"
           aria-modal="true"
           aria-labelledby='sektor-edit-title'
@@ -225,7 +225,7 @@ export default function MasterLeadingSectorClient({ initialData, canEdit }: { in
             <form onSubmit={submitEdit} className='px-5 py-4 space-y-4'>
               <div>
                 <label className='block text-sm font-medium mb-1.5'>Nama</label>
-                <input value={editNama} onChange={(e) => setEditNama(e.target.value)} className='w-full px-3 py-2 rounded-lg border border-app text-sm' placeholder='cth. Dinas Pendidikan' />
+                <input autoFocus value={editNama} onChange={(e) => setEditNama(e.target.value)} className='w-full px-3 py-2 rounded-lg border border-app text-sm' placeholder='cth. Dinas Pendidikan' />
               </div>
               <div>
             <label className="block text-sm font-medium mb-1.5">Kategori</label>

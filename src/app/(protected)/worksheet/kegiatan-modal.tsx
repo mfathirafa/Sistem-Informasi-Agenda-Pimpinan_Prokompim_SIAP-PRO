@@ -141,6 +141,7 @@ export default function KegiatanModal({
           <div>
             <label className="block text-sm font-medium mb-1.5">Nama Kegiatan</label>
             <input
+              autoFocus
               value={form.namaKegiatan}
               onChange={(e) => update('namaKegiatan', e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-app text-sm"
