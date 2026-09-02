@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, HelpCircle } from 'lucide-react';
 import type { KegiatanInput } from '@/app/actions/kegiatan';
 import type { KegiatanRow } from '@/lib/worksheet';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
@@ -293,7 +293,15 @@ export default function KegiatanModal({
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5">Jenis Penugasan</label>
+            <label className="flex items-center gap-1.5 text-sm font-medium mb-1.5">
+              Jenis Penugasan
+              <span 
+                title={"Biasa: kegiatan hari kerja normal\nLembur: di luar jam/hari kerja\nSPPD: perjalanan dinas ke luar kota"}
+                className="cursor-help text-muted leading-none"
+              >
+                <HelpCircle size={13} />
+              </span>
+            </label>
             <select 
               value={form.jenisPenugasan} 
               onChange={(e) => update('jenisPenugasan', e.target.value as (typeof JENIS_PENUGASAN_OPTIONS)[number])}
@@ -305,7 +313,15 @@ export default function KegiatanModal({
             </select>
           </div>
           <div>
-           <label className="block text-sm font-medium mb-1.5">Status Publikasi</label>
+           <label className="flex items-center gap-1.5 text-sm font-medium mb-1.5">
+              Status Publikasi
+              <span  
+                title={"Belum Dirilis: masih draft, belum ada konten yang dipublikasikan\nDirilis: sudah dipublikasikan ke media\nTidak Dirilis: kegiatan memang tidak untuk dipublikasi"}
+                className="cursor-help text-muted leading-none"
+              >
+                <HelpCircle size={13} />
+              </span>
+            </label>
           <select value={form.statusPublikasi} onChange={(e) => update('statusPublikasi', e.target.value as (typeof STATUS_PUBLIKASI_OPTIONS)[number])}
           className="w-full px-3 py-2 rounded-lg border border-app text-sm"
           >
