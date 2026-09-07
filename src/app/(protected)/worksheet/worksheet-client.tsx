@@ -171,6 +171,10 @@ export default function WorksheetClient({
     allCrewProtokol: row.allCrewProtokol,
     allCrewLiputan: row.allCrewLiputan,
     linkUpload: row.linkUpload ?? undefined,
+    linkTiktok: row.linkTiktok ?? undefined,
+    linkInstagram: row.linkInstagram ?? undefined,
+    linkBeritaInternal: row.linkBeritaInternal ?? undefined,
+    linkBeritaEksternal: row.linkBeritaEksternal ?? undefined,
     catatan: row.catatan ?? undefined,
     jenisPenugasan: row.jenisPenugasan,
     statusPublikasi: row.statusPublikasi,
@@ -340,6 +344,10 @@ export default function WorksheetClient({
       'Petugas Protokol',
       'Petugas Liputan',
       'Link Upload',
+      'Link Tiktok',
+      'Link Instagram',
+      'Link Berita Internal',
+      'Link Berita Eksternal',
       'Catatan',
       'Jenis Tugas',
       'Status Publikasi',
@@ -359,6 +367,10 @@ export default function WorksheetClient({
       allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama),
       allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama),
       k.linkUpload || '',
+      k.linkTiktok || '',
+      k.linkInstagram || '',
+      k.linkBeritaInternal || '',
+      k.linkBeritaEksternal || '',
       k.catatan || '',
       JENIS_PENUGASAN_LABEL[k.jenisPenugasan],
       STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
@@ -511,6 +523,8 @@ export default function WorksheetClient({
                 <th className="px-2 py-2 font-medium">Petugas Protokol</th>
                 <th className="px-2 py-2 font-medium">Petugas Liputan</th>
                 <th className="px-2 py-2 font-medium">Dokumentasi</th>
+                <th className="px-2 py-2 font-medium">Medsos</th>
+                <th className="px-2 py-2 font-medium">Berita</th>
                 <th className="px-2 py-2 font-medium">Jenis Tugas</th>
                 <th className="px-2 py-2 font-medium">Publikasi</th>
                 {canEdit && <th className="px-2 py-2 font-medium">Aksi</th>}
@@ -519,7 +533,7 @@ export default function WorksheetClient({
             <tbody>
               {initialData.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 18 : 17} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 20 : 19} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -596,6 +610,58 @@ export default function WorksheetClient({
                       ) : (
                         <span className="text-muted">-</span>
                       )}
+                    </td>
+                    {/* Kolom Medsos */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        {k.linkTiktok &&(
+                          <a 
+                            href={k.linkTiktok}
+                            target="_blank"
+                            rel="noopener noreferrer"                         
+                            className="px-2 py-0.5 rounded text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium" 
+                          >
+                            TT
+                          </a>
+                        )}
+                        {k.linkInstagram && (
+                          <a
+                            href={k.linkInstagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-0.5 rounded text-xs bg-pink-50 hover:bg-pink-100 text-pink-700 font-medium"
+                          >
+                            IG
+                          </a>
+                        )}
+                        {!k.linkTiktok && !k.linkInstagram && <span className="text-muted">-</span>}
+                      </div>
+                    </td>
+                    {/* Kolom Berita */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        {k.linkBeritaInternal && (
+                          <a
+                            href={k.linkBeritaInternal}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-0.5 rounded text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium"
+                          >
+                            Internal
+                          </a>
+                        )}
+                        {k.linkBeritaEksternal && (
+                          <a
+                            href={k.linkBeritaEksternal}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-0.5 rounded text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium"
+                          >
+                            Eksternal
+                          </a>
+                        )}
+                        {!k.linkBeritaInternal && !k.linkBeritaEksternal && <span className='text-muted'>-</span>}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       {canEdit ? (

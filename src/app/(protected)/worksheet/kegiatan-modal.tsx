@@ -52,6 +52,10 @@ export default function KegiatanModal({
           allCrewProtokol: item.allCrewProtokol,
           allCrewLiputan: item.allCrewLiputan,
           linkUpload: item.linkUpload || '',
+          linkTiktok: item.linkTiktok || '',
+          linkInstagram: item.linkInstagram || '',
+          linkBeritaInternal: item.linkBeritaInternal || '',
+          linkBeritaEksternal: item.linkBeritaEksternal || '',
           catatan: item.catatan || '',
           jenisPenugasan: item.jenisPenugasan,
           statusPublikasi: item.statusPublikasi,
@@ -75,6 +79,10 @@ export default function KegiatanModal({
           allCrewProtokol: false,
           allCrewLiputan: false,
           linkUpload: '',
+          linkTiktok: '',
+          linkInstagram: '',
+          linkBeritaInternal: '',
+          linkBeritaEksternal: '',
           catatan: '',
           jenisPenugasan: 'LEMBUR',
           statusPublikasi: 'BELUM_DIRILIS',
@@ -372,6 +380,44 @@ export default function KegiatanModal({
               className="w-full px-3 py-2 rounded-lg border border-app text-sm"
               placeholder="https://drive.google.com/..."
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Link Tiktok</label>
+              <input 
+                value={form.linkTiktok || ''}
+                onChange={(e) => update('linkTiktok', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                placeholder="https://vt.tiktok.com/..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Link Instagram</label>
+              <input 
+                value={form.linkInstagram || ''}
+                onChange={(e) => update('linkInstagram', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                placeholder="https://instagram.com/p/..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Link Berita Internal</label>
+              <input 
+                value={form.linkBeritaInternal || ''}
+                onChange={(e) => update('linkBeritaInternal', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                placeholder="https://prokompim.kotakab.go.id/..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Link Berita Eksternal</label>
+              <input 
+                value={form.linkBeritaEksternal || ''}
+                onChange={(e) => update('linkBeritaEksternal', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                placeholder="https://media.com/..."
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Catatan</label>

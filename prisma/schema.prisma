@@ -104,6 +104,9 @@ model LeadingSector {
   id        String     @id @default(cuid())
   nama      String     @unique      
   kategori  String?
+  noHp      String?
+  pejabatNama String?
+  pejabatJabatan  String?
   createdAt DateTime   @default(now())
   kegiatan  Kegiatan[]
 
@@ -125,6 +128,10 @@ model Kegiatan {
   statusPublikasi StatusPublikasi   @default(BELUM_DIRILIS)
   jenisPenugasan  JenisPenugasan    @default(LEMBUR)
   linkUpload      String?
+  linkTiktok      String?
+  linkInstagram   String?
+  linkBeritaInternal  String?
+  linkBeritaEksternal String?
   catatan         String?
   perihalSurat    String?
   dresscode       String?

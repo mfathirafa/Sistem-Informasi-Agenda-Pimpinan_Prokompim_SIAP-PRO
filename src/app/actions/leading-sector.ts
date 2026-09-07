@@ -6,7 +6,13 @@ import { getCurrentUser, canEditRole, type ActionResult } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { KATEGORI_LEADING_SECTOR_OPTIONS } from '@/lib/constants/kategori-leading-sector';
 
-export async function createLeadingSector(nama: string, kategori: string | null): Promise<ActionResult> {
+export async function createLeadingSector(
+  nama: string, 
+  kategori: string | null, 
+  noHp?: string | null,
+  pejabatNama?: string | null,
+  pejabatJabatan?: string | null,
+): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
   if (!nama.trim()) return { ok: false, error: 'Nama leading sector wajib diisi.' };
@@ -21,13 +27,34 @@ export async function createLeadingSector(nama: string, kategori: string | null)
 
   try {
     await prisma.$transaction(async (tx) => {
-      const created = await tx.leadingSector.create({ data: { nama: nama.trim(), kategori: validKategori } });
+      const validNoHp = noHp && noHp.trim().length > 0 ? noHp.trim() : null;
+      const validPejabatNama = pejabatNama && pejabatNama.trim().length > 0 ? pejabatNama.trim() : null;
+      const validPejabatJabatan = pejabatJabatan && pejabatJabatan.trim().length > 0 ? pejabatJabatan.trim() : null;
+
+      const created = await tx.leadingSector.create({ 
+        data: { 
+          nama: nama.trim(), 
+          kategori: validKategori, 
+          noHp: validNoHp,
+          pejabatNama: validPejabatNama,
+          pejabatJabatan: validPejabatJabatan,
+        },
+       });
       await logActivity({
         entity: 'LEADING_SECTOR',
         entityId: created.id,
         action: 'CREATE',
         userId: user!.id,
-        changes: { after: { nama: nama.trim() , kategori: validKategori }, meta: { entityName: nama.trim() } },
+        changes: { 
+          after: {
+            nama: nama.trim() , 
+            kategori: validKategori, 
+            noHp: validNoHp,
+            pejabatNama: validPejabatNama,
+            pejabatJabatan: validPejabatJabatan,
+          }, 
+          meta: { entityName: nama.trim() }, 
+        },
       }, tx);
     });
     revalidatePath('/master-leading-sector');
@@ -38,7 +65,14 @@ export async function createLeadingSector(nama: string, kategori: string | null)
   }
 }
 
-export async function updateLeadingSector(id: string, nama: string, kategori: string | null): Promise<ActionResult> {
+export async function updateLeadingSector(
+  id: string, 
+  nama: string, 
+  kategori: string | null, 
+  noHp: string | null,
+  pejabatNama?: string | null,
+  pejabatJabatan?: string | null,
+): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
 
@@ -54,23 +88,58 @@ export async function updateLeadingSector(id: string, nama: string, kategori: st
     const existing = await prisma.leadingSector.findUnique({ where: { id } });
     if (!existing) return { ok: false, error: 'Leading sector tidak ditemukan.' };
 
-    // No-op guard -- nama tidak berubah, langsung sukses tanpa menulis DB/log.
-    if (existing.nama === trimmed && existing.kategori === validKategori) return { ok: true };
+    const validNoHp = noHp && noHp.trim().length > 0 ? noHp.trim() : null;
+    const validPejabatNama = pejabatNama && pejabatNama.trim().length > 0 ? pejabatNama.trim() : null;
+    const validPejabatJabatan = pejabatJabatan && pejabatJabatan.trim().length > 0 ? pejabatJabatan.trim() : null;
 
-    // Cek duplikat, kecuali record itu sendiri (konsisten dengan createLeadingSector).
+    // No-op guard -- nama tidak berubah, langsung sukses tanpa menulis DB/log.
+    if (
+      existing.nama === trimmed && 
+      existing.kategori === validKategori && 
+      existing.noHp === validNoHp &&
+      existing.pejabatNama === validPejabatNama &&
+      existing.pejabatJabatan === validPejabatJabatan
+    ) {
+      return { ok: true };
+    }
+
+    // Cek duplikat, kecuali record itu sendiri 
     const duplicate = await prisma.leadingSector.findFirst({
       where: { nama: trimmed, NOT: { id } },
     });
     if (duplicate) return { ok: false, error: 'Leading sector ini sudah ada di daftar.' };
 
     await prisma.$transaction(async (tx) => {
-      await tx.leadingSector.update({ where: { id }, data: { nama: trimmed, kategori: validKategori } });
+      await tx.leadingSector.update({ 
+        where: { id }, 
+        data: { 
+          nama: trimmed, 
+          kategori: validKategori, 
+          noHp: validNoHp,
+          pejabatNama: validPejabatNama,
+          pejabatJabatan: validPejabatJabatan, 
+        }, 
+      });
       await logActivity({
         entity: 'LEADING_SECTOR',
         entityId: id,
         action: 'UPDATE',
         userId: user!.id,
-        changes: { before: { nama: existing.nama, kategori: existing.kategori }, after: { nama: trimmed, kategori: validKategori }, meta: { entityName: trimmed } },
+        changes: { 
+          before: { 
+            nama: existing.nama, 
+            kategori: existing.kategori, 
+            noHp: existing.noHp 
+          }, 
+          after: { 
+            nama: trimmed, 
+            kategori: validKategori, 
+            noHp: validNoHp,
+            pejabatNama: validPejabatNama,
+            pejabatJabatan: validPejabatJabatan, 
+          }, 
+            meta: { entityName: trimmed }, 
+        },
       }, tx);
     });
       revalidatePath('/master-leading-sector');

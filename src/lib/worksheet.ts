@@ -26,6 +26,10 @@ export type KegiatanRow = {
     allCrewProtokol: boolean;
     allCrewLiputan: boolean;
     linkUpload: string | null;
+    linkTiktok?: string | null;
+    linkInstagram?: string | null;
+    linkBeritaInternal?: string | null;
+    linkBeritaEksternal?: string | null;
     catatan: string | null;
     jenisPenugasan: JenisPenugasanValue;
     statusPublikasi: StatusPublikasiValue;

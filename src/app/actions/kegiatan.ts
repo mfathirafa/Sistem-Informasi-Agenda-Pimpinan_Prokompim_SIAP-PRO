@@ -30,6 +30,10 @@ export type KegiatanInput = {
   allCrewProtokol?: boolean;
   allCrewLiputan?: boolean;
   linkUpload?: string;
+  linkTiktok?: string;
+  linkInstagram?: string;
+  linkBeritaInternal?: string;
+  linkBeritaEksternal?: string;
   catatan?: string;
   jenisPenugasan: JenisPenugasanValue;
   statusPublikasi: StatusPublikasiValue;
