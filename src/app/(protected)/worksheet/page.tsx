@@ -48,10 +48,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
 
     // Opsional: Batasi data agar tidak menarik ribuan histori dari tahun-tahun lama
     // Misalnya: Tarik data dari 3 bulan yang lalu ke depan
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-    const where = buildKegiatanWhere(filters, threeMonthsAgo);
+    const where = buildKegiatanWhere(filters);
 
     // Hitung total terlebih dahulu agar page bisa di-clamp sebelum findMany.
     const total = await prisma.kegiatan.count({ where });

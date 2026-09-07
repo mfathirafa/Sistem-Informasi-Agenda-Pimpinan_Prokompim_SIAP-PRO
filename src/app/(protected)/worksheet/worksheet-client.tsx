@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { Search, Download, Plus, Edit2, Trash2, Link as LinkIcon, ArrowUp, ArrowUpDown, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { createKegiatan, updateKegiatan, deleteKegiatan, getKegiatanExport, type KegiatanInput } from '@/app/actions/kegiatan';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
@@ -106,6 +106,11 @@ export default function WorksheetClient({
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nama: string } | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [searchQuery, setSearchQueary] = useState(filters.q || '');
+
+  useEffect(() => {
+    setSearchQueary(filters.q || '');
+  }, [filters.q]);
 
   // Auto reset loading pas searchParams berubah (filter/sort/page)
   // pathname ga berubah, jadi GlobalLoading.params.usePathname() ga ketriggre
@@ -176,7 +181,7 @@ export default function WorksheetClient({
     linkBeritaInternal: row.linkBeritaInternal ?? undefined,
     linkBeritaEksternal: row.linkBeritaEksternal ?? undefined,
     catatan: row.catatan ?? undefined,
-    jenisPenugasan: row.jenisPenugasan,
+    jenisPenugasan: row.jenisPenugasan ?? null,
     statusPublikasi: row.statusPublikasi,
   });
 
@@ -372,7 +377,7 @@ export default function WorksheetClient({
       k.linkBeritaInternal || '',
       k.linkBeritaEksternal || '',
       k.catatan || '',
-      JENIS_PENUGASAN_LABEL[k.jenisPenugasan],
+      k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '',
       STATUS_PUBLIKASI_LABEL[k.statusPublikasi],
     ]);
 
@@ -405,14 +410,37 @@ export default function WorksheetClient({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            defaultValue={filters.q || ''}
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQueary(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setFilter('q', searchQuery.trim() || undefined);
+              }
+            }}
+            onBlur={() => {
+              if (searchQuery.trim() !== (filters.q || '')) {
+                setFilter('q', searchQuery.trim() || undefined);
+              }
+            }}
             placeholder="Cari kegiatan, tempat, atau perihal..."
-            onBlur={(e) => setFilter('q', e.target.value.trim() || undefined)}
-            onKeyDown={(e) => e.key === 'Enter' && setFilter('q', (e.target as HTMLInputElement).value.trim() || undefined)}
-            className="w-full min-w-0 pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
+            className="w-full min-w-0 pl-9 pr-8 py-2 rounded-lg border border-app text-sm bg-white"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQueary('');
+                setFilter('q', undefined);
+              }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-navy p-0.5 rounded"
+              title="Hapus pencarian"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
           <select value={filters.tahun || ''} 
@@ -666,18 +694,23 @@ export default function WorksheetClient({
                     <td className="px-4 py-3">
                       {canEdit ? (
                         <select
-                          value={k.jenisPenugasan}
-                          onChange={(e) => handleInlinePenugasanChange(k.id, e.target.value as JenisPenugasanValue)}
-                          className={`px-1 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]} bg-transparent border-none cursor-pointer`}
+                          value={k.jenisPenugasan || ''}
+                          onChange={(e) => handleInlinePenugasanChange(k.id, (e.target.value as JenisPenugasanValue) || null)}
+                          className={`px-1 py-1 rounded-full text-xs font-medium ${k.jenisPenugasan ? JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]: 'text-muted'} bg-transparent border-none cursor-pointer`}
                         >
+                          <option value="">-</option>
                           {JENIS_PENUGASAN_OPTIONS.map((j) => (
                             <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
                           ))}
                         </select>
                       ) : (
+                        k.jenisPenugasan ? (
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${JENIS_PENUGASAN_BADGE_CLASS[k.jenisPenugasan]}`}>
                           {JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}
                         </span>
+                      ) : (
+                        <span className="text-muted text-xs">-</span>
+                        )
                       )}
                     </td>
                     <td className="px-4 py-3">

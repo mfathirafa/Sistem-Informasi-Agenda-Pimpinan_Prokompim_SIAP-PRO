@@ -35,7 +35,7 @@ type KalenderEvent = {
   picNama: string | null;
   picNoHp: string | null;
   leadingSector: { nama: string } | null;
-  jenisPenugasan: JenisPenugasanValue;
+  jenisPenugasan: JenisPenugasanValue | null;
   statusPublikasi: StatusPublikasiValue;
   dokumen: KalenderDokumen[];
   createdAt: Date;
@@ -118,7 +118,7 @@ function KegiatanItem({
             </div>
             <div>
               <dt className="text-muted text-xs">Jenis Penugasan</dt>
-              <dd className="font-medium">{JENIS_PENUGASAN_LABEL[k.jenisPenugasan]}</dd>
+              <dd className="font-medium">{k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '-'}</dd>
             </div>
             <div>
               <dt className="text-muted text-xs">Status Publikasi</dt>

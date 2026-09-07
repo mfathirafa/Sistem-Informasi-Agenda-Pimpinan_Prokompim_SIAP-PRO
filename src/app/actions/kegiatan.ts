@@ -35,7 +35,7 @@ export type KegiatanInput = {
   linkBeritaInternal?: string;
   linkBeritaEksternal?: string;
   catatan?: string;
-  jenisPenugasan: JenisPenugasanValue;
+  jenisPenugasan: JenisPenugasanValue | null;
   statusPublikasi: StatusPublikasiValue;
 };
 
@@ -382,9 +382,7 @@ export async function getKegiatanExport(filters: KegiatanFilter) {
     return { ok: false as const, error: 'Sesi berakhir. Silakan login kembali.' };
   }
 
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  const where = buildKegiatanWhere(filters, threeMonthsAgo);
+  const where = buildKegiatanWhere(filters);
   const kegiatan = await prisma.kegiatan.findMany({
     where,
     orderBy: buildKegiatanOrderBy(filters.sort, filters.dir),

@@ -31,7 +31,7 @@ export type KegiatanRow = {
     linkBeritaInternal?: string | null;
     linkBeritaEksternal?: string | null;
     catatan: string | null;
-    jenisPenugasan: JenisPenugasanValue;
+    jenisPenugasan: JenisPenugasanValue | null;
     statusPublikasi: StatusPublikasiValue;
 };
 

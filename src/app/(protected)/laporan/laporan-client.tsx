@@ -42,7 +42,7 @@ type KegiatanItem = {
     petugasLiputanNama: string[];
     allCrewProtokol: boolean;
     allCrewLiputan: boolean;
-    jenisPenugasan: JenisPenugasanValue;
+    jenisPenugasan: JenisPenugasanValue | null;
     statusPublikasi: StatusPublikasiValue;
 };
 
@@ -103,7 +103,7 @@ const COLUMNS: ColumnDef[] = [
     },
     { key: 'petugasProtokol', label: 'Petugas Protokol', get: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), render: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), tdClass: 'text-gray-500' },
     { key: 'petugasLiputan', label: 'Petugas Liputan', get: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), render: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), tdClass: 'text-gray-500 max-w-[200px] truncate' },
-    { key: 'jenisPenugasan', label: 'Jenis Penugasan', get: (k) => JENIS_PENUGASAN_LABEL[k.jenisPenugasan], render: (k) => JENIS_PENUGASAN_LABEL[k.jenisPenugasan], tdClass: 'text-gray-500' },
+    { key: 'jenisPenugasan', label: 'Jenis Penugasan', get: (k) => (k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '-'), render: (k) => (k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '-'), tdClass: 'text-gray-500' },
     { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], render: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], tdClass: 'text-gray-500' },
 ];
 
@@ -434,7 +434,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                             : col.key === 'statusSambutan'
                                             ? (k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum')
                                             : col.key === 'jenisPenugasan'
-                                            ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan]
+                                            ? (k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '-')
                                             : col.key === 'statusPublikasi'
                                             ? STATUS_PUBLIKASI_LABEL[k.statusPublikasi]
                                             : col.key === 'petugasProtokol'

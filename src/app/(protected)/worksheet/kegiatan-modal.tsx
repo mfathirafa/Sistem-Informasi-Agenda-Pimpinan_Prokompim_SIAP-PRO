@@ -7,7 +7,7 @@ import type { KegiatanRow } from '@/lib/worksheet';
 import SearchableSelect, { type SearchableOption } from '@/components/searchable-select';
 import PetugasPicker from '@/components/petugas-picker';
 import { STATUS_KEGIATAN_OPTIONS, STATUS_KEGIATAN_LABEL } from '@/lib/constants/status-kegiatan';
-import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL } from '@/lib/constants/status-penugasan';
+import { JENIS_PENUGASAN_OPTIONS, JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_OPTIONS, STATUS_PUBLIKASI_LABEL } from '@/lib/constants/status-publikasi';
 import { toDateInput } from '@/lib/format';
 import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
@@ -57,7 +57,7 @@ export default function KegiatanModal({
           linkBeritaInternal: item.linkBeritaInternal || '',
           linkBeritaEksternal: item.linkBeritaEksternal || '',
           catatan: item.catatan || '',
-          jenisPenugasan: item.jenisPenugasan,
+          jenisPenugasan: item.jenisPenugasan ?? null,
           statusPublikasi: item.statusPublikasi,
         }
       : {
@@ -84,7 +84,7 @@ export default function KegiatanModal({
           linkBeritaInternal: '',
           linkBeritaEksternal: '',
           catatan: '',
-          jenisPenugasan: 'LEMBUR',
+          jenisPenugasan: null,
           statusPublikasi: 'BELUM_DIRILIS',
         }
   );
@@ -311,10 +311,11 @@ export default function KegiatanModal({
               </span>
             </label>
             <select 
-              value={form.jenisPenugasan} 
-              onChange={(e) => update('jenisPenugasan', e.target.value as (typeof JENIS_PENUGASAN_OPTIONS)[number])}
+              value={form.jenisPenugasan || ''} 
+              onChange={(e) => update('jenisPenugasan', (e.target.value as JenisPenugasanValue) || null)}
               className="w-full px-3 py-2 rounded-lg border border-app text-sm"
             >
+              <option value="">-</option>
              {JENIS_PENUGASAN_OPTIONS.map((j) => (
               <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
             ))}

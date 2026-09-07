@@ -126,7 +126,7 @@ model Kegiatan {
   statusSambutan  StatusSambutan    @default(BELUM)
   statusKegiatan  StatusKegiatan    @default(ACARA_MASUK)
   statusPublikasi StatusPublikasi   @default(BELUM_DIRILIS)
-  jenisPenugasan  JenisPenugasan    @default(LEMBUR)
+  jenisPenugasan  JenisPenugasan?    
   linkUpload      String?
   linkTiktok      String?
   linkInstagram   String?

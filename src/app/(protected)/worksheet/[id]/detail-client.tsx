@@ -28,7 +28,7 @@ type KegiatanDetail = {
   picNama: string | null;
   picNoHp: string | null;
   leadingSectorNama: string;
-  jenisPenugasan: JenisPenugasanValue;
+  jenisPenugasan: JenisPenugasanValue | null;
   statusPublikasi: StatusPublikasiValue;
 };
 
@@ -206,7 +206,7 @@ export default function DetailClient({
             </div>
             <div>
               <dt className="text-muted">Jenis Penugasan</dt>
-              <dd className="font-medium">{JENIS_PENUGASAN_LABEL[kegiatan.jenisPenugasan]}</dd>
+              <dd className="font-medium">{kegiatan.jenisPenugasan ? JENIS_PENUGASAN_LABEL[kegiatan.jenisPenugasan] : '-'}</dd>
             </div>
             <div>
               <dt className="text-muted">Status Publikasi</dt>

@@ -23,7 +23,7 @@ export type KegiatanItem = {
     petugasLiputanNama: string[];
     allCrewProtokol: boolean;
     allCrewLiputan: boolean;
-    jenisPenugasan: JenisPenugasanValue;
+    jenisPenugasan: JenisPenugasanValue | null;
     statusPublikasi: StatusPublikasiValue;
 };
 
