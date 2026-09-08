@@ -350,7 +350,7 @@ export default function KegiatanModal({
               </label>
               <PetugasPicker
                 label={form.allCrewProtokol ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Protokol'}
-                options={petugasProtokolOptions}
+                options={petugasProtokolOptions.filter((opt) => !form.petugasLiputanIds?.includes(opt.id))}
                 selected={form.petugasProtokolIds || []}
                 onChange={(ids) => update('petugasProtokolIds', ids)}
                 disabled={saving}
@@ -366,7 +366,7 @@ export default function KegiatanModal({
               </label>
               <PetugasPicker
                 label={form.allCrewLiputan ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Liputan'}
-                options={petugasLiputanOptions}
+                options={petugasLiputanOptions.filter((opt) => !form.petugasProtokolIds?.includes(opt.id))}
                 selected={form.petugasLiputanIds || []}
                 onChange={(ids) => update('petugasLiputanIds', ids)}
                 disabled={saving}

@@ -10,6 +10,7 @@ import { StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import { validateTransition } from '@/lib/workflow';
 import { logActivity } from '@/lib/activity-log';
 import { buildKegiatanWhere, buildKegiatanOrderBy, mapKegiatanToRow, kegiatanInclude, type KegiatanFilter } from '@/lib/queries/kegiatan';
+import { error } from 'console';
 
 export type KegiatanInput = {
   namaKegiatan: string;
@@ -113,6 +114,27 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
         return { ok: false, error: 'Petugas Liputan tidak valid.'};
       }
     }
+
+    // Cegah petugas dipilih ganda (Protokol sekaligus Liputan)
+  const bentrokIds = petugasProtokolIds.filter((id) => petugasLiputanIds.includes(id));
+  if (bentrokIds.length > 0) {
+    const bentrokPetugas = await prisma.petugas.findMany({
+      where: {
+        id: {
+          in: bentrokIds
+        }
+      },
+      select: {
+        nama: true
+      },
+    });
+    const namaList = bentrokPetugas.map((p) => p.nama).join(', ');
+    return {
+      ok: false,
+      error: `Petugas "${namaList}" tidak dapat dipilih sebagai Protokol dan Liputan sekaligus. Hapus dari salah satu peran terlebih dahulu.`,
+    };
+  }
+
     // Normalisasi nomorSurat/dresscode: kosong -> null.
     const nomorSurat = data.nomorSurat?.trim() || null;
     const dresscode = data.dresscode?.trim() || null;
@@ -221,6 +243,26 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     if (valid !== petugasLiputanIds.length) {
       return { ok: false, error: 'Petugas Liputan tidak valid.' };
     }
+  }
+
+  // Cegah petugas dipilih ganda (Protokol sekaligus Liputan)
+  const bentrokIds = petugasProtokolIds.filter((id) => petugasLiputanIds.includes(id));
+  if (bentrokIds.length > 0) {
+    const bentrokPetugas = await prisma.petugas.findMany({
+      where: {
+        id: {
+          in: bentrokIds
+        }
+      },
+      select: {
+        nama: true
+      },
+    });
+    const namaList = bentrokPetugas.map((p) => p.nama).join(', ');
+    return {
+      ok: false,
+      error: `Petugas "${namaList}" tidak dapat dipilih sebagai Protokol dan Liputan sekaligus. Hapus dari salah satu peran terlebih dahulu.`,
+    };
   }
 
   // --- scalar diff ---
@@ -341,7 +383,9 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     ? { ok: true, warning: 'Kegiatan dengan perihal, tanggal, tempat, dan pejabat yang sama sudah ada. Periksa kembali apakah ini benar-benar kegiatan baru.' }
     : { ok: true };
   } catch {
-    return { ok: false, error: 'Gagal memperbarui kegiatan.' };
+    console.error('[UPDATE_KEGIATAN_ERROR]', error);
+    const message = error instanceof Error ? error.message : 'Gagal memperbarui kegiatan.';
+    return { ok: false, error: message };
   }
 }
 
