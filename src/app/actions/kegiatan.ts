@@ -99,7 +99,7 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
     // Validasi petugas sesuai kategori
     if (petugasProtokolIds.length > 0) {
       const valid = await prisma.petugas.count({
-        where: { id: { in: petugasProtokolIds }, kategori: 'PROTOKOL' },
+        where: { id: { in: petugasProtokolIds } },
       });
       if (valid !== petugasProtokolIds.length) {
         return { ok: false, error: 'Petugas Protokol tidak valid.' };
@@ -107,7 +107,7 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
     }
     if (petugasLiputanIds.length > 0) {
       const valid = await prisma.petugas.count({
-        where: { id: { in: petugasLiputanIds }, kategori: 'LIPUTAN'},
+        where: { id: { in: petugasLiputanIds } },
       });
       if (valid !== petugasLiputanIds.length) {
         return { ok: false, error: 'Petugas Liputan tidak valid.'};
@@ -141,8 +141,8 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
           tanggal: new Date(data.tanggal),
           petugas: {
             create: [
-              ...petugasProtokolIds.map((id) => ({ petugasId: id })),
-              ...petugasLiputanIds.map((id) => ({ petugasId: id })),
+              ...petugasProtokolIds.map((id) => ({ petugasId: id, peran: 'PROTOKOL' as const })),
+              ...petugasLiputanIds.map((id) => ({ petugasId: id, peran: 'LIPUTAN' as const })),
             ],
           },
           dokumen: {
@@ -208,7 +208,7 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   // Validasi petugas sesuai kategori
   if (petugasProtokolIds.length > 0) {
     const valid = await prisma.petugas.count({
-      where: { id: { in: petugasProtokolIds }, kategori: 'PROTOKOL'},
+      where: { id: { in: petugasProtokolIds } },
     });
     if (valid !== petugasProtokolIds.length) {
       return { ok: false, error: 'Petugas Protokol tidak valid.' };
@@ -216,7 +216,7 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   }
   if (petugasLiputanIds.length > 0) {
     const valid = await prisma.petugas.count({
-      where: { id: {in: petugasLiputanIds }, kategori: 'LIPUTAN'},
+      where: { id: {in: petugasLiputanIds } },
     });
     if (valid !== petugasLiputanIds.length) {
       return { ok: false, error: 'Petugas Liputan tidak valid.' };
@@ -250,12 +250,12 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   });
 
   const existingProtokol = existingAssignments
-    .filter((a) => a.petugas.kategori === 'PROTOKOL')
+    .filter((a) => (a.peran ?? a.petugas.kategori) === 'PROTOKOL')
     .map((a) => ({ id: a.petugasId, nama: a.petugas.nama }))
     .sort((a, b) => a.id.localeCompare(b.id));
   
   const existingLiputan = existingAssignments
-    .filter((a) => a.petugas.kategori === 'LIPUTAN')
+    .filter((a) => (a.peran ?? a.petugas.kategori) === 'LIPUTAN')
     .map((a) => ({ id: a.petugasId, nama: a.petugas.nama }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
@@ -321,8 +321,8 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
         petugas: {
           deleteMany: {},
           create: [
-            ...petugasProtokolIds.map((id) => ({ petugasId: id })),
-            ...petugasLiputanIds.map((id) => ({ petugasId: id })),
+            ...petugasProtokolIds.map((id) => ({ petugasId: id, peran: 'PROTOKOL' as const })),
+            ...petugasLiputanIds.map((id) => ({ petugasId: id, peran: 'LIPUTAN' as const })),
           ],
         },
       },

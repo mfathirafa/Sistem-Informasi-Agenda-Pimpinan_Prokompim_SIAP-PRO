@@ -55,7 +55,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const safePage = Math.min(page, totalPages);
 
-    const [kegiatan, dates, petugasProtokol, petugasLiputan, leadingSectors] = await Promise.all([
+    const [kegiatan, dates, allPetugas, leadingSectors] = await Promise.all([
       prisma.kegiatan.findMany({
         where,
         orderBy: buildKegiatanOrderBy(sort, dir),
@@ -67,11 +67,7 @@ export default async function WorksheetPage({ searchParams }: Props) {
         select: { tanggal: true },
       }),
       prisma.petugas.findMany({
-        where: { statusAktif: true, kategori: 'PROTOKOL' },
-        orderBy: { nama: 'asc' }
-      }),
-      prisma.petugas.findMany({
-        where: { statusAktif: true, kategori: 'LIPUTAN' },
+        where: { statusAktif: true },
         orderBy: { nama: 'asc' }
       }),
       prisma.leadingSector.findMany({
@@ -96,8 +92,8 @@ export default async function WorksheetPage({ searchParams }: Props) {
         filters={filters}
         tahunOptions={tahunOptions}
         canEdit={canEdit}
-        petugasProtokolOptions={petugasProtokol.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
-        petugasLiputanOptions={petugasLiputan.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
+        petugasProtokolOptions={allPetugas.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
+        petugasLiputanOptions={allPetugas.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
         leadingSectorOptions={leadingSectors.map((l) => ({ id: l.id, label: l.nama }))}
       />
     );

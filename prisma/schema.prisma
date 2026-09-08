@@ -152,6 +152,7 @@ model KegiatanPetugas {
   kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
   petugasId  String
   petugas    Petugas  @relation(fields: [petugasId], references: [id], onDelete: Cascade)
+  peran      KategoriPetugas  @default(PROTOKOL)
   createdAt  DateTime @default(now())
 
   @@id([kegiatanId, petugasId])

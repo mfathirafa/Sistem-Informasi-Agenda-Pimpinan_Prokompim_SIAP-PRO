@@ -10,10 +10,10 @@ type Props = {
 };
 
 function mapPetugasByKategori(
-    petugas: Array<{ petugas: { id: string; nama: string; kategori: string } }>,
+    petugas: Array<{ peran?: string, petugas: { id: string; nama: string; kategori: string } }>,
     kategori: string,
 ) {
-    const filtered = petugas.filter((p) => p.petugas.kategori === kategori);
+    const filtered = petugas.filter((p) => (p.peran ?? p.petugas.kategori) === kategori);
     return {
         ids: filtered.map((p) => p.petugas.id),
         names: filtered.map((p) => p.petugas.nama),
