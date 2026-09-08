@@ -98,11 +98,20 @@ export default function PetugasPicker({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter(
-      (o) => o.label.toLowerCase().includes(q) || (o.sublabel || '').toLowerCase().includes(q),
-    );
-  }, [options, query]);
+    const base = !q
+      ? options
+      : options.filter(
+        (o) => o.label.toLowerCase().includes(q) || (o.sublabel || '').toLowerCase().includes(q),
+      );
+
+    // Urutkan yang sudah dicentang (by name) naik ke atas, sisanya (by name) di bawah
+    return [...base].sort((a, b) => {
+      const aChecked = selected.includes(a.id);
+      const bChecked = selected.includes(b.id);
+      if (aChecked !== bChecked) return aChecked ? -1 : 1;
+      return a.label.localeCompare(b.label, 'id');
+    });
+  }, [options, query, selected])
 
   // Pagination mengikuti hasil filter (search). Page di-reset ke 1 saat query berubah.
   const handleQueryChange = (value: string) => {
