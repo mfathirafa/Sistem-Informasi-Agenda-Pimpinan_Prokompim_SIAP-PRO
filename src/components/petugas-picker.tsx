@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useMemo, useRef, useState, useEffect, useTransition } from 'react';
+import ReactDOM from 'react-dom';
 import { ChevronDown, Search, X, UserPlus, Loader2 } from 'lucide-react';
 import type { SearchableOption } from '@/components/searchable-select';
 import Pagination from '@/components/pagination';
@@ -67,8 +68,8 @@ export default function PetugasPicker({
   
   // --- Quick-add petugas baru ---
   const [qaOpen, setQaOpen] = useState(false);
-  const [qaForm, setQaForm] = useState<{ nama: string; jabatan: string; nip: string; kategori: KategoriPetugas }>({
-    nama: '', jabatan: '', nip: '', kategori: 'PROTOKOL',
+  const [qaForm, setQaForm] = useState<{ nama: string; jabatan: string; nip: string; kategori: KategoriPetugas; statusAktif: boolean }>({
+    nama: '', jabatan: '', nip: '', kategori: 'PROTOKOL', statusAktif: true
   });
   const [qaError, setQaError] = useState('');
   const [qaWarning, setQaWarning] = useState('');
@@ -98,7 +99,8 @@ export default function PetugasPicker({
 
   const openQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setQaForm({ nama: query.trim(), jabatan: '', nip: '', kategori: 'PROTOKOL' });
+    const defaultKategori: KategoriPetugas = label.toLowerCase().includes('liputan') ? 'LIPUTAN' : 'PROTOKOL';
+    setQaForm({ nama: query.trim(), jabatan: '', nip: '', kategori: defaultKategori, statusAktif: true });
     setQaError('');
     setQaWarning('');
     setQaOpen(true);
@@ -106,13 +108,15 @@ export default function PetugasPicker({
 
   const submitQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    (e.nativeEvent as Event).stopImmediatePropagation();
     if (!qaForm.nama.trim()) { setQaError('Nama wajib diisi.'); return; }
     startQaTransition(async () => {
       const res = await createPetugas({
         nama: qaForm.nama.trim(),
         jabatan: qaForm.jabatan.trim() || undefined,
         nip: qaForm.nip.trim() || undefined,
-        statusAktif: true,
+        statusAktif: qaForm.statusAktif,
         kategori: qaForm.kategori,
       });
       if (!res.ok) { setQaError(res.error || 'Gagal memuat petugas.'); return; }
@@ -121,10 +125,13 @@ export default function PetugasPicker({
       const newOpt: SearchableOption & { kategori: KategoriPetugas } = {
         id: res.id!,
         label: qaForm.nama.trim(),
-        sublabel: qaForm.jabatan.trim() || undefined,
+        sublabel: qaForm.statusAktif
+          ? (qaForm.jabatan.trim() || undefined)
+          : (qaForm.jabatan.trim() ? `${qaForm.jabatan.trim()} (Nonaktif)` : 'Nonaktif'),
         kategori: qaForm.kategori,
       };
       onPetugasCreated?.(newOpt);
+      onChange([...selected, res.id!]);
       if (res.warning) {
         setQaWarning(res.warning);
       } else {
@@ -380,7 +387,7 @@ export default function PetugasPicker({
         </div>
       )}
       {/* --- Quick-add petugas baru --- */}
-      {qaOpen && (
+      {qaOpen && typeof document !== 'undefined' && ReactDOM.createPortal (
         <div
           className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-[70]"
           onClick={() => !qaPending && setQaOpen(false)}
@@ -430,6 +437,18 @@ export default function PetugasPicker({
                   ))}
                 </select>
               </div>
+              <label 
+                className="flex items-center gap-2 text-sm cursor-pointer pt-1"
+              >
+                <input 
+                  type="checkbox"
+                  checked={qaForm.statusAktif}
+                  onChange={(e) => setQaForm((f) => ({ ...f, statusAktif: e.target.checked }))}
+                  disabled={qaPending}
+                  className="rounded border-app text-navy" 
+                />
+                <span>Status aktif (karyawan saat ini)</span>
+              </label>
               {qaError && <p className="text-sm text-red-600">{qaError}</p>}
               {qaWarning && (
                 <div className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
@@ -450,7 +469,8 @@ export default function PetugasPicker({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

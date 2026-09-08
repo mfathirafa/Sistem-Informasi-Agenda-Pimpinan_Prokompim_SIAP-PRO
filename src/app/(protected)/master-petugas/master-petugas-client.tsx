@@ -32,6 +32,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState<'ALL' | KategoriPetugas>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'AKTIF' | 'NONAKTIF' | 'ALL'>('AKTIF');
   const [sortKey, setSortKey] = useState<'nama' | 'jabatan' | 'nip' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -77,13 +78,19 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
 
   const filtered = items.filter((p) => {
     const matchKategori = filterKategori === 'ALL' || p.kategori === filterKategori;
+    const mathcStatus = 
+      filterStatus === 'ALL'
+        ? true
+        : filterStatus === 'AKTIF'
+        ? p.statusAktif
+        : !p.statusAktif
     const q = search.trim().toLocaleLowerCase();
     const matchSearch = 
       !q ||
       p.nama.toLowerCase().includes(q) ||
       (p.jabatan ?? '').toLowerCase().includes(q) ||
       (p.nip ?? '').includes(q);
-    return matchKategori && matchSearch;
+    return matchKategori && mathcStatus && matchSearch;
   });
 
   const displayData = sortKey
@@ -104,7 +111,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
       const res = editingItem ? await updatePetugas(editingItem.id, form) : await createPetugas(form);
       if (res.ok) {
         const row = {
-          id: editingItem?.id ?? 'temp-' + Date.now(),
+          id: editingItem?.id ?? (res as { id?: string }).id ?? 'temp-' + Date.now(),
           ...form,
           nip: form.nip ?? null,
           jabatan: form.jabatan ?? null,
@@ -160,6 +167,15 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             {KATEGORI_PETUGAS_OPTIONS.map((k) => (
               <option key={k} value={k}>{KATEGORI_PETUGAS_LABEL[k]}</option>
             ))}
+          </select>
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as 'AKTIF' | 'NONAKTIF' | 'ALL')}
+            className="px-3 py-2 rounded-lg border border-app text-sm"
+          >
+            <option value="AKTIF">Petugas Aktif</option>
+            <option value="NONAKTIF">Nonaktif / Arsip</option>
+            <option value="ALL">Semua Status</option>
           </select>
         {canEdit && (
           <button onClick={openAdd} className="btn-primary flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium">
@@ -262,7 +278,7 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
             <form onSubmit={submit} className="px-5 py-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">Nama</label>
-                <input autoFocus value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="Nama lengkap petugas" />
+                <input autoFocus value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm" placeholder="cth. Rian / Dewi / Fajar" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">NIP</label>

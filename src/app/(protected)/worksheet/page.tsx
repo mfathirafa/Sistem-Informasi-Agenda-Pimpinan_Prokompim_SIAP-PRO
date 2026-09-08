@@ -67,7 +67,6 @@ export default async function WorksheetPage({ searchParams }: Props) {
         select: { tanggal: true },
       }),
       prisma.petugas.findMany({
-        where: { statusAktif: true },
         orderBy: { nama: 'asc' }
       }),
       prisma.leadingSector.findMany({
@@ -92,8 +91,16 @@ export default async function WorksheetPage({ searchParams }: Props) {
         filters={filters}
         tahunOptions={tahunOptions}
         canEdit={canEdit}
-        petugasProtokolOptions={allPetugas.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
-        petugasLiputanOptions={allPetugas.map((p) => ({ id: p.id, label: p.nama, sublabel: p.jabatan || undefined }))}
+        petugasProtokolOptions={allPetugas.map((p) => ({ 
+          id: p.id, 
+          label: p.nama, 
+          sublabel: p.statusAktif ? (p.jabatan || undefined) : (p.jabatan ? `${p.jabatan} (Nonaktif)` : 'Nonaktif'),
+        }))}
+        petugasLiputanOptions={allPetugas.map((p) => ({ 
+          id: p.id, 
+          label: p.nama, 
+          sublabel: p.statusAktif ? (p.jabatan || undefined) : (p.jabatan ? `${p.jabatan} (Nonaktif)` : 'Nonaktif'), 
+        }))}
         leadingSectorOptions={leadingSectors.map((l) => ({ id: l.id, label: l.nama }))}
       />
     );
