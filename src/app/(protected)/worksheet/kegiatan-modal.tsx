@@ -350,10 +350,12 @@ export default function KegiatanModal({
               </label>
               <PetugasPicker
                 label={form.allCrewProtokol ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Protokol'}
-                options={petugasProtokolOptions.filter((opt) => !form.petugasLiputanIds?.includes(opt.id))}
+                options={petugasProtokolOptions}
                 selected={form.petugasProtokolIds || []}
                 onChange={(ids) => update('petugasProtokolIds', ids)}
                 disabled={saving}
+                warnIds={form.petugasLiputanIds || []}
+                warnLabel="Sudah dipilih sebagai Petugas Liputan"
               />
             </div>
             <div className="space-y-2">
@@ -366,10 +368,12 @@ export default function KegiatanModal({
               </label>
               <PetugasPicker
                 label={form.allCrewLiputan ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Liputan'}
-                options={petugasLiputanOptions.filter((opt) => !form.petugasProtokolIds?.includes(opt.id))}
+                options={petugasLiputanOptions}
                 selected={form.petugasLiputanIds || []}
                 onChange={(ids) => update('petugasLiputanIds', ids)}
                 disabled={saving}
+                warnIds={form.petugasProtokolIds || []}
+                warnLabel="Sudah dipilih sebagai Petugas Protokol"
               />
             </div>
           </div>

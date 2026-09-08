@@ -4,6 +4,7 @@ import { useId, useMemo, useRef, useState, useEffect } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import type { SearchableOption } from '@/components/searchable-select';
 import Pagination from '@/components/pagination';
+import { spawn } from 'child_process';
 
 const PAGE_SIZE = 10;
 
@@ -13,6 +14,12 @@ type PetugasPickerProps = {
   selected: string[];
   onChange: (ids: string[]) => void;
   disabled?: boolean;
+  /**IDs petugas yang sudah dipilih di picker lain (Protokol <-> Liputan).
+   * Item tersebut tetap muncul, namun diberi badge peringatan
+   */
+  warnIds?: string[];
+  /** Teks tooltip / keterangan badge peringatan */
+  warnLabel?: string;
 };
 
 /** Wrap bagian teks yang cocok dengan query. Styling Tailwind, bukan <mark> bawaan. */
@@ -46,6 +53,8 @@ export default function PetugasPicker({
   selected,
   onChange,
   disabled = false,
+  warnIds = [],
+  warnLabel = 'Sudah dipilih di peran lain',
 }: PetugasPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -232,6 +241,7 @@ export default function PetugasPicker({
               ) : (
                 pageItems.map((o) => {
                   const isSelected = selected.includes(o.id);
+                  const isWarn = warnIds.includes(o.id);
                   return (
                     <label
                       key={o.id}
@@ -248,7 +258,15 @@ export default function PetugasPicker({
                       <span className="font-medium truncate">
                         <Highlighted text={o.label} query={query} />
                       </span>
-                      {o.sublabel && (
+                      {isWarn && (
+                        <span
+                          title={warnLabel}
+                          className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-full px-2 py-0.5"
+                        >
+                          ⚠️ Sudah dipilih
+                        </span>
+                      )}
+                      {!isWarn && o.sublabel && (
                         <span className="text-xs text-muted ml-auto truncate shrink-0 max-w-[45%]">
                           <Highlighted text={o.sublabel} query={query} />
                         </span>
