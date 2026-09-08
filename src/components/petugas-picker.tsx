@@ -1,10 +1,12 @@
 'use client';
 
-import { useId, useMemo, useRef, useState, useEffect } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { useId, useMemo, useRef, useState, useEffect, useTransition } from 'react';
+import { ChevronDown, Search, X, UserPlus, Loader2 } from 'lucide-react';
 import type { SearchableOption } from '@/components/searchable-select';
 import Pagination from '@/components/pagination';
-import { spawn } from 'child_process';
+import { createPetugas } from '@/app/actions/petugas';
+import { KATEGORI_PETUGAS_OPTIONS, KATEGORI_PETUGAS_LABEL } from '@/lib/constants/kategori-petugas';
+import type { KategoriPetugas } from '@prisma/client';
 
 const PAGE_SIZE = 10;
 
@@ -20,6 +22,9 @@ type PetugasPickerProps = {
   warnIds?: string[];
   /** Teks tooltip / keterangan badge peringatan */
   warnLabel?: string;
+  /** Dipanggil setelah petugas ba berhasil dibuat: { id, label, sublabel }.
+   * Parent wajib menambahkan item ini ke options agar langsung bisa dipilih */
+  onPetugasCreated?: (newOption: SearchableOption & { kategori: KategoriPetugas }) => void;
 };
 
 /** Wrap bagian teks yang cocok dengan query. Styling Tailwind, bukan <mark> bawaan. */
@@ -55,9 +60,19 @@ export default function PetugasPicker({
   disabled = false,
   warnIds = [],
   warnLabel = 'Sudah dipilih di peran lain',
+  onPetugasCreated,
 }: PetugasPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  
+  // --- Quick-add petugas baru ---
+  const [qaOpen, setQaOpen] = useState(false);
+  const [qaForm, setQaForm] = useState<{ nama: string; jabatan: string; nip: string; kategori: KategoriPetugas }>({
+    nama: '', jabatan: '', nip: '', kategori: 'PROTOKOL',
+  });
+  const [qaError, setQaError] = useState('');
+  const [qaWarning, setQaWarning] = useState('');
+  const [qaPending, startQaTransition] = useTransition();
   const [page, setPage] = useState(1);
   const fieldRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -80,6 +95,43 @@ export default function PetugasPicker({
 
   const toggle = (id: string) =>
     onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+
+  const openQuickAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQaForm({ nama: query.trim(), jabatan: '', nip: '', kategori: 'PROTOKOL' });
+    setQaError('');
+    setQaWarning('');
+    setQaOpen(true);
+  };
+
+  const submitQuickAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qaForm.nama.trim()) { setQaError('Nama wajib diisi.'); return; }
+    startQaTransition(async () => {
+      const res = await createPetugas({
+        nama: qaForm.nama.trim(),
+        jabatan: qaForm.jabatan.trim() || undefined,
+        nip: qaForm.nip.trim() || undefined,
+        statusAktif: true,
+        kategori: qaForm.kategori,
+      });
+      if (!res.ok) { setQaError(res.error || 'Gagal memuat petugas.'); return; }
+      // Buat SearchableOption dari data form (id belum diketahui -> pakai revalidasi dari server)
+      // Server action sudah revalidatePath('/worksheet') -> options di parent akan refresh
+      const newOpt: SearchableOption & { kategori: KategoriPetugas } = {
+        id: res.id!,
+        label: qaForm.nama.trim(),
+        sublabel: qaForm.jabatan.trim() || undefined,
+        kategori: qaForm.kategori,
+      };
+      onPetugasCreated?.(newOpt);
+      if (res.warning) {
+        setQaWarning(res.warning);
+      } else {
+        setQaOpen(false);
+      }
+    });
+  };
 
   // Capture-phase + stopPropagation agar saat picker terbuka, Escape hanya menutup
   // picker, bukan ikut menutup modal induk (kegiatan modal) yang juga punya handler.
@@ -304,6 +356,17 @@ export default function PetugasPicker({
               <span className="text-xs text-muted" aria-live="polite">
                 {selected.length} dipilih
               </span>
+              <div className="flex items-center gap-2">
+                {onPetugasCreated && (
+                  <button
+                    type="button"
+                    onClick={openQuickAdd}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-app hover:bg-app text-navy"
+                  >
+                    <UserPlus size={14} />
+                    Tambah Baru
+                  </button>
+                )}
               <button
                 type="button"
                 onClick={closePicker}
@@ -311,7 +374,81 @@ export default function PetugasPicker({
               >
                 Selesai
               </button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* --- Quick-add petugas baru --- */}
+      {qaOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-[70]"
+          onClick={() => !qaPending && setQaOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-app">
+              <h3 className="font-display text-base font-semibold text-navy">Tambah Petugas Baru</h3>
+              <button type="button" onClick={() => setQaOpen(false)} disabled={qaPending} aria-label="Tutup" className="p-1 rounded-md hover:bg-app disabled:opacity-40">
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={submitQuickAdd} className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nama <span className="text-red-500">*</span></label>
+                <input 
+                  autoFocus
+                  value={qaForm.nama}
+                  onChange={(e) => setQaForm((f) => ({ ...f, nama: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                  placeholder="Nama Petugas"
+                  disabled={qaPending}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Jabatan</label>
+                <input 
+                  value={qaForm.jabatan}
+                  onChange={(e) => setQaForm((f) => ({ ...f, jabatan: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                  placeholder="Opsional"
+                  disabled={qaPending}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Kategori</label>
+                <select 
+                  value={qaForm.kategori}
+                  onChange={(e) => setQaForm((f) => ({ ...f, kategori: e.target.value as KategoriPetugas }))}
+                  className="w-full px-3 py-2 rounded-lg border border-app text-sm"
+                  disabled={qaPending}
+                >
+                  {KATEGORI_PETUGAS_OPTIONS.map((k) => (
+                    <option key={k} value={k}>{KATEGORI_PETUGAS_LABEL[k]}</option>
+                  ))}
+                </select>
+              </div>
+              {qaError && <p className="text-sm text-red-600">{qaError}</p>}
+              {qaWarning && (
+                <div className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+                   ⚠️ {qaWarning} 
+                   <div className="mt-2 flex justify-end">
+                      <button type="button" onClick={() => setQaOpen(false)} className="text-xs underline">Tutup</button>
+                   </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setQaOpen(false)} disabled={qaPending} className="px-4 py-2 rounded-lg text-sm border border-app hover:bg-app disabled:opacity-40">
+                  Batal
+                </button>
+                <button type='submit' disabled={qaPending} className='btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 disabled:opacity-60'>
+                  {qaPending && <Loader2 size={14} className='animate-spin' />}
+                  Simpan
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

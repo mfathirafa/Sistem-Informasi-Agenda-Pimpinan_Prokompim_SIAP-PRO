@@ -15,7 +15,7 @@ export type SessionPayload = {
   role: 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN';
 };
 
-export type ActionResult = { ok: boolean; error?: string; warning?: string };
+export type ActionResult = { ok: boolean; error?: string; warning?: string; id?: string };
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);

@@ -28,7 +28,7 @@ export type PetugasInput = {
   kategori: KategoriPetugas;
 };
 
-export async function createPetugas(data: PetugasInput): Promise<ActionResult> {
+export async function createPetugas(data: PetugasInput): Promise<ActionResult & { id?: string }> {
   const user = await getCurrentUser();
   if (!canEditRole(user?.role)) return { ok: false, error: 'Anda tidak memiliki izin untuk melakukan aksi ini.' };
   if (!data.nama.trim()) return { ok: false, error: 'Nama wajib diisi.' };
@@ -36,8 +36,10 @@ export async function createPetugas(data: PetugasInput): Promise<ActionResult> {
 
   try {
     const duplikat = await cekDuplikatPetugas(data.nama);
+    let newId = '';
     await prisma.$transaction(async (tx) => {
       const created = await tx.petugas.create({ data });
+      newId = created.id;
       await logActivity({
         entity: 'PETUGAS',
         entityId: created.id,
@@ -48,8 +50,9 @@ export async function createPetugas(data: PetugasInput): Promise<ActionResult> {
     });
     revalidatePath('/master-petugas');
     revalidatePath('/worksheet');
-    return duplikat ? { ok: true, warning: 'Petugas dengan nama yang sama sudah ada. Periksa kembali apakah data ini benar-benar baru.' }
-    : { ok: true };
+    return duplikat 
+    ? { ok: true, id: newId, warning: 'Petugas dengan nama yang sama sudah ada. Periksa kembali apakah data ini benar-benar baru.' }
+    : { ok: true, id: newId };
   } catch {
     return { ok: false, error: 'Gagal menambah petugas.' };
   }

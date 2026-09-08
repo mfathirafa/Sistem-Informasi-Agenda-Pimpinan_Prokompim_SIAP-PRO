@@ -94,6 +94,23 @@ export default function KegiatanModal({
   );
   const [showTempatError, setShowTempatError] = useState(false);
 
+  // State lokal options - bisa ditambah petugas baru secara instan tanp reload halaman
+  const [localProtokolOptions, setLocalProtokolOptions] = useState(petugasProtokolOptions);
+  const [localLiputanOptions, setLocalLiputanOptions] = useState(petugasLiputanOptions);
+
+  // Sinkronkan jika prop dari parent berubah (misal setelah revalidate)
+  useEffect(() => { setLocalProtokolOptions(petugasProtokolOptions); }, [petugasProtokolOptions]);
+  useEffect(() => { setLocalLiputanOptions(petugasLiputanOptions); }, [petugasLiputanOptions]);
+
+  const handlePetugasCreated = (newOpt: { id: string; label: string; sublabel?: string; kategori: import('@prisma/client').KategoriPetugas }) => {
+    const opt = { id: newOpt.id, label: newOpt.label, sublabel: newOpt.sublabel };
+    if (newOpt.kategori === 'PROTOKOL') {
+      setLocalProtokolOptions((prev) => [...prev, opt].sort((a, b) => a.label.localeCompare(b.label, 'id')));
+    } else {
+      setLocalLiputanOptions((prev) => [...prev, opt].sort((a, b) => a.label.localeCompare(b.label, 'id')));
+    }
+  }
+
   // 🔒 Lock scroll backgound saat modal terbuka
   useModalScrollLock(true); // komponen hanya dirender saat modal terbuka (parent conditional render)
 
@@ -356,6 +373,7 @@ export default function KegiatanModal({
                 disabled={saving}
                 warnIds={form.petugasLiputanIds || []}
                 warnLabel="Sudah dipilih sebagai Petugas Liputan"
+                onPetugasCreated={handlePetugasCreated}
               />
             </div>
             <div className="space-y-2">
@@ -374,6 +392,7 @@ export default function KegiatanModal({
                 disabled={saving}
                 warnIds={form.petugasProtokolIds || []}
                 warnLabel="Sudah dipilih sebagai Petugas Protokol"
+                onPetugasCreated={handlePetugasCreated}
               />
             </div>
           </div>
