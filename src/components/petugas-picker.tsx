@@ -188,9 +188,7 @@ export default function PetugasPicker({
     const q = query.trim().toLowerCase();
     const base = !q
       ? options
-      : options.filter(
-        (o) => o.label.toLowerCase().includes(q) || (o.sublabel || '').toLowerCase().includes(q),
-      );
+      : options.filter((o) => o.label.toLowerCase().includes(q));
 
     // Urutkan yang sudah dicentang (by name) naik ke atas, sisanya (by name) di bawah
     return [...base].sort((a, b) => {
@@ -376,7 +374,7 @@ export default function PetugasPicker({
                     value={query}
                     onChange={(e) => handleQueryChange(e.target.value)}
                     onKeyDown={handleSearchKeyDown}
-                    placeholder="Cari nama / jabatan…"
+                    placeholder="Cari nama petugas..."
                     className="w-full pl-9 pr-8 py-2 rounded-lg border border-app text-sm focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy"
                   />
                   {query && (
@@ -448,7 +446,7 @@ export default function PetugasPicker({
                       )}
                       {!isWarn && o.sublabel && (
                         <span className="text-xs text-muted ml-auto truncate shrink-0 max-w-[45%]">
-                          <Highlighted text={o.sublabel} query={query} />
+                          {o.sublabel}
                         </span>
                       )}
                     </label>
