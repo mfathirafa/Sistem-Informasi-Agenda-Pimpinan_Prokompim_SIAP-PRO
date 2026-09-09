@@ -536,6 +536,7 @@ export default function WorksheetClient({
           <table className="w-full min-w-[480px] sm:min-w-[640px] md:min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
+                <th className="px-3 py-2 font-medium text-center w-12 border-r border-app">No</th>
                 <SortableTh label="Tanggal Pelaksanaan" sortKey="tanggal" current={filters.sort} dir={filters.dir} onSort={setSort} className="bg-app border-r border-app px-2 py-2 font-medium" />
                 <th className="px-2 py-2 font-medium">Waktu</th>
                 <SortableTh label="Kegiatan" sortKey="namaKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} className="px-2 py-2" />
@@ -561,13 +562,16 @@ export default function WorksheetClient({
             <tbody>
               {initialData.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 20 : 19} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 21 : 20} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
               ) : (
-                initialData.map((k) => (
+                initialData.map((k, index) => (
                   <tr key={k.id} className="border-t border-app hover:bg-slate-50">
+                    <td className="px-3 py-3 text-center text-xs text-muted font-mono whitespace-nowrap border-r border-app">
+                      {(page - 1) * pageSize + index + 1}
+                    </td>
                     <td className="bg-white hover:bg-slate-50 border-r border-app px-4 py-3 font-mono text-xs whitespace-nowrap">
                       {new Date(k.tanggal).toLocaleDateString('id-ID', {
                         day: '2-digit',

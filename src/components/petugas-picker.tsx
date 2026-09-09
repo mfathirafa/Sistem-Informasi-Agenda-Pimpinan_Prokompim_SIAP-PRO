@@ -65,6 +65,7 @@ export default function PetugasPicker({
 }: PetugasPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   
   // --- Quick-add petugas baru ---
   const [qaOpen, setQaOpen] = useState(false);
@@ -84,11 +85,14 @@ export default function PetugasPicker({
     if (disabled) return;
     setQuery('');
     setPage(1);
+    setHighlightedIndex(-1);
     setOpen(true);
   };
 
   const closePicker = () => {
     setOpen(false);
+    setQuery('');
+    setHighlightedIndex(-1);
     fieldRef.current?.focus();
   };
 
@@ -96,6 +100,31 @@ export default function PetugasPicker({
 
   const toggle = (id: string) =>
     onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+
+  // Centang petugas: jika ada keyword pencarian, reset keyword & tetap fokus di input agr bisa langsung ketik lagi
+  const handleSelect = (id: string, forceCheck = false) => {
+    const isSelected = selected.includes(id);
+    if (forceCheck && isSelected) {
+      if (query.trim()) {
+        setQuery('');
+        setPage(1);
+        setHighlightedIndex(-1);
+      }
+      requestAnimationFrame(() => {
+        searchInputRef.current?.focus();
+      });
+      return;
+    }
+    onChange(isSelected ? selected.filter((x) => x !== id) : [...selected, id]);
+    if (query.trim()) {
+      setQuery('');
+      setPage(1);
+      setHighlightedIndex(-1);
+    }
+    requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+  };
 
   const openQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -180,16 +209,65 @@ export default function PetugasPicker({
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageItems = useMemo(
+    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filtered, safePage]
+  );
   const pageStart = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const pageEnd = Math.min(safePage * PAGE_SIZE, filtered.length);
 
+  // Otomaris menyorot item pertama yang belum dipilih saat ada keyword pencarian 
+  useEffect(() => {
+    if (query.trim() && pageItems.length > 0) {
+      const firstUnselected = pageItems.findIndex((o) => !selected.includes(o.id));
+      setHighlightedIndex(firstUnselected !== -1 ? firstUnselected : 0);
+    } else {
+      setHighlightedIndex(-1);
+    }
+  }, [query, safePage, pageItems, selected]);
+
+  // Otomaris scroll jika menggunakan navigasi panah atas/bawah
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const el = listRef.current.querySelector(`[data-index="${highlightedIndex}"]`) as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex]);
+
   // Pindah halaman → list kembali ke atas + fokus kembali ke kolom search.
-  // Keyword search tetap bertahan (query tidak disentuh saat ganti halaman).
   useEffect(() => {
     listRef.current?.scrollTo(0, 0);
     searchInputRef.current?.focus();
   }, [safePage]);
+
+  // Enter pada pencarian: mencentang petugas (bukan submit form) lalu reset keyword
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (pageItems.length === 0) return;
+
+      let targetIndex = highlightedIndex;
+      if (targetIndex < 0 || targetIndex >= pageItems.length) {
+        const firstUnselected = pageItems.findIndex((o) => !selected.includes(o.id));
+        targetIndex = firstUnselected !== -1 ? firstUnselected : 0; 
+      }
+      const target = pageItems[targetIndex];
+      if (target) {
+        handleSelect(target.id, true);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (pageItems.length === 0) return;
+      setHighlightedIndex((prev) => (prev + 1 < pageItems.length ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (pageItems.length === 0) return;
+      setHighlightedIndex((prev) => (prev - 1 >= 0 ? prev - 1 : pageItems.length - 1));
+    }
+  };
 
   const selectedOptions = selected
     .map((id) => options.find((o) => o.id === id))
@@ -267,6 +345,12 @@ export default function PetugasPicker({
           <div
             className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                // Cegah tombol Enter di dalam model ini memicu submit form simpan kegiatan
+                e.stopPropagation();
+              }
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-app shrink-0">
@@ -291,9 +375,25 @@ export default function PetugasPicker({
                     autoFocus
                     value={query}
                     onChange={(e) => handleQueryChange(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
                     placeholder="Cari nama / jabatan…"
-                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-app text-sm"
+                    className="w-full pl-9 pr-8 py-2 rounded-lg border border-app text-sm focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy"
                   />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery('');
+                        setPage(1);
+                        setHighlightedIndex(-1);
+                        searchInputRef.current?.focus();
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-slate-700 p-0.5 rounded-full"
+                      aria-label="Hapus Pencarian"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -307,20 +407,32 @@ export default function PetugasPicker({
                   Tidak ada petugas yang cocok dengan &quot;{query.trim()}&quot;.
                 </p>
               ) : (
-                pageItems.map((o) => {
+                pageItems.map((o, index) => {
                   const isSelected = selected.includes(o.id);
                   const isWarn = warnIds.includes(o.id);
+                  const isHighlighted = highlightedIndex === index;
                   return (
                     <label
                       key={o.id}
-                      className={`flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer rounded-lg hover:bg-app ${
-                        isSelected ? 'bg-navy/[0.06]' : ''
-                      }`}
+                      data-index={index}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      className={`flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer rounded-lg transition-colors ${
+                        isSelected ? 'bg-navy/[0.08]' : ''
+                      } ${
+                        isHighlighted ? 'ring-2 ring-navy/30 bg-app' : 'hover:bg-app'
+                      } `}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => toggle(o.id)}
+                        onChange={() => handleSelect(o.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelect(o.id);
+                          }
+                        }}
                         className="rounded border-app text-navy"
                       />
                       <span className="font-medium truncate">
