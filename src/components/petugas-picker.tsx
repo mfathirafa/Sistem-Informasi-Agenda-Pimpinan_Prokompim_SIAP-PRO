@@ -335,7 +335,6 @@ export default function PetugasPicker({
       {open && (
         <div
           className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-[60]"
-          onClick={closePicker}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}

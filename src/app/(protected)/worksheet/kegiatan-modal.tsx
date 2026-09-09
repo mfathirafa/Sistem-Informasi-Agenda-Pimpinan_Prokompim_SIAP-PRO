@@ -145,7 +145,6 @@ export default function KegiatanModal({
   return (
     <div
       className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="kegiatan-modal-title"
