@@ -393,10 +393,7 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
 
       {/* Pagination + Info */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-          <span className="text-muted text-center sm:text-left">
-            Menampilkan {pageStart}-{pageEnd} dari {total} log
-          </span>
+        <div className="flex flex-col items-center gap-2 text-sm sm:flex-row sm:justify-between">
           <div className="flex justify-center">
             <Pagination 
               page={page}
@@ -408,6 +405,9 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
               }}  
             />
           </div>
+          <span className="text-muted text-center sm:text-right">
+            Menampilkan {pageStart}-{pageEnd} dari {total} log
+          </span>
         </div>
       )}
 

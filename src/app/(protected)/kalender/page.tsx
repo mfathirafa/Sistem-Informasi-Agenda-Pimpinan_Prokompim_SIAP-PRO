@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from "next/link";
 import { getMonthGrid } from "@/lib/kalender";
-import KalenderClient from './kalender-client';
+import KalenderClient, { KalenderNav } from './kalender-client';
 import {
     STATUS_KEGIATAN_OPTIONS,
     STATUS_KEGIATAN_LABEL,
-    STATUS_KEGIATAN_BADGE_CLASS,
     type StatusKegiatanValue,
 } from '@/lib/constants/status-kegiatan';
 
@@ -17,7 +15,15 @@ const DOT_COLOR: Record<StatusKegiatanValue, string> = {
     ACARA_MASUK: 'bg-slate-400',
     MENUNGGU_PENUGASAN: 'bg-amber-400',
     KEGIATAN_SELESAI: 'bg-emerald-400',
-    SPJ_SELESAI: 'bg-navy',
+    SPJ_SELESAI: 'bg-blue-400',
+};
+
+// Warna chip event di grip desktop --- harus sinkron dengan DOT_COLOR di atas.
+const CHIP_CLASS: Record<StatusKegiatanValue, string> = {
+    ACARA_MASUK: 'bg-slate-100 text-slate-600',
+    MENUNGGU_PENUGASAN: 'bg-amber-50 text-amber-700',
+    KEGIATAN_SELESAI: 'bg-emerald-50 text-emerald-700',
+    SPJ_SELESAI: 'bg-blue-50 text-blue-700',
 };
 
 // Parse ?bulan=YYYY-MM. Invalid/kosong -> bulan berjalan.
@@ -72,6 +78,12 @@ export default async function KalenderPage({
             },
         });
 
+        // Tahun yang punya data - dropdown tahun.
+        const semuaTahun = await prisma.kegiatan.findMany({ select: { tanggal: true } });
+        const tahunSet = new Set(semuaTahun.map(k => k.tanggal.getFullYear()));
+        if (!tahunSet.has(tahun)) tahunSet.add(tahun);
+        const tahunOptions = [...tahunSet].sort((a, b) => b - a);
+
         // Group per tanggal (komponen lokal, konsistensi dengan sel grid).
         const byTanggal = new Map<string, (typeof kegiatan)[number][]>();
         for (const k of kegiatan) {
@@ -87,26 +99,14 @@ export default async function KalenderPage({
         return (
             <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h1 className="font-display text-xl font-semibold text-navy">Kalender Kegiatan</h1>
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href={`/kalender?bulan=${fmtBulan(prev)}`}
-                            aria-label="Bulan sebelumnya"
-                            className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center "
-                        >
-                            <ChevronLeft size={16} />
-                        </Link>
-                        <span className="text-base font-medium text-navy min-w-[150px] text-center">
-                            {periode.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                        </span>
-                        <Link
-                            href={`/kalender?bulan=${fmtBulan(next)}`}
-                            aria-label="Bulan berikutnya"
-                            className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center"
-                        >
-                            <ChevronRight size={16} />
-                        </Link>
-                    </div>
+                    <h1 className="font-display text-xs font-semibold text-navy">Kalender Kegiatan</h1>
+                    <KalenderNav
+                        tahun={tahun}
+                        bulanIdx={bulanIdx}
+                        tahunOptions={tahunOptions}
+                        prevHref={`/kalender?bulan=${fmtBulan(prev)}`}
+                        nextHref={`/kalender?bulan=${fmtBulan(next)}`}
+                    />
                 </div>
 
                 <KalenderClient events={kegiatan}>
@@ -189,7 +189,7 @@ export default async function KalenderPage({
                                                         key={k.id}
                                                         href={`/worksheet/${k.id}`}
                                                         title={`${k.namaKegiatan}${k.waktu ? ` - ${k.waktu}` : ''}`}
-                                                        className={`truncate rounded px-1.5 py-0.5 text-[11px] leading-tight ${STATUS_KEGIATAN_BADGE_CLASS[k.statusKegiatan]}`}
+                                                        className={`truncate rounded px-1.5 py-0.5 text-[11px] leading-tight ${CHIP_CLASS[k.statusKegiatan]}`}
                                                     >
                                                         {k.namaKegiatan}
                                                     </Link>

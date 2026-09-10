@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, ExternalLink, ChevronDown } from 'lucide-react';
+import { X, ExternalLink, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   STATUS_KEGIATAN_BADGE_CLASS,
   STATUS_KEGIATAN_LABEL,
@@ -11,6 +12,58 @@ import {
 import { JENIS_PENUGASAN_LABEL, type JenisPenugasanValue } from '@/lib/constants/status-penugasan';
 import { STATUS_PUBLIKASI_LABEL, type StatusPublikasiValue } from '@/lib/constants/status-publikasi';
 import type { JenisDokumenValue, StatusDokumenValue } from '@/lib/constants/status-dokumen';
+
+const BULAN_NAMA = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+export function KalenderNav({
+  tahun,
+  bulanIdx,
+  tahunOptions,
+  prevHref,
+  nextHref,
+}: {
+  tahun: number;
+  bulanIdx: number;
+  tahunOptions: number[];
+  prevHref: string;
+  nextHref: string;
+}) {
+  const router = useRouter();
+
+  const navigate = (newTahun: number, newBulan: number) => {
+    const val = `${newTahun}-${String(newBulan + 1).padStart(2, '0')}`;
+    router.push(`/kalender?bulan=${val}`);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link href={prevHref} aria-label="Bulan sebelumnya" className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center">
+        <ChevronLeft size={16} />
+      </Link>
+      <select 
+        value={tahun}
+        onChange={(e) => navigate(Number(e.target.value), bulanIdx)}
+        className="px-2 py-1.5 rounded-lg border border-app text-sm font-medium text-navy bg-white cursor-pointer"
+      >
+        {tahunOptions.map(y => (
+          <option key={y} value={y}>{y}</option>
+        ))}
+      </select>
+      <select
+        value={bulanIdx}
+        onChange={(e) => navigate(tahun, Number(e.target.value))}
+        className="px-2 py-1.5 rounded-lg border border-app text-sm font-medium text-navy bg-white cursor-pointer"
+      >
+        {BULAN_NAMA.map((nama, i) => (
+          <option key={i} value={i}>{nama}</option>
+        ))}
+      </select>
+      <Link href={nextHref} aria-label="Bulan berikutnya" className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center">
+        <ChevronRight size={16} />
+      </Link>
+    </div>
+  );
+}
 
 type KalenderDokumen = {
   jenis: JenisDokumenValue;
