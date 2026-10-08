@@ -81,6 +81,11 @@ export default async function WorksheetPage({ searchParams }: Props) {
     const tahunOptions = Array.from(
       new Set(dates.map((d) => d.tanggal.getFullYear()))
     ).sort((a, b) => b - a).map(String);
+    const petugasOptions = allPetugas.map((p) => ({ 
+      id: p.id, 
+      label: p.nama, 
+      sublabel: p.statusAktif ? (p.jabatan || undefined) : (p.jabatan ? `${p.jabatan} (Nonaktif)` : 'Nonaktif'),
+    }));
 
     return (
       <WorksheetClient
@@ -91,16 +96,9 @@ export default async function WorksheetPage({ searchParams }: Props) {
         filters={filters}
         tahunOptions={tahunOptions}
         canEdit={canEdit}
-        petugasProtokolOptions={allPetugas.map((p) => ({ 
-          id: p.id, 
-          label: p.nama, 
-          sublabel: p.statusAktif ? (p.jabatan || undefined) : (p.jabatan ? `${p.jabatan} (Nonaktif)` : 'Nonaktif'),
-        }))}
-        petugasLiputanOptions={allPetugas.map((p) => ({ 
-          id: p.id, 
-          label: p.nama, 
-          sublabel: p.statusAktif ? (p.jabatan || undefined) : (p.jabatan ? `${p.jabatan} (Nonaktif)` : 'Nonaktif'), 
-        }))}
+        petugasProtokolOptions={petugasOptions}
+        petugasLiputanOptions={petugasOptions}
+        petugasDriverOptions={petugasOptions}
         leadingSectorOptions={leadingSectors.map((l) => ({ id: l.id, label: l.nama }))}
       />
     );

@@ -8,4 +8,5 @@ export type KategoriPetugasValue = KategoriPetugas;
 export const KATEGORI_PETUGAS_LABEL: Record<KategoriPetugasValue, string> = {
     PROTOKOL: 'Protokol',
     LIPUTAN: 'Liputan',
+    DRIVER: 'Driver',
 };

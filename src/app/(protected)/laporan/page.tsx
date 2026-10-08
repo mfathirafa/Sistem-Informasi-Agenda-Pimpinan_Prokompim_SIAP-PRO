@@ -56,6 +56,7 @@ export default async function LaporanPage({ searchParams }: Props) {
         const data = kegiatan.map((k) => {
             const protokol = mapPetugasByKategori(k.petugas, 'PROTOKOL');
             const liputan = mapPetugasByKategori(k.petugas, 'LIPUTAN');
+            const driver = mapPetugasByKategori(k.petugas, 'DRIVER');
             return {
                 id: k.id,
                 namaKegiatan: k.namaKegiatan,
@@ -76,8 +77,11 @@ export default async function LaporanPage({ searchParams }: Props) {
                 petugasProtokolNama: protokol.names,
                 petugasLiputanIds: liputan.ids,
                 petugasLiputanNama: liputan.names,
+                petugasDriverIds: driver.ids,
+                petugasDriverNama: driver.names,
                 allCrewProtokol: k.allCrewProtokol,
                 allCrewLiputan: k.allCrewLiputan,
+                allCrewDriver: k.allCrewDriver,
                 linkUpload: k.linkUpload,        
                 linkTiktok: k.linkTiktok,        
                 linkInstagram: k.linkInstagram,  

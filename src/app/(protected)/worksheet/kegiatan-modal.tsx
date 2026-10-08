@@ -29,6 +29,7 @@ export default function KegiatanModal({
   saving,
   petugasProtokolOptions,
   petugasLiputanOptions,
+  petugasDriverOptions,
   leadingSectorOptions,
 }: {
   item: KegiatanRow | null;
@@ -37,6 +38,7 @@ export default function KegiatanModal({
   saving: boolean;
   petugasProtokolOptions: SearchableOption[];
   petugasLiputanOptions: SearchableOption[];
+  petugasDriverOptions: SearchableOption[];
   leadingSectorOptions: SearchableOption[];
 }) {
   const [form, setForm] = useState<KegiatanInput>(() =>
@@ -57,8 +59,10 @@ export default function KegiatanModal({
           statusKegiatan: item.statusKegiatan,
           petugasProtokolIds: item.petugasProtokolIds,
           petugasLiputanIds: item.petugasLiputanIds,
+          petugasDriverIds: item.petugasDriverIds || [],
           allCrewProtokol: item.allCrewProtokol,
           allCrewLiputan: item.allCrewLiputan,
+          allCrewDriver: item.allCrewDriver || false,
           linkUpload: item.linkUpload || '',
           linkTiktok: item.linkTiktok || '',
           linkInstagram: item.linkInstagram || '',
@@ -84,8 +88,10 @@ export default function KegiatanModal({
           statusKegiatan: 'ACARA_MASUK',
           petugasProtokolIds: [],
           petugasLiputanIds: [],
+          petugasDriverIds: [],
           allCrewProtokol: false,
           allCrewLiputan: false,
+          allCrewDriver: false,
           linkUpload: '',
           linkTiktok: '',
           linkInstagram: '',
@@ -105,17 +111,21 @@ export default function KegiatanModal({
   // State lokal options - bisa ditambah petugas baru secara instan tanp reload halaman
   const [localProtokolOptions, setLocalProtokolOptions] = useState(petugasProtokolOptions);
   const [localLiputanOptions, setLocalLiputanOptions] = useState(petugasLiputanOptions);
+  const [localDriverOptions, setLocalDriverOptions] = useState(petugasDriverOptions);
 
   // Sinkronkan jika prop dari parent berubah (misal setelah revalidate)
   useEffect(() => { setLocalProtokolOptions(petugasProtokolOptions); }, [petugasProtokolOptions]);
   useEffect(() => { setLocalLiputanOptions(petugasLiputanOptions); }, [petugasLiputanOptions]);
+  useEffect(() => { setLocalDriverOptions(petugasDriverOptions); }, [petugasDriverOptions]);
 
   const handlePetugasCreated = (newOpt: { id: string; label: string; sublabel?: string; kategori: import('@prisma/client').KategoriPetugas }) => {
     const opt = { id: newOpt.id, label: newOpt.label, sublabel: newOpt.sublabel };
     if (newOpt.kategori === 'PROTOKOL') {
       setLocalProtokolOptions((prev) => [...prev, opt].sort((a, b) => a.label.localeCompare(b.label, 'id')));
-    } else {
+    } else if (newOpt.kategori === 'LIPUTAN') {
       setLocalLiputanOptions((prev) => [...prev, opt].sort((a, b) => a.label.localeCompare(b.label, 'id')));
+    } else if (newOpt.kategori === 'DRIVER') {
+      setLocalDriverOptions((prev) => [...prev, opt].sort((a, b) => a.label.localeCompare(b.label, 'id')));
     }
   }
 
@@ -158,7 +168,7 @@ export default function KegiatanModal({
       aria-labelledby="kegiatan-modal-title"
     >
       <div
-        className="bg-white rounded-2xl max-w-lg w-full overflow-y-auto max-h-[90vh]"
+        className="bg-white rounded-2xl max-w-2xl w-full overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-app">
@@ -363,7 +373,7 @@ export default function KegiatanModal({
           ))}
           </select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={form.allCrewProtokol}
@@ -374,12 +384,12 @@ export default function KegiatanModal({
               </label>
               <PetugasPicker
                 label={form.allCrewProtokol ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Protokol'}
-                options={petugasProtokolOptions}
+                options={localProtokolOptions}
                 selected={form.petugasProtokolIds || []}
                 onChange={(ids) => update('petugasProtokolIds', ids)}
                 disabled={saving}
-                warnIds={form.petugasLiputanIds || []}
-                warnLabel="Sudah dipilih sebagai Petugas Liputan"
+                warnIds={[...(form.petugasLiputanIds || []), ...(form.petugasDriverIds || [])]}
+                warnLabel="Sudah dipilih di peran lain"
                 onPetugasCreated={handlePetugasCreated}
               />
             </div>
@@ -393,12 +403,31 @@ export default function KegiatanModal({
               </label>
               <PetugasPicker
                 label={form.allCrewLiputan ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Liputan'}
-                options={petugasLiputanOptions}
+                options={localLiputanOptions}
                 selected={form.petugasLiputanIds || []}
                 onChange={(ids) => update('petugasLiputanIds', ids)}
                 disabled={saving}
-                warnIds={form.petugasProtokolIds || []}
-                warnLabel="Sudah dipilih sebagai Petugas Protokol"
+                warnIds={[...(form.petugasProtokolIds || []), ...(form.petugasDriverIds || [])]}
+                warnLabel="Sudah dipilih di peran lain"
+                onPetugasCreated={handlePetugasCreated}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.allCrewDriver}
+                  onChange={(e) => update('allCrewDriver', e.target.checked)}
+                  disabled={saving}
+                  className="rounded border-app text-navy" />
+                <span className="font-medium">Semua Driver</span>
+              </label>
+              <PetugasPicker
+                label={form.allCrewDriver ? 'Pilih Penanggung Jawab (opsional)' : 'Petugas Driver'}
+                options={localDriverOptions}
+                selected={form.petugasDriverIds || []}
+                onChange={(ids) => update('petugasDriverIds', ids)}
+                disabled={saving}
+                warnIds={[...(form.petugasProtokolIds || []), ...(form.petugasLiputanIds || [])]}
+                warnLabel="Sudah dipilih di peran lain"
                 onPetugasCreated={handlePetugasCreated}
               />
             </div>

@@ -21,8 +21,10 @@ export type KegiatanItem = {
     statusKegiatan: StatusKegiatan;
     petugasProtokolNama: string[];
     petugasLiputanNama: string[];
+    petugasDriverNama: string[];
     allCrewProtokol: boolean;
     allCrewLiputan: boolean;
+    allCrewDriver: boolean;
     jenisPenugasan: JenisPenugasanValue | null;
     statusPublikasi: StatusPublikasiValue;
 };
@@ -197,32 +199,34 @@ export function LaporanPdfDocument({
                         {isRingkas ? (
                             <>
                                 <Text style={[styles.th, { width: '3%' }]}>#</Text>
-                                <Text style={[styles.th, { width: '7%' }]}>Tanggal</Text>
-                                <Text style={[styles.th, { width: '18%' }]}>Nama Kegiatan</Text>
-                                <Text style={[styles.th, { width: '13%' }]}>Tempat</Text>
-                                <Text style={[styles.th, { width: '10%' }]}>Pejabat</Text>
+                                <Text style={[styles.th, { width: '6%' }]}>Tanggal</Text>
+                                <Text style={[styles.th, { width: '17%' }]}>Nama Kegiatan</Text>
+                                <Text style={[styles.th, { width: '12%' }]}>Tempat</Text>
+                                <Text style={[styles.th, { width: '9%' }]}>Pejabat</Text>
                                 <Text style={[styles.th, { width: '5%' }]}>Waktu</Text>
-                                <Text style={[styles.th, { width: '12%' }]}>Leading Sector</Text>
-                                <Text style={[styles.th, { width: '12%' }]}>Protokol</Text>
-                                <Text style={[styles.th, { width: '12%' }]}>Liputan</Text>
-                                <Text style={[styles.th, { width: '8%', borderRightWidth: 0 }]}>Status</Text>
+                                <Text style={[styles.th, { width: '11%' }]}>Leading Sector</Text>
+                                <Text style={[styles.th, { width: '10%' }]}>Protokol</Text>
+                                <Text style={[styles.th, { width: '10%' }]}>Liputan</Text>
+                                <Text style={[styles.th, { width: '10%' }]}>Driver</Text>
+                                <Text style={[styles.th, { width: '7%', borderRightWidth: 0 }]}>Status</Text>
                             </>
                         ) : (
                             <>
                                 <Text style={[styles.th, { width: '2.5%' }]}>#</Text>
                                 <Text style={[styles.th, { width: '5.5%' }]}>Tanggal</Text>
-                                <Text style={[styles.th, { width: '12%' }]}>Nama Kegiatan</Text>
-                                <Text style={[styles.th, { width: '7.5%' }]}>Perihal</Text>
-                                <Text style={[styles.th, { width: '7%' }]}>No. Surat</Text>
-                                <Text style={[styles.th, { width: '5%' }]}>Dresscode</Text>
-                                <Text style={[styles.th, { width: '4.5%' }]}>Waktu</Text>
-                                <Text style={[styles.th, { width: '9%' }]}>Tempat</Text>
-                                <Text style={[styles.th, { width: '7%' }]}>Pejabat</Text>
-                                <Text style={[styles.th, { width: '6%' }]}>No HP PIC</Text>
-                                <Text style={[styles.th, { width: '8%' }]}>Leading Sector</Text>
-                                <Text style={[styles.th, { width: '4.5%' }]}>Sambutan</Text>
-                                <Text style={[styles.th, { width: '7.5%' }]}>Protokol</Text>
-                                <Text style={[styles.th, { width: '7.5%' }]}>Liputan</Text>
+                                <Text style={[styles.th, { width: '11%' }]}>Nama Kegiatan</Text>
+                                <Text style={[styles.th, { width: '7%' }]}>Perihal</Text>
+                                <Text style={[styles.th, { width: '6.5%' }]}>No. Surat</Text>
+                                <Text style={[styles.th, { width: '4.5%' }]}>Dresscode</Text>
+                                <Text style={[styles.th, { width: '4%' }]}>Waktu</Text>
+                                <Text style={[styles.th, { width: '8.5%' }]}>Tempat</Text>
+                                <Text style={[styles.th, { width: '6.5%' }]}>Pejabat</Text>
+                                <Text style={[styles.th, { width: '5.5%' }]}>No HP PIC</Text>
+                                <Text style={[styles.th, { width: '7.5%' }]}>Leading Sector</Text>
+                                <Text style={[styles.th, { width: '4%' }]}>Sambutan</Text>
+                                <Text style={[styles.th, { width: '6.5%' }]}>Protokol</Text>
+                                <Text style={[styles.th, { width: '6.5%' }]}>Liputan</Text>
+                                <Text style={[styles.th, { width: '7.5%' }]}>Driver</Text>
                                 <Text style={[styles.th, { width: '6.5%', borderRightWidth: 0 }]}>Status</Text>
                             </>
                         )}
@@ -241,32 +245,34 @@ export function LaporanPdfDocument({
                                 {isRingkas ? (
                                     <>
                                         <Text style={[styles.td, { width: '3%', textAlign: 'center' }]}>{index + 1}</Text>
-                                        <Text style={[styles.td, { width: '7%' }]}>{formatTanggalIndo(k.tanggal)}</Text>
-                                        <Text style={[styles.td, { width: '18%', fontFamily: 'Helvetica-Bold' }]}>{k.namaKegiatan}</Text>
-                                        <Text style={[styles.td, { width: '13%' }]}>{k.tempat || '-'}</Text>
-                                        <Text style={[styles.td, { width: '10%' }]}>{k.pejabat || '-'}</Text>
+                                        <Text style={[styles.td, { width: '6%' }]}>{formatTanggalIndo(k.tanggal)}</Text>
+                                        <Text style={[styles.td, { width: '17%', fontFamily: 'Helvetica-Bold' }]}>{k.namaKegiatan}</Text>
+                                        <Text style={[styles.td, { width: '12%' }]}>{k.tempat || '-'}</Text>
+                                        <Text style={[styles.td, { width: '9%' }]}>{k.pejabat || '-'}</Text>
                                         <Text style={[styles.td, { width: '5%', textAlign: 'center' }]}>{k.waktu || '-'}</Text>
-                                        <Text style={[styles.td, { width: '12%' }]}>{k.leadingSectorNama || '-'}</Text>
-                                        <Text style={[styles.td, { width: '12%' }]}>{formatCrew(k.allCrewProtokol, k.petugasProtokolNama)}</Text>
-                                        <Text style={[styles.td, { width: '12%' }]}>{formatCrew(k.allCrewLiputan, k.petugasLiputanNama)}</Text>
-                                        <Text style={[styles.tdLast, { width: '8%' }]}>{STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}</Text>
+                                        <Text style={[styles.td, { width: '11%' }]}>{k.leadingSectorNama || '-'}</Text>
+                                        <Text style={[styles.td, { width: '10%' }]}>{formatCrew(k.allCrewProtokol, k.petugasProtokolNama)}</Text>
+                                        <Text style={[styles.td, { width: '10%' }]}>{formatCrew(k.allCrewLiputan, k.petugasLiputanNama)}</Text>
+                                        <Text style={[styles.td, { width: '10%' }]}>{formatCrew(k.allCrewDriver, k.petugasDriverNama)}</Text>
+                                        <Text style={[styles.tdLast, { width: '7%' }]}>{STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}</Text>
                                     </>
                                 ): (
                                     <>
                                         <Text style={[styles.td, { width: '2.5%', textAlign: 'center' }]}>{index + 1}</Text>
                                         <Text style={[styles.td, { width: '5.5%' }]}>{formatTanggalIndo(k.tanggal)}</Text>
-                                        <Text style={[styles.td, { width: '12%', fontFamily: 'Helvetica-Bold' }]}>{k.namaKegiatan}</Text>
-                                        <Text style={[styles.td, { width: '7.5%' }]}>{k.perihalSurat || '-'}</Text>
-                                        <Text style={[styles.td, { width: '7%' }]}>{k.nomorSurat || '-'}</Text>
-                                        <Text style={[styles.td, { width: '5%' }]}>{k.dresscode || '-'}</Text>
-                                        <Text style={[styles.td, { width: '4.5%', textAlign: 'center' }]}>{k.waktu || '-'}</Text>
-                                        <Text style={[styles.td, { width: '9%' }]}>{k.tempat || '-'}</Text>
-                                        <Text style={[styles.td, { width: '7%' }]}>{k.pejabat || '-'}</Text>
-                                        <Text style={[styles.td, { width: '6%' }]}>{k.picNoHp || '-'}</Text>
-                                        <Text style={[styles.td, { width: '8%' }]}>{k.leadingSectorNama || '-'}</Text>
-                                        <Text style={[styles.td, { width: '4.5%', textAlign: 'center' }]}>{k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}</Text>
-                                        <Text style={[styles.td, { width: '7.5%' }]}>{formatCrew(k.allCrewProtokol, k.petugasProtokolNama)}</Text>
-                                        <Text style={[styles.td, { width: '7.5%' }]}>{formatCrew(k.allCrewLiputan, k.petugasLiputanNama)}</Text>
+                                        <Text style={[styles.td, { width: '11%', fontFamily: 'Helvetica-Bold' }]}>{k.namaKegiatan}</Text>
+                                        <Text style={[styles.td, { width: '7%' }]}>{k.perihalSurat || '-'}</Text>
+                                        <Text style={[styles.td, { width: '6.5%' }]}>{k.nomorSurat || '-'}</Text>
+                                        <Text style={[styles.td, { width: '4.5%' }]}>{k.dresscode || '-'}</Text>
+                                        <Text style={[styles.td, { width: '4%', textAlign: 'center' }]}>{k.waktu || '-'}</Text>
+                                        <Text style={[styles.td, { width: '8.5%' }]}>{k.tempat || '-'}</Text>
+                                        <Text style={[styles.td, { width: '6.5%' }]}>{k.pejabat || '-'}</Text>
+                                        <Text style={[styles.td, { width: '5.5%' }]}>{k.picNoHp || '-'}</Text>
+                                        <Text style={[styles.td, { width: '7.5%' }]}>{k.leadingSectorNama || '-'}</Text>
+                                        <Text style={[styles.td, { width: '4%', textAlign: 'center' }]}>{k.statusSambutan === 'SUDAH' ? 'Sudah' : 'Belum'}</Text>
+                                        <Text style={[styles.td, { width: '6.5%' }]}>{formatCrew(k.allCrewProtokol, k.petugasProtokolNama)}</Text>
+                                        <Text style={[styles.td, { width: '6.5%' }]}>{formatCrew(k.allCrewLiputan, k.petugasLiputanNama)}</Text>
+                                        <Text style={[styles.td, { width: '7.5%' }]}>{formatCrew(k.allCrewDriver, k.petugasDriverNama)}</Text>
                                         <Text style={[styles.tdLast, { width: '6.5%' }]}>{STATUS_KEGIATAN_LABEL[k.statusKegiatan] || k.statusKegiatan}</Text>
                                     </>
                                 )}

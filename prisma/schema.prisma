@@ -83,6 +83,7 @@ model User {
 enum KategoriPetugas {
   PROTOKOL
   LIPUTAN
+  DRIVER
 }
 
 model Petugas {
@@ -137,6 +138,7 @@ model Kegiatan {
   dresscode       String?
   allCrewProtokol Boolean           @default(false)
   allCrewLiputan  Boolean           @default(false)
+  allCrewDriver   Boolean           @default(false)
   picNama         String?
   picNoHp         String?
   createdAt       DateTime          @default(now())

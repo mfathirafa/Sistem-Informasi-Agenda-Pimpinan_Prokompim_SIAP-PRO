@@ -94,6 +94,7 @@ export default function WorksheetClient({
   canEdit,
   petugasProtokolOptions,
   petugasLiputanOptions,
+  petugasDriverOptions,
   leadingSectorOptions,
 }: {
   initialData: KegiatanRow[];
@@ -105,6 +106,7 @@ export default function WorksheetClient({
   canEdit: boolean;
   petugasProtokolOptions: SearchableOption[];
   petugasLiputanOptions: SearchableOption[];
+  petugasDriverOptions: SearchableOption[];
   leadingSectorOptions: SearchableOption[];
 }) {
   const router = useRouter();
@@ -181,8 +183,10 @@ export default function WorksheetClient({
     statusKegiatan: overrideStatus ?? row.statusKegiatan,
     petugasProtokolIds: row.petugasProtokolIds,
     petugasLiputanIds: row.petugasLiputanIds,
+    petugasDriverIds: row.petugasDriverIds || [],
     allCrewProtokol: row.allCrewProtokol,
     allCrewLiputan: row.allCrewLiputan,
+    allCrewDriver: row.allCrewDriver || false,
     linkUpload: row.linkUpload ?? undefined,
     linkTiktok: row.linkTiktok ?? undefined,
     linkInstagram: row.linkInstagram ?? undefined,
@@ -356,6 +360,7 @@ export default function WorksheetClient({
       'Status Kegiatan',
       'Petugas Protokol',
       'Petugas Liputan',
+      'Petugas Driver',
       'Link Upload',
       'Link Tiktok',
       'Link Instagram',
@@ -379,6 +384,7 @@ export default function WorksheetClient({
       STATUS_KEGIATAN_LABEL[k.statusKegiatan],
       allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama),
       allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama),
+      allCrewSummary(k.allCrewDriver, k.petugasDriverNama),
       k.linkUpload || '',
       k.linkTiktok || '',
       k.linkInstagram || '',
@@ -566,6 +572,7 @@ export default function WorksheetClient({
                 <SortableTh  label="Status Kegiatan" sortKey="statusKegiatan" current={filters.sort} dir={filters.dir} onSort={setSort} className="px-2 py-2" />
                 <th className="px-2 py-2 font-medium">Petugas Protokol</th>
                 <th className="px-2 py-2 font-medium">Petugas Liputan</th>
+                <th className="px-2 py-2 font-medium">Petugas Driver</th>
                 <th className="px-2 py-2 font-medium">Dokumentasi</th>
                 <th className="px-2 py-2 font-medium">Medsos</th>
                 <th className="px-2 py-2 font-medium">Berita</th>
@@ -577,7 +584,7 @@ export default function WorksheetClient({
             <tbody>
               {initialData.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 21 : 20} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={canEdit ? 22 : 21} className="px-4 py-10 text-center text-muted">
                     Tidak ada kegiatan yang cocok.
                   </td>
                 </tr>
@@ -644,6 +651,7 @@ export default function WorksheetClient({
                     </td>
                     <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewProtokol, k.petugasProtokolNama)}</td>
                     <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewLiputan, k.petugasLiputanNama)}</td>
+                    <td className="px-4 py-3 text-muted">{allCrewSummary(k.allCrewDriver, k.petugasDriverNama)}</td>
                     <td className="px-4 py-3">
                       {k.linkUpload ? (
                         <a
@@ -808,6 +816,7 @@ export default function WorksheetClient({
           saving={isPending}
           petugasProtokolOptions={petugasProtokolOptions}
           petugasLiputanOptions={petugasLiputanOptions}
+          petugasDriverOptions={petugasDriverOptions}
           leadingSectorOptions={leadingSectorOptions}
         />
       )}

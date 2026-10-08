@@ -41,8 +41,10 @@ type KegiatanItem = {
     statusKegiatan: StatusKegiatan;
     petugasProtokolNama: string[];
     petugasLiputanNama: string[];
+    petugasDriverNama: string[];
     allCrewProtokol: boolean;
     allCrewLiputan: boolean;
+    allCrewDriver: boolean;
     linkUpload: string | null;                   
     linkTiktok: string | null;                   
     linkInstagram: string | null;                
@@ -66,7 +68,7 @@ function crewLabel(allCrew: boolean, names: string[]): string {
 type ColumnKey = 
     | 'tanggal' | 'waktu' | 'namaKegiatan' | 'perihalSurat' | 'nomorSurat' | 'dresscode'                                                             
     | 'tempat' | 'pejabat' | 'picNama' | 'picNoHp' | 'leadingSector'                                                                                 
-    | 'statusSambutan' | 'statusKegiatan' | 'petugasProtokol' | 'petugasLiputan'                                                                     
+    | 'statusSambutan' | 'statusKegiatan' | 'petugasProtokol' | 'petugasLiputan' | 'petugasDriver'                                                                     
     | 'dokumentasi' | 'medsos' | 'berita' | 'catatan'                                                                                                
     | 'jenisPenugasan' | 'statusPublikasi'; 
 
@@ -112,6 +114,7 @@ const COLUMNS: ColumnDef[] = [
     },
     { key: 'petugasProtokol', label: 'Petugas Protokol', get: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), render: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), tdClass: 'text-gray-500' },
     { key: 'petugasLiputan', label: 'Petugas Liputan', get: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), render: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), tdClass: 'text-gray-500 max-w-[200px] truncate' },
+    { key: 'petugasDriver', label: 'Petugas Driver', get: (k) => crewLabel(k.allCrewDriver, k.petugasDriverNama), render: (k) => crewLabel(k.allCrewDriver, k.petugasDriverNama), tdClass: 'text-gray-500 max-w-[200px] truncate' },
     {
         key: 'dokumentasi', label: 'Dokumentasi',
         get: (k) => k.linkUpload || '',
@@ -159,10 +162,10 @@ const COLUMNS: ColumnDef[] = [
     { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], render: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], tdClass: 'text-gray-500' },
 ];
 
-// Kolom untuk Laporan Ringkas (print-friendly, 9 kolom)
+// Kolom untuk Laporan Ringkas (print-friendly, 10 kolom)
 const RINGKAS_COLUMN_KEYS: ColumnKey[] = [
     'tanggal', 'namaKegiatan', 'tempat', 'pejabat', 'waktu',
-    'leadingSector', 'petugasProtokol', 'petugasLiputan', 'statusKegiatan'
+    'leadingSector', 'petugasProtokol', 'petugasLiputan', 'petugasDriver', 'statusKegiatan'
 ];
 
 const ALL_COLUMN_KEYS: ColumnKey[] = COLUMNS.map((c) => c.key);
@@ -520,6 +523,8 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                                             ? crewLabel(k.allCrewProtokol, k.petugasProtokolNama)
                                             : col.key === 'petugasLiputan'
                                             ? crewLabel(k.allCrewLiputan, k.petugasLiputanNama)
+                                            : col.key === 'petugasDriver'
+                                            ? crewLabel(k.allCrewDriver, k.petugasDriverNama)
                                             : col.get(k) || '-'
                                         }
                                     </td>

@@ -28,8 +28,10 @@ export type KegiatanInput = {
   statusKegiatan: StatusKegiatanValue;
   petugasProtokolIds: string[];
   petugasLiputanIds: string[];
+  petugasDriverIds: string[];
   allCrewProtokol?: boolean;
   allCrewLiputan?: boolean;
+  allCrewDriver?: boolean;
   linkUpload?: string;
   linkTiktok?: string;
   linkInstagram?: string;
@@ -81,7 +83,7 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
     if (!data.tanggal) return { ok: false, error: 'Tanggal wajib diisi.' };
     if (!data.tempat.trim()) return { ok: false, error: 'Tempat wajib diisi.' };
     
-    const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
+    const { petugasProtokolIds, petugasLiputanIds, petugasDriverIds, ...kegiatanData } = data;
     
     // Normalisasi leading sector: kosong atau "-" -> null
     const leadingSectorId =
@@ -114,26 +116,39 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
         return { ok: false, error: 'Petugas Liputan tidak valid.'};
       }
     }
+    if (petugasDriverIds.length > 0) {
+      const valid = await prisma.petugas.count({
+        where: { id: { in: petugasDriverIds } },
+      });
+      if (valid !== petugasDriverIds.length) {
+        return { ok: false, error: 'Petugas Driver tidak valid.' };
+      }
+    }
 
-    // Cegah petugas dipilih ganda (Protokol sekaligus Liputan)
-  const bentrokIds = petugasProtokolIds.filter((id) => petugasLiputanIds.includes(id));
-  if (bentrokIds.length > 0) {
-    const bentrokPetugas = await prisma.petugas.findMany({
-      where: {
-        id: {
-          in: bentrokIds
-        }
-      },
-      select: {
-        nama: true
-      },
-    });
-    const namaList = bentrokPetugas.map((p) => p.nama).join(', ');
-    return {
-      ok: false,
-      error: `Petugas "${namaList}" tidak dapat dipilih sebagai Protokol dan Liputan sekaligus. Hapus dari salah satu peran terlebih dahulu.`,
-    };
-  }
+    // Cegah petugas dipilih ganda di lebih dari satu peran
+    const allSelectedIds = [
+      ...petugasProtokolIds.map((id) => ({ id, peran: 'Protokol' })),
+      ...petugasLiputanIds.map((id) => ({ id, peran: 'Liputan' })),
+      ...petugasDriverIds.map((id) => ({ id, peran: 'Driver' })),
+    ];
+    const idCount = new Map<string, string[]>();
+    for (const { id, peran } of allSelectedIds) {
+      if (!idCount.has(id)) idCount.set(id, []);
+      idCount.get(id)!.push(peran);
+    }
+    const bentrokEntries = [...idCount.entries()].filter(([, perans]) => perans.length > 1);
+    if (bentrokEntries.length > 0) {
+      const bentrokIds = bentrokEntries.map(([id]) => id);
+      const bentrokPetugas = await prisma.petugas.findMany({
+        where: { id: { in: bentrokIds } },
+        select: { nama: true },
+      });
+      const namaList = bentrokPetugas.map((p) => p.nama).join(', ');
+      return {
+        ok: false,
+        error: `Petugas "${namaList}" tidak dapat dipilih di lebih dari satu peran sekaligus.`,
+      };
+    }
 
     // Normalisasi nomorSurat/dresscode: kosong -> null.
     const nomorSurat = data.nomorSurat?.trim() || null;
@@ -165,6 +180,7 @@ export async function createKegiatan(data: KegiatanInput): Promise<ActionResult>
             create: [
               ...petugasProtokolIds.map((id) => ({ petugasId: id, peran: 'PROTOKOL' as const })),
               ...petugasLiputanIds.map((id) => ({ petugasId: id, peran: 'LIPUTAN' as const })),
+              ...petugasDriverIds.map((id) => ({ petugasId: id, peran: 'DRIVER' as const })),
             ],
           },
           dokumen: {
@@ -225,7 +241,7 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     }
 
 
-  const { petugasProtokolIds, petugasLiputanIds, ...kegiatanData } = data;
+  const { petugasProtokolIds, petugasLiputanIds, petugasDriverIds, ...kegiatanData } = data;
 
   // Validasi petugas sesuai kategori
   if (petugasProtokolIds.length > 0) {
@@ -244,24 +260,37 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
       return { ok: false, error: 'Petugas Liputan tidak valid.' };
     }
   }
+  if (petugasDriverIds.length > 0) {
+    const valid = await prisma.petugas.count({
+      where: { id: { in: petugasDriverIds } },
+    });
+    if (valid !== petugasDriverIds.length) {
+      return { ok: false, error: 'Petugas Driver tidak valid.' };
+    }
+  }
 
-  // Cegah petugas dipilih ganda (Protokol sekaligus Liputan)
-  const bentrokIds = petugasProtokolIds.filter((id) => petugasLiputanIds.includes(id));
-  if (bentrokIds.length > 0) {
+  // Cegah petugas dipilih ganda di lebih dari satu peran
+  const allSelectedIds = [
+    ...petugasProtokolIds.map((id) => ({ id, peran: 'Protokol' })),
+    ...petugasLiputanIds.map((id) => ({ id, peran: 'Liputan' })),
+    ...petugasDriverIds.map((id) => ({ id, peran: 'Driver' })),
+  ];
+  const idCount = new Map<string, string[]>();
+  for (const { id, peran } of allSelectedIds) {
+    if (!idCount.has(id)) idCount.set(id, []);
+    idCount.get(id)!.push(peran);
+  }
+  const bentrokEntries = [...idCount.entries()].filter(([, perans]) => perans.length > 1);
+  if (bentrokEntries.length > 0) {
+    const bentrokIds = bentrokEntries.map(([id]) => id);
     const bentrokPetugas = await prisma.petugas.findMany({
-      where: {
-        id: {
-          in: bentrokIds
-        }
-      },
-      select: {
-        nama: true
-      },
+      where: { id: { in: bentrokIds } },
+      select: { nama: true },
     });
     const namaList = bentrokPetugas.map((p) => p.nama).join(', ');
     return {
       ok: false,
-      error: `Petugas "${namaList}" tidak dapat dipilih sebagai Protokol dan Liputan sekaligus. Hapus dari salah satu peran terlebih dahulu.`,
+      error: `Petugas "${namaList}" tidak dapat dipilih di lebih dari satu peran sekaligus.`,
     };
   }
 
@@ -301,8 +330,14 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     .map((a) => ({ id: a.petugasId, nama: a.petugas.nama }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
+  const existingDriver = existingAssignments
+    .filter((a) => (a.peran ?? a.petugas.kategori) === 'DRIVER')
+    .map((a) => ({ id: a.petugasId, nama: a.petugas.nama }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
   const newProtokolIds = [...new Set(petugasProtokolIds)].sort();
   const newLiputanIds = [...new Set(petugasLiputanIds)].sort();
+  const newDriverIds = [...new Set(petugasDriverIds)].sort();
 
   const protokolChanged = 
     existingProtokol.length !== newProtokolIds.length ||
@@ -311,9 +346,13 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
   const liputanChanged = 
     existingLiputan.length !== newLiputanIds.length ||
     existingLiputan.some((p, i) => p.id !== newLiputanIds[i]);
+
+  const driverChanged =
+    existingDriver.length !== newDriverIds.length ||
+    existingDriver.some((p, i) => p.id !== newDriverIds[i]);
   
-  if (protokolChanged || liputanChanged) {
-    const allNewIds = [...newProtokolIds, ...newLiputanIds];
+  if (protokolChanged || liputanChanged || driverChanged) {
+    const allNewIds = [...newProtokolIds, ...newLiputanIds, ...newDriverIds];
     const nameMap = new Map(
       (await prisma.petugas.findMany({
         where: { id: { in: allNewIds } },
@@ -325,6 +364,8 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
     afterSnapshot.petugasProtokol = newProtokolIds.map((id) => ({ id, nama: nameMap.get(id) ?? id }));
     beforeSnapshot.petugasLiputan = existingLiputan;
     afterSnapshot.petugasLiputan = newLiputanIds.map((id) => ({ id, nama: nameMap.get(id) ?? id }));
+    beforeSnapshot.petugasDriver = existingDriver;
+    afterSnapshot.petugasDriver = newDriverIds.map((id) => ({ id, nama: nameMap.get(id) ?? id }));
     hasDiff = true;
   }
 
@@ -365,6 +406,7 @@ export async function updateKegiatan(id: string, data: KegiatanInput): Promise<A
           create: [
             ...petugasProtokolIds.map((id) => ({ petugasId: id, peran: 'PROTOKOL' as const })),
             ...petugasLiputanIds.map((id) => ({ petugasId: id, peran: 'LIPUTAN' as const })),
+            ...petugasDriverIds.map((id) => ({ petugasId: id, peran: 'DRIVER' as const })),
           ],
         },
       },
