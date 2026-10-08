@@ -12,7 +12,7 @@ import { setGlobalLoading } from '@/components/global-loading';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
-  STAFF: 'Staf Protokom',
+  STAFF: 'Staf Prokompim',
   KEPALA_BAGIAN: 'Kepala Bagian',
 };
 

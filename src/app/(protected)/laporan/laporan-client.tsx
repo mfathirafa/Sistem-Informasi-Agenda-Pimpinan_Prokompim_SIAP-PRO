@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useTransition, type ReactNode } from "react";
-import { Download, Settings2, FileText, Table, Loader2 } from "lucide-react";
+import { Download, Settings2, FileText, Table, Loader2, Link as LinkIcon } from "lucide-react";
+import Pagination from "@/components/pagination"; 
 import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
 import { STATUS_KEGIATAN_LABEL, STATUS_KEGIATAN_CELL_CLASS } from "@/lib/constants/status-kegiatan";
@@ -42,6 +43,12 @@ type KegiatanItem = {
     petugasLiputanNama: string[];
     allCrewProtokol: boolean;
     allCrewLiputan: boolean;
+    linkUpload: string | null;                   
+    linkTiktok: string | null;                   
+    linkInstagram: string | null;                
+    linkBeritaInternal: string | null;           
+    linkBeritaEksternal: string | null;   
+    catatan: string | null;
     jenisPenugasan: JenisPenugasanValue | null;
     statusPublikasi: StatusPublikasiValue;
 };
@@ -57,10 +64,11 @@ function crewLabel(allCrew: boolean, names: string[]): string {
 
 // Urutan array = urutan kolom tabel/laporan - jadi header & row XLSX ikut urutan itu.
 type ColumnKey = 
-    | 'tanggal' | 'namaKegiatan' | 'perihalSurat' | 'nomorSurat' | 'dresscode'
-    | 'waktu' | 'tempat' | 'pejabat' | 'picNoHp' | 'leadingSector'
-    | 'statusSambutan' | 'statusKegiatan' | 'petugasProtokol' | 'petugasLiputan'
-    | 'jenisPenugasan' | 'statusPublikasi';
+    | 'tanggal' | 'waktu' | 'namaKegiatan' | 'perihalSurat' | 'nomorSurat' | 'dresscode'                                                             
+    | 'tempat' | 'pejabat' | 'picNama' | 'picNoHp' | 'leadingSector'                                                                                 
+    | 'statusSambutan' | 'statusKegiatan' | 'petugasProtokol' | 'petugasLiputan'                                                                     
+    | 'dokumentasi' | 'medsos' | 'berita' | 'catatan'                                                                                                
+    | 'jenisPenugasan' | 'statusPublikasi'; 
 
 type ColumnDef = {
     key: ColumnKey;
@@ -74,13 +82,14 @@ type ColumnDef = {
 
 const COLUMNS: ColumnDef[] = [
     { key: 'tanggal', label: 'Tanggal Pelaksanaan', get: (k) => formatTanggal(k.tanggal), render: (k) => formatTanggal(k.tanggal), tdClass: 'whitespace-nowrap' },
+    { key: 'waktu', label: 'Waktu', get: (k) => k.waktu || '', render: (k) => k.waktu || '-', tdClass: 'text-gray-500' },
     { key: 'namaKegiatan', label: 'Nama Kegiatan', get: (k) => k.namaKegiatan, render: (k) => k.namaKegiatan, tdClass: 'font-medium' },
     { key: 'perihalSurat', label: 'Perihal Surat', get: (k) => k.perihalSurat || '', render: (k) => k.perihalSurat || '-', tdClass: 'text-gray-500 max-w-[200px] truncate' },
     { key: 'nomorSurat', label: 'Nomor Surat', get: (k) => k.nomorSurat || '', render: (k) => k.nomorSurat || '-', tdClass: 'text-gray-500 max-w-[180px] truncate' },
     { key: 'dresscode', label: 'Dresscode', get: (k) => k.dresscode || '', render: (k) => k.dresscode || '-', tdClass: 'text-gray-500 max-w-[120px] truncate' },
-    { key: 'waktu', label: 'Waktu', get: (k) => k.waktu || '', render: (k) => k.waktu || '-', tdClass: 'text-gray-500' },
     { key: 'tempat', label: 'Tempat', get: (k) => k.tempat, render: (k) => k.tempat, tdClass: 'text-gray-500 max-w-[200px] truncate' },
     { key: 'pejabat', label: 'Pejabat', get: (k) => k.pejabat, render: (k) => k.pejabat },
+    { key: 'picNama', label: 'Nama PIC', get: (k) => k.picNama || '', render: (k) => k.picNama || '-', tdClass: 'text-gray-500' },
     { key: 'picNoHp', label: 'No. HP PIC', get: (k) => k.picNoHp || '', render: (k) => k.picNoHp || '-', tdClass: 'text-gray-500' },
     { key: 'leadingSector', label: 'Leading Sector', get: (k) => k.leadingSectorNama, render: (k) => k.leadingSectorNama, tdClass: 'text-gray-500' },
     {
@@ -103,6 +112,49 @@ const COLUMNS: ColumnDef[] = [
     },
     { key: 'petugasProtokol', label: 'Petugas Protokol', get: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), render: (k) => crewLabel(k.allCrewProtokol, k.petugasProtokolNama), tdClass: 'text-gray-500' },
     { key: 'petugasLiputan', label: 'Petugas Liputan', get: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), render: (k) => crewLabel(k.allCrewLiputan, k.petugasLiputanNama), tdClass: 'text-gray-500 max-w-[200px] truncate' },
+    {
+        key: 'dokumentasi', label: 'Dokumentasi',
+        get: (k) => k.linkUpload || '',
+        render: (k) => k.linkUpload ? (
+            <a href={k.linkUpload} target="_blank" rel="noopener noreferrer" className="text-navy inline-flex items-center gap-1 hover:underline">
+                <LinkIcon size={13} />
+            </a>
+        ) : '-',
+        tdClass: 'text-gray-500 text-center'
+    },
+    {
+        key: 'medsos', label: 'Medsos',
+        get: (k) => [k.linkTiktok ? `TikTok: ${k.linkTiktok}` : '', k.linkInstagram ? `Instagram: ${k.linkInstagram}` : ''].filter(Boolean).join(' | ') || '-',
+        render: (k) => (
+            <div className="flex items-center gap-1.5">
+                {k.linkTiktok && (
+                    <a href={k.linkTiktok} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium">TT</a>
+                )}
+                {k.linkInstagram && (
+                    <a href={k.linkInstagram} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded text-xs bg-pink-50 hover:bg-pink-100 text-pink-700 font-medium">IG</a>
+                )}
+                {!k.linkTiktok && !k.linkInstagram && <span className="text-muted">-</span>}
+            </div>
+        ),
+        tdClass: 'text-gray-500'
+    },
+    {
+        key: 'berita', label: 'Berita',
+        get: (k) => [k.linkBeritaInternal ? `Internal: ${k.linkBeritaInternal}` : '', k.linkBeritaEksternal ? `Eksternal: ${k.linkBeritaEksternal}` : ''].filter(Boolean).join(' | ') || '-',
+        render: (k) => (
+            <div className="flex items-center gap-1.5">
+                {k.linkBeritaInternal && (
+                    <a href={k.linkBeritaInternal} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium">Internal</a>
+                )}
+                {k.linkBeritaEksternal && (
+                    <a href={k.linkBeritaEksternal} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium">Eksternal</a>
+                )}
+                {!k.linkBeritaInternal && !k.linkBeritaEksternal && <span className="text-muted">-</span>}
+            </div>
+        ),
+        tdClass: 'text-gray-500'
+    },
+    { key: 'catatan', label: 'Catatan', get: (k) => k.catatan || '', render: (k) => k.catatan || '-', tdClass: 'text-gray-500 max-w-[200px] truncate' },
     { key: 'jenisPenugasan', label: 'Jenis Penugasan', get: (k) => (k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '-'), render: (k) => (k.jenisPenugasan ? JENIS_PENUGASAN_LABEL[k.jenisPenugasan] : '-'), tdClass: 'text-gray-500' },
     { key: 'statusPublikasi', label: 'Status Publikasi', get: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], render: (k) => STATUS_PUBLIKASI_LABEL[k.statusPublikasi], tdClass: 'text-gray-500' },
 ];
@@ -114,7 +166,7 @@ const RINGKAS_COLUMN_KEYS: ColumnKey[] = [
 ];
 
 const ALL_COLUMN_KEYS: ColumnKey[] = COLUMNS.map((c) => c.key);
-const STORAGE_KEY = 'laporan.exportColumns';
+const STORAGE_KEY = 'laporan.exportColumns.v2';
 
 type Props = {
     data: KegiatanItem[];
@@ -134,6 +186,20 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
     const [hydrated, setHydrated] = useState(false);
     const [printMode] = useState<'ringkas' | 'detail'>('ringkas');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState<'ringkas' | 'detail' | null>(null);
+
+    const [page, setPage] = useState(1);
+    const pageSize = 20;
+    const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+
+    // Reset ke halaman 1 saat filter tanggal berubah
+    useEffect(() => {
+        setPage(1);
+    }, [startDate, endDate]);
+
+    const paginatedData = useMemo(() => {
+        const start = (page - 1) * pageSize;
+        return data.slice(start, start + pageSize);
+    }, [data, page]);
 
     const handleDownloadPdf = async (mode: 'ringkas' | 'detail') => {
         if (data.length === 0) {
@@ -332,7 +398,7 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app disabled:opacity-50"
                 >
                     {isGeneratingPdf === 'detail' ? <Loader2 size={14} className="animate-spin" /> : <Table size={14} />}
-                    PDF Detaiil
+                    PDF Detail
                 </button>
                 <button
                     onClick={() => setShowColumnPicker((v) => !v)}
@@ -388,15 +454,18 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                 <table className="w-full min-w-[640px] md:min-w-[1000px] text-sm">
                     <thead className="bg-app text-left text-xs text-muted uppercase tracking-wide">
                         <tr>
-                            {/* Urutan kolom selalu tetap (urutan COLUMNS = urutan worksheet), activeColumns hanya filter. */}
+                            <th className="px-3 py-3 font-medium text-center w-12 border-r border-app sticky left-0 z-10 bg-app">No</th>
                             {COLUMNS.filter((c) => activeColumns.includes(c.key)).map((col) => (
                                 <th key={col.key} className="px-4 p-3 font-medium">{col.label}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map((k) => (
-                            <tr key={k.id} className="border-t border-app hover:bg-slate-50">
+                        {paginatedData.map((k, index) => (
+                            <tr key={k.id} className="group border-t border-app hover:bg-slate-50">
+                                <td className="px-3 py-3 text-center text-xs text-muted font-mono whitespace-nowrap border-r border-app sticky left-0 z-10 bg-white group-hover:bg-slate-50">
+                                    {(page - 1) * pageSize + index + 1}
+                                </td>
                                 {COLUMNS.filter((c) => activeColumns.includes(c.key)).map((col) => (
                                     <td key={col.key} className={`px-4 py-3 ${col.tdClass || ''}`}>
                                         {col.render(k)}
@@ -405,12 +474,22 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
                             </tr>
                         ))}
                         {data.length === 0 && (
-                            <tr><td colSpan={activeColumns.length} className="px-4 py-10 text-center text-muted">Tidak ada data.</td></tr>
+                            <tr><td colSpan={activeColumns.length + 1} className="px-4 py-10 text-center text-muted">Tidak ada data.</td></tr>
                         )}
                     </tbody>
                 </table>
                 </div>
             </div>
+
+            {/* Navigasi Paginasi (20 data per halaman) */}
+            {data.length > 0 && (
+                <div className="no-print flex flex-col items-center gap-2 text-sm sm:flex-row sm:justify-between py-2">
+                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                    <span className="text-muted text-center sm:text-right">
+                        Menampilkan {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.length)} dari {data.length} data
+                    </span>
+                </div>
+            )}
 
             {/* Print Table - tabel khusus untuk print dengan kolom ringkas/detail */}
             <div className="hidden print:block">

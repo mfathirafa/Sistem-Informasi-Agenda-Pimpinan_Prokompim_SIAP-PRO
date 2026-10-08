@@ -7,7 +7,7 @@ import ConfirmDialog from '@/components/confirm-dialog';
 import { useRouter } from 'next/navigation';
 import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
-const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Protokom', KEPALA_BAGIAN: 'Kepala Bagian' };
+const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', STAFF: 'Staf Prokompim', KEPALA_BAGIAN: 'Kepala Bagian' };
 type UserRow = { id: string; username: string; nama: string; role: string };
 
 export default function UsersClient({ users: initialUsers, currentUserId }: { users: UserRow[]; currentUserId: string }) {
@@ -200,7 +200,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
             <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} aria-label="Filter Peran" className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-app text-sm">
               <option value="ALL">Semua Peran</option>
               <option value="ADMIN">Admin</option>
-              <option value="STAFF">Staf Protokom</option>
+              <option value="STAFF">Staf Prokompim</option>
               <option value="KEPALA_BAGIAN">Kepala Bagian</option>
             </select>
             <button type="button"
@@ -293,7 +293,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Peran</label>
                   <select value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value as 'ADMIN' | 'STAFF' | 'KEPALA_BAGIAN' }))} className="w-full px-3 py-2 rounded-lg border border-app text-sm">
-                    <option value="STAFF">Staf Protokom</option>
+                    <option value="STAFF">Staf Prokompim</option>
                     <option value="KEPALA_BAGIAN">Kepala Bagian</option>
                     <option value="ADMIN">Admin</option>
                   </select>

@@ -1,4 +1,4 @@
-# Sistem Manajemen SPJ — Protokom Sekda Brebes
+# Sistem Manajemen SPJ — Prokompim Sekda Brebes
 
 Worksheet digital untuk mencatat kegiatan Bupati/Wakil Bupati: tempat, tanggal, status sambutan, petugas protokol & liputan, leading sector, dan link dokumentasi — menggantikan pencatatan tersebar di grup WhatsApp.
 
@@ -59,7 +59,7 @@ Buka browser ke `http://localhost:3000`. Login pakai salah satu akun percobaan d
 | Peran | Username | Password |
 |---|---|---|
 | Admin (kelola pengguna + input data) | `admin` | `admin123` |
-| Staf Protokom (input data) | `staff` | `staff123` |
+| Staf Prokompim (input data) | `staff` | `staff123` |
 | Kepala Bagian (lihat saja) | `atasan` | `atasan123` |
 
 **Penting:** setelah dipakai sungguhan, segera ganti password akun-akun ini lewat menu Kelola Pengguna (buat akun baru dengan password sendiri, lalu hapus akun percobaan).
@@ -85,7 +85,7 @@ git push -u origin main
 1. Buka https://vercel.com/new, pilih repo GitHub yang tadi dibuat.
 2. Di bagian **Environment Variables**, tambahkan `DATABASE_URL`, `DIRECT_URL`, dan `AUTH_SECRET` — isi dengan nilai yang sama seperti di `.env` lokal kamu (untuk produksi, sebaiknya buat database Supabase terpisah dari yang dipakai untuk coba-coba di laptop).
 3. Klik **Deploy**. Tunggu beberapa menit.
-4. Setelah selesai, Vercel kasih link publik (misalnya `https://sistem-spj-protokom.vercel.app`) — ini yang dibagikan ke tim protokom dan atasan.
+4. Setelah selesai, Vercel kasih link publik (misalnya `https://sistem-spj-prokompim.vercel.app`) — ini yang dibagikan ke tim prokompim dan atasan.
 5. Jalankan migrasi & seed ke database produksi sekali saja (dari laptop, dengan `DATABASE_URL` produksi aktif di `.env`): `npm run db:push` lalu `npm run db:seed`.
 
 Setelah ini, **setiap kali kamu push ke branch `main`, Vercel otomatis deploy ulang** — tidak perlu upload manual lagi.

@@ -19,7 +19,15 @@ import { setGlobalLoading } from '@/components/global-loading';
 import { StatusKegiatanValue } from '@/lib/constants/status-kegiatan';
 import { validateTransition } from '@/lib/workflow';
 
-const PEJABAT_OPTIONS = ['Bupati', 'Wakil Bupati', 'Bupati & Wakil Bupati', 'Belum Ditentukan', 'Lainnya'];
+const PEJABAT_OPTIONS = [
+  'Bupati',
+  'Wakil Bupati',
+  'Bupati & Wakil Bupati',
+  'Wakil Bupati dan Sekda',
+  '-',
+  'Belum Ditentukan',
+  'Lainnya',
+];
 
 // 12 bulan statis - filter bulan tak lagi diambil dari data.
 const BULAN_NAMA = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -408,128 +416,135 @@ export default function WorksheetClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQueary(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                setFilter('q', searchQuery.trim() || undefined);
-              }
-            }}
-            onBlur={() => {
-              if (searchQuery.trim() !== (filters.q || '')) {
-                setFilter('q', searchQuery.trim() || undefined);
-              }
-            }}
-            placeholder="Cari kegiatan, tempat, atau perihal..."
-            className="w-full min-w-0 pl-9 pr-8 py-2 rounded-lg border border-app text-sm bg-white"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQueary('');
-                setFilter('q', undefined);
-              }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-navy p-0.5 rounded"
-              title="Hapus pencarian"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-          <select value={filters.tahun || ''} 
-          onChange={(e) => {
-            const v = e.target.value;
-            const params = new URLSearchParams(searchParams.toString());
-            if (v) params.set('tahun', v);
-            else params.delete('tahun');
-            params.delete('bulan'); // bulan mengikuti tahun - reset saat tahun berubah
-            params.delete('page');
-            // Pakai setFilter biar loading direset otomatis
-            router.replace(`/worksheet?${params.toString()}`);
-          }}
-          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value="">Semua Tahun</option>
-            {tahunOptions.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-          <select value={filters.bulan ? Number(filters.bulan.split('-')[1]) :0}
-          onChange={(e) => {
-            const m = Number(e.target.value);
-            const tahun = filters.tahun || String(new Date().getFullYear());
-            setFilter('bulan', m ===0 ? undefined : `${tahun}-${String(m).padStart(2, '0')}`);
-          }}
-          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value={0}>Semua Bulan</option>
-            {BULAN_NAMA.map((nama, i) => (
-              <option key={i +1} value={i +1}>{nama}</option>
-            ))}
-          </select>
-          <select value={filters.status || 'Semua'}
-          onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value="Semua">Semua Sambutan</option>
-            <option value="SUDAH">Sudah Sambutan</option>
-            <option value="BELUM">Belum Sambutan</option>
-          </select>
-          <select value={filters.statusKegiatan || 'Semua'}
-          onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value="Semua">Semua Status Kegiatan</option>
-            {STATUS_KEGIATAN_OPTIONS.map((s) => (
-              <option key={s} value={s}>{STATUS_KEGIATAN_LABEL[s]}</option>
-            ))}
-          </select>
-          <select value={filters.pejabat || 'Semua'}
-          onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value="Semua">Semua Pejabat</option>
-            {PEJABAT_OPTIONS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          <select value={filters.penugasan || 'Semua'}
-          onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}
-          className="min-w-0 px-3 py-2 rounded-lg border border-app text-sm"
-          >
-            <option value="Semua">Semua Jenis Tugas</option>
-            {JENIS_PENUGASAN_OPTIONS.map((j) => (
-              <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>
-            ))}
-          </select>
-          <div className="w-full col-span-2 sm:w-48">
-            <SearchableSelect options={leadingSectorOptions}
-            value={filters.sektor || null}
-            onChange={(v) => setFilter('sektor', v || undefined)}
-            placeholder="Semua Sektor"
-          />
-          </div>
-          <button onClick={exportExcel}
-          className="col-span-2 justify-center flex items-center gap-1.5 px-3 py-2 rounded-lg border border-app text-sm hover:bg-app"
-          >
-            <Download size={15} /> Excel
-          </button>
-          {canEdit && (
-            <button onClick={openAdd}
-            className="btn-primary col-span-2 justify-center flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium"
-            >
-              <Plus size={15} /> Tambah Kegiatan
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Baris 1: Kolom Pencarian Luas & Tombol Aksi */}                                                                                            
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">                                                           
+            <div className="relative flex-1 min-w-0">                                                                                                    
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />                                 
+              <input                                                                                                                                     
+                type="text"                                                                                                                              
+                value={searchQuery}                                                                                                                      
+                onChange={(e) => setSearchQueary(e.target.value)}                                                                                        
+                onKeyDown={(e) => {                                                                                                                      
+                  if (e.key === 'Enter') {                                                                                                               
+                    setFilter('q', searchQuery.trim() || undefined);                                                                                     
+                  }                                                                                                                                      
+                }}                                                                                                                                       
+                onBlur={() => {                                                                                                                          
+                  if (searchQuery.trim() !== (filters.q || '')) {                                                                                        
+                    setFilter('q', searchQuery.trim() || undefined);                                                                                     
+                  }                                                                                                                                      
+                }}                                                                                                                                       
+                placeholder="Cari kegiatan, tempat, atau perihal..."                                                                                     
+                className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-app text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-  
+  navy/20"                                                                                                                                               
+              />                                                                                                                                         
+              {searchQuery && (                                                                                                                          
+                <button                                                                                                                                  
+                  type="button"                                                                                                                          
+                  onClick={() => {                                                                                                                       
+                    setSearchQueary('');                                                                                                                 
+                    setFilter('q', undefined);                                                                                                           
+                  }}                                                                                                                                     
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-navy p-0.5 rounded"                                         
+                  title="Hapus pencarian"                                                                                                                
+                >                                                                                                                                        
+                  <X size={15} />                                                                                                                        
+                </button>                                                                                                                                
+              )}                                                                                                                                         
+            </div>                                                                                                                                       
+            <div className="flex items-center gap-2 shrink-0">                                                                                           
+              <button onClick={exportExcel}                                                                                                              
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-app text-sm bg-white   
+  hover:bg-slate-50 transition shadow-sm font-medium"                                                                                                    
+              >                                                                                                                                          
+                <Download size={15} /> Excel                                                                                                             
+              </button>                                                                                                                                  
+              {canEdit && (                                                                                                                              
+                <button onClick={openAdd}                                                                                                                
+                  className="btn-primary flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium      
+  shadow-sm whitespace-nowrap"                                                                                                                           
+                >                                                                                                                                        
+                  <Plus size={15} /> Tambah Kegiatan                                                                                                     
+                </button>                                                                                                                                
+              )}                                                                                                                                         
+            </div>                                                                                                                                       
+          </div>                                                                                                                                         
+                                                                                                                                                         
+          {/* Baris 2: Barisan Filter Dropdown */}                                                                                                       
+          <div className="flex flex-wrap items-center gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-app">                                          
+            <select value={filters.tahun || ''}                                                                                                          
+              onChange={(e) => {                                                                                                                         
+                const v = e.target.value;                                                                                                                
+                const params = new URLSearchParams(searchParams.toString());                                                                             
+                if (v) params.set('tahun', v);                                                                                                           
+                else params.delete('tahun');                                                                                                             
+                params.delete('bulan');                                                                                                                  
+                params.delete('page');                                                                                                                   
+                router.replace(`/worksheet?${params.toString()}`);                                                                                       
+              }}                                                                                                                                         
+              className="min-w-0 px-3 py-1.5 rounded-lg border border-app text-sm bg-white"                                                              
+            >                                                                                                                                            
+              <option value="">Semua Tahun</option>                                                                                                      
+              {tahunOptions.map((t) => (                                                                                                                 
+                <option key={t} value={t}>{t}</option>                                                                                                   
+              ))}                                                                                                                                        
+            </select>                                                                                                                                    
+            <select value={filters.bulan ? Number(filters.bulan.split('-')[1]) : 0}                                                                      
+              onChange={(e) => {                                                                                                                         
+                const m = Number(e.target.value);                                                                                                        
+                const tahun = filters.tahun || String(new Date().getFullYear());                                                                         
+                setFilter('bulan', m === 0 ? undefined : `${tahun}-${String(m).padStart(2, '0')}`);                                                      
+              }}                                                                                                                                         
+              className="min-w-0 px-3 py-1.5 rounded-lg border border-app text-sm bg-white"                                                              
+            >                                                                                                                                            
+              <option value={0}>Semua Bulan</option>                                                                                                     
+              {BULAN_NAMA.map((nama, i) => (                                                                                                             
+                <option key={i + 1} value={i + 1}>{nama}</option>                                                                                        
+              ))}                                                                                                                                        
+            </select>                                                                                                                                    
+            <select value={filters.status || 'Semua'}                                                                                                    
+              onChange={(e) => setFilter('status', e.target.value === 'Semua' ? undefined : e.target.value)}                                             
+              className="min-w-0 px-3 py-1.5 rounded-lg border border-app text-sm bg-white"                                                              
+            >                                                                                                                                            
+              <option value="Semua">Semua Sambutan</option>                                                                                              
+              <option value="SUDAH">Sudah Sambutan</option>                                                                                              
+              <option value="BELUM">Belum Sambutan</option>                                                                                              
+            </select>                                                                                                                                    
+            <select value={filters.statusKegiatan || 'Semua'}                                                                                            
+              onChange={(e) => setFilter('statusKegiatan', e.target.value === 'Semua' ? undefined : e.target.value)}                                     
+              className="min-w-0 px-3 py-1.5 rounded-lg border border-app text-sm bg-white"                                                              
+            >                                                                                                                                            
+              <option value="Semua">Semua Status Kegiatan</option>                                                                                       
+              {STATUS_KEGIATAN_OPTIONS.map((s) => (                                                                                                      
+                <option key={s} value={s}>{STATUS_KEGIATAN_LABEL[s]}</option>                                                                            
+              ))}                                                                                                                                        
+            </select>                                                                                                                                    
+            <select value={filters.pejabat || 'Semua'}                                                                                                   
+              onChange={(e) => setFilter('pejabat', e.target.value === 'Semua' ? undefined : e.target.value)}                                            
+              className="min-w-0 px-3 py-1.5 rounded-lg border border-app text-sm bg-white"                                                              
+            >                                                                                                                                            
+              <option value="Semua">Semua Pejabat</option>                                                                                               
+              {PEJABAT_OPTIONS.map((p) => (                                                                                                              
+                <option key={p} value={p}>{p}</option>                                                                                                   
+              ))}                                                                                                                                        
+            </select>                                                                                                                                    
+            <select value={filters.penugasan || 'Semua'}                                                                                                 
+              onChange={(e) => setFilter('penugasan', e.target.value === 'Semua' ? undefined : e.target.value)}                                          
+              className="min-w-0 px-3 py-1.5 rounded-lg border border-app text-sm bg-white"                                                              
+            >                                                                                                                                            
+              <option value="Semua">Semua Jenis Tugas</option>                                                                                           
+              {JENIS_PENUGASAN_OPTIONS.map((j) => (                                                                                                      
+                <option key={j} value={j}>{JENIS_PENUGASAN_LABEL[j]}</option>                                                                            
+              ))}                                                                                                                                        
+            </select>                                                                                                                                    
+            <div className="w-full sm:w-48">                                                                                                             
+              <SearchableSelect options={leadingSectorOptions}                                                                                           
+                value={filters.sektor || null}                                                                                                           
+                onChange={(v) => setFilter('sektor', v || undefined)}                                                                                    
+                placeholder="Semua Sektor"                                                                                                               
+              />                                                                                                                                         
+            </div>                                                                                                                                       
+          </div>              
 
       <div className={`bg-white rounded-2xl border border-app overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
         <div className="overflow-x-auto">

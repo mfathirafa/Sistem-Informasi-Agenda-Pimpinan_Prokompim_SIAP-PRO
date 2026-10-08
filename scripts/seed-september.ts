@@ -11,7 +11,7 @@ async function main() {
     if (!adminUser) {
         const passwordAdmin = await bcrypt.hash('prokompim', 10);
         adminUser = await prisma.user.create({
-            data: { username: 'admin', password: passwordAdmin, nama: 'Admin Protokom', role: Role.ADMIN },
+            data: { username: 'admin', password: passwordAdmin, nama: 'Admin Prokompim', role: Role.ADMIN },
         });
     }
 

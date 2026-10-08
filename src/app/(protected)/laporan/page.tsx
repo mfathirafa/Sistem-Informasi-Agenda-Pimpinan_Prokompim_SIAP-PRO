@@ -78,10 +78,14 @@ export default async function LaporanPage({ searchParams }: Props) {
                 petugasLiputanNama: liputan.names,
                 allCrewProtokol: k.allCrewProtokol,
                 allCrewLiputan: k.allCrewLiputan,
-                linkUpload: k.linkUpload,
-                catatan: k.catatan,
+                linkUpload: k.linkUpload,        
+                linkTiktok: k.linkTiktok,        
+                linkInstagram: k.linkInstagram,  
+                linkBeritaInternal: k.linkBeritaInternal,                                
+                linkBeritaEksternal: k.linkBeritaEksternal,                               
+                catatan: k.catatan,              
                 jenisPenugasan: k.jenisPenugasan,
-                statusPublikasi: k.statusPublikasi,
+                statusPublikasi: k.statusPublikasi,       
             };
         });
 

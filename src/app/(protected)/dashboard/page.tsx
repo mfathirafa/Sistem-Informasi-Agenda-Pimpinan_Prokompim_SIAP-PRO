@@ -177,7 +177,7 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
             )}
             <div className='absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/30 pointer-events-none' />
             <div className='relative z-10 p-5 sm:p-8'>
-              <p className='text-gold text-xs font-semibold uppercase tracking-wider'>Sistem Manajemen SPJ · Protokom</p>
+              <p className='text-gold text-xs font-semibold uppercase tracking-wider'>Sistem Manajemen SPJ · Prokompim</p>
               <h1 className='font-display text-2xl sm:text-3xl font-semibold mt-1'>
                 Selamat datang, {user?.nama ?? 'Pengguna'}
               </h1>
