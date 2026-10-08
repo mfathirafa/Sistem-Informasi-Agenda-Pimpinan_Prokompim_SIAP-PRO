@@ -216,13 +216,36 @@ export default function LaporanClient({ data, startDate, endDate }: Props) {
             const blob = await pdf(doc).toBlob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.display = 'none';
             a.href = url;
             a.download = `laporan-kegiatan-${mode}-${localStart || 'awal'}-${localEnd || 'akhir'}.pdf`;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            toast.success(`PDF ${mode === 'ringkas' ? 'Ringkas' : 'Detail'} berhasil diunduh.`, { id: toastId });
+
+            // Beri waktu browser (terutama di mobile) untuk menyelesaikan download stream sebelum blob di-revoke
+            setTimeout(() => {
+                try {
+                    if (document.body.contains(a)) {
+                        document.body.removeChild(a);
+                    }
+                    URL.revokeObjectURL(url);
+                } catch {
+                    // ignore
+                }
+            }, 120000);
+
+            toast.success(`PDF ${mode === 'ringkas' ? 'Ringkas' : 'Detail'} berhasil disiapkan!`, {
+                id: toastId,
+                duration: 10000,
+                action: {
+                    label: 'Buka PDF',
+                    onClick: () => {
+                        window.open(url, '_blank');
+                    },
+                },
+            });
         } catch (err) {
             console.error(err);
             toast.error('Gagal membuat file PDF.', { id: toastId });

@@ -98,9 +98,6 @@ export default function PetugasPicker({
 
   const remove = (id: string) => onChange(selected.filter((x) => x !== id));
 
-  const toggle = (id: string) =>
-    onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
-
   // Centang petugas: jika ada keyword pencarian, reset keyword & tetap fokus di input agr bisa langsung ketik lagi
   const handleSelect = (id: string, forceCheck = false) => {
     const isSelected = selected.includes(id);

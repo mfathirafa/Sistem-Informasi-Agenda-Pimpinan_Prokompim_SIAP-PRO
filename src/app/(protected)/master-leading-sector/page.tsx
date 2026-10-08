@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import MasterLeadingSectorClient from './master-leading-sector-client';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MasterLeadingSectorPage() {
   try {
     const user = await getCurrentUser();

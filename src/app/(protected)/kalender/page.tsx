@@ -37,6 +37,8 @@ function parseBulan(value: string | undefined): { tahun: number; bulan: number }
     return { tahun, bulan };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function KalenderPage({
     searchParams,
 }: {
@@ -45,7 +47,6 @@ export default async function KalenderPage({
     try {
         const { bulan } = await searchParams;
         const { tahun, bulan: bulanIdx } = parseBulan(bulan);
-        const periode = new Date(tahun, bulanIdx, 1);
 
         const fmtBulan = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const prev = new Date(tahun, bulanIdx - 1, 1);
@@ -54,35 +55,43 @@ export default async function KalenderPage({
         const start = new Date(tahun, bulanIdx, 1);
         const end = new Date(tahun, bulanIdx + 1, 0, 23, 59, 59, 999);
 
-        const kegiatan = await prisma.kegiatan.findMany({
-            where: { tanggal: { gte: start, lte: end } },
-            orderBy: { tanggal: 'asc' },
-            select: { 
-                id: true, 
-                namaKegiatan: true, 
-                tanggal: true, 
-                waktu: true, 
-                statusKegiatan: true,
-                tempat: true,
-                pejabat: true,
-                perihalSurat: true,
-                nomorSurat: true,
-                dresscode: true,
-                picNama: true,
-                picNoHp: true,
-                jenisPenugasan: true,
-                statusPublikasi: true,
-                leadingSector: { select: { nama: true } },
-                dokumen: { select: { jenis: true, status: true, link: true, catatan: true } }, 
-                createdAt: true, 
-            },
-        });
+        const [kegiatan, tahunAgg] = await Promise.all([
+            prisma.kegiatan.findMany({
+                where: { tanggal: { gte: start, lte: end } },
+                orderBy: { tanggal: 'asc' },
+                select: { 
+                    id: true, 
+                    namaKegiatan: true, 
+                    tanggal: true, 
+                    waktu: true, 
+                    statusKegiatan: true,
+                    tempat: true,
+                    pejabat: true,
+                    perihalSurat: true,
+                    nomorSurat: true,
+                    dresscode: true,
+                    picNama: true,
+                    picNoHp: true,
+                    jenisPenugasan: true,
+                    statusPublikasi: true,
+                    leadingSector: { select: { nama: true } },
+                    dokumen: { select: { jenis: true, status: true, link: true, catatan: true } }, 
+                    createdAt: true, 
+                },
+            }),
+            prisma.kegiatan.aggregate({
+                _min: { tanggal: true },
+                _max: { tanggal: true },
+            }),
+        ]);
 
-        // Tahun yang punya data - dropdown tahun.
-        const semuaTahun = await prisma.kegiatan.findMany({ select: { tanggal: true } });
-        const tahunSet = new Set(semuaTahun.map(k => k.tanggal.getFullYear()));
-        if (!tahunSet.has(tahun)) tahunSet.add(tahun);
-        const tahunOptions = [...tahunSet].sort((a, b) => b - a);
+        // Tahun yang punya data - dropdown tahun
+        const currentYear = new Date().getFullYear();
+        const minYear = tahunAgg._min.tanggal ? tahunAgg._min.tanggal.getFullYear() : currentYear;
+        const maxYear = tahunAgg._max.tanggal ? tahunAgg._max.tanggal.getFullYear() : currentYear;
+        const tahunSet = new Set<number>([currentYear, tahun, minYear, maxYear]);
+        for (let y = minYear; y <= maxYear; y++) tahunSet.add(y);
+        const tahunOptions = Array.from(tahunSet).sort((a, b) => b - a);
 
         // Group per tanggal (komponen lokal, konsistensi dengan sel grid).
         const byTanggal = new Map<string, (typeof kegiatan)[number][]>();
@@ -98,8 +107,8 @@ export default async function KalenderPage({
 
         return (
             <div className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h1 className="font-display text-xs font-semibold text-navy">Kalender Kegiatan</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <h1 className="font-display text-lg sm:text-xl font-semibold text-navy">Kalender Kegiatan</h1>
                     <KalenderNav
                         tahun={tahun}
                         bulanIdx={bulanIdx}

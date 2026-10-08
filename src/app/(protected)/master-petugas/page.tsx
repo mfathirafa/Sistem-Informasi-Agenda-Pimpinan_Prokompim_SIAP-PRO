@@ -1,6 +1,8 @@
- import { prisma } from '@/lib/prisma';
-  import { getCurrentUser } from '@/lib/auth';
-  import MasterPetugasClient from './master-petugas-client';
+import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/auth';
+import MasterPetugasClient from './master-petugas-client';
+
+export const dynamic = 'force-dynamic';
 
   export default async function MasterPetugasPage() {
     try {

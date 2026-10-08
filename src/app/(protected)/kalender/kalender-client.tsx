@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, ExternalLink, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import {
   STATUS_KEGIATAN_BADGE_CLASS,
   STATUS_KEGIATAN_LABEL,
@@ -29,38 +29,77 @@ export function KalenderNav({
   nextHref: string;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  // Prefetch navigasi bulan berikutnya/sebelumnya agar respons instan saat diklik
+  useEffect(() => {
+    router.prefetch(prevHref);
+    router.prefetch(nextHref);
+  }, [prevHref, nextHref, router]);
 
   const navigate = (newTahun: number, newBulan: number) => {
     const val = `${newTahun}-${String(newBulan + 1).padStart(2, '0')}`;
-    router.push(`/kalender?bulan=${val}`);
+    startTransition(() => {
+      router.push(`/kalender?bulan=${val}`);
+    });
+  };
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    startTransition(() => {
+      router.push(prevHref);
+    });
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    startTransition(() => {
+      router.push(nextHref);
+    });
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Link href={prevHref} aria-label="Bulan sebelumnya" className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center">
-        <ChevronLeft size={16} />
-      </Link>
-      <select 
-        value={tahun}
-        onChange={(e) => navigate(Number(e.target.value), bulanIdx)}
-        className="px-2 py-1.5 rounded-lg border border-app text-sm font-medium text-navy bg-white cursor-pointer"
+    <div className={`w-full sm:w-auto grid grid-cols-[auto_1fr_1fr_auto] items-center gap-2 transition-opacity ${isPending ? 'opacity-60' : ''}`}>
+      <button
+        type="button"
+        onClick={handlePrev}
+        disabled={isPending}
+        aria-label="Bulan sebelumnya"
+        className="btn-primary rounded-lg h-10 w-10 sm:h-9 sm:w-9 inline-flex items-center justify-center shrink-0 disabled:opacity-50"
       >
-        {tahunOptions.map(y => (
-          <option key={y} value={y}>{y}</option>
-        ))}
-      </select>
+        <ChevronLeft size={18} />
+      </button>
       <select
         value={bulanIdx}
+        disabled={isPending}
         onChange={(e) => navigate(tahun, Number(e.target.value))}
-        className="px-2 py-1.5 rounded-lg border border-app text-sm font-medium text-navy bg-white cursor-pointer"
+        aria-label="Pilih Bulan"
+        className="h-10 sm:h-9 px-2.5 rounded-lg border border-app text-sm font-medium text-navy bg-white cursor-pointer w-full text-center sm:text-left truncate disabled:opacity-70"
       >
         {BULAN_NAMA.map((nama, i) => (
           <option key={i} value={i}>{nama}</option>
         ))}
       </select>
-      <Link href={nextHref} aria-label="Bulan berikutnya" className="btn-primary rounded-lg px-2.5 py-1.5 inline-flex items-center">
-        <ChevronRight size={16} />
-      </Link>
+      <select 
+        value={tahun}
+        disabled={isPending}
+        onChange={(e) => navigate(Number(e.target.value), bulanIdx)}
+        aria-label="Pilih Tahun"
+        className="h-10 sm:h-9 px-2.5 rounded-lg border border-app text-sm font-medium text-navy bg-white cursor-pointer w-full text-center sm:text-left truncate disabled:opacity-70"
+      >
+        {tahunOptions.map(y => (
+          <option key={y} value={y}>{y}</option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={handleNext}
+        disabled={isPending}
+        aria-label="Bulan berikutnya"
+        className="btn-primary rounded-lg h-10 w-10 sm:h-9 sm:w-9 inline-flex items-center justify-center shrink-0 disabled:opacity-50"
+      >
+        {isPending ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={18} />}
+      </button>
     </div>
   );
 }

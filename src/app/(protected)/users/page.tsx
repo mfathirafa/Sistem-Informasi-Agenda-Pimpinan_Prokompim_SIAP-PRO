@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import UsersClient from './users-client';
 
+export const dynamic = 'force-dynamic';
+
 export default async function UsersPage() {
   try {
     const user = await getCurrentUser();

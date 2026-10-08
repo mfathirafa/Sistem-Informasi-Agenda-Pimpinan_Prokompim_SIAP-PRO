@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition, useMemo } from 'react';
 import { Trash2, Pencil, X, Search, Eye, EyeOff } from 'lucide-react';
 import { createUser, updateUser, deleteUser, resetAllStaffPassword } from '@/app/actions/users';
 import ConfirmDialog from '@/components/confirm-dialog';
+import Pagination from '@/components/pagination';
 import { useRouter } from 'next/navigation';
 import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
@@ -35,6 +36,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
   useModalScrollLock(Boolean(editingUser));
   useModalScrollLock(resetAllOpen);
 
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return users.filter((u) => {
@@ -42,7 +46,18 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
       const matchSearch = !q || u.nama.toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
       return matchRole && matchSearch;
     });
-  }, [users, search, roleFilter])
+  }, [users, search, roleFilter]);
+
+  // Reset page saat filter/search berubah
+  useEffect(() => {
+    setPage(1);
+  }, [search, roleFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
   useEffect(() => {
     if (!editingUser) return;
@@ -214,6 +229,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
           <table className="w-full min-w-[480px] text-sm">
             <thead>
               <tr className="bg-app text-left text-xs text-muted uppercase tracking-wide">
+                <th className="px-4 py-3 font-medium text-center w-12">#</th>
                 <th className="px-4 py-3 font-medium">Nama</th>
                 <th className="px-4 py-3 font-medium">Nama Pengguna</th>
                 <th className="px-4 py-3 font-medium">Peran</th>
@@ -221,8 +237,9 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
+              {paginatedUsers.map((u, index) => (
                 <tr key={u.id} className="border-t border-app">
+                  <td className="px-4 py-3 text-center text-muted">{(page - 1) * pageSize + index + 1}</td>
                   <td className="px-4 py-3 font-medium">{u.nama}</td>
                   <td className="px-4 py-3 font-mono text-xs">{u.username}</td>
                   <td className="px-4 py-3">{ROLE_LABELS[u.role]}</td>
@@ -243,7 +260,7 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="p-6 text-center text-gray-400">
                       Tidak ada pengguna yang cocok.
                   </td>
@@ -253,6 +270,15 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
           </table>
           </div>
         </div>
+
+        {filtered.length > 0 && (
+          <div className="flex flex-col items-center gap-2 text-sm sm:flex-row sm:justify-between py-1">
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <span className="text-muted text-center sm:text-right">
+              Menampilkan {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} dari {filtered.length} pengguna
+            </span>
+          </div>
+        )}
 
         {deleteError && (
           <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>

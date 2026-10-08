@@ -1,19 +1,20 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { CalendarDays, CheckCircle2, FileWarning } from 'lucide-react';
+import nextDynamic from 'next/dynamic';
+import { CalendarDays, CheckCircle2, CalendarCheck2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { existsSync } from 'fs';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
 
-const DashboardCharts = dynamic(() => import('./dashboard-charts'), {
+export const dynamic = 'force-dynamic';
+
+const DashboardCharts = nextDynamic(() => import('./dashboard-charts'), {
   loading: () => <div className="h-[220px] bg-slate-50 animate-pulse rounded-xl" />,
 });
 
-const DashboardStats = dynamic(() => import('./dashboard-stats'), {
+const DashboardStats = nextDynamic(() => import('./dashboard-stats'), {
   loading: () => <div className="h-[200px] bg-slate-50 animate-pulse rounded-xl" />,
 });
 
@@ -44,17 +45,22 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
         hariIniCount,
         sudahCount,
         belumCount,
-        dokumenBelumUploadCount,
+        tahunIniCount,
+        statusKegiatanRaw,
         upcoming,
         chartDataRaw,
         topSektorRaw,
-        kegiatanWithDokumen,
       ] = await Promise.all([
         prisma.kegiatan.count({ where: { tanggal: { gte: startOfMonth, lte: endOfMonth } } }),
         prisma.kegiatan.count({ where: { tanggal: { gte: today, lt: tomorrow } } }),
         prisma.kegiatan.count({ where: { statusSambutan: 'SUDAH' } }),
         prisma.kegiatan.count({ where: { statusSambutan: 'BELUM' } }),
-        prisma.kegiatan.count({ where: { OR: [{ linkUpload: null }, { linkUpload: '' }] } }),
+        prisma.kegiatan.count({ where: { tanggal: { gte: currentYearStart } } }),
+        prisma.kegiatan.groupBy({
+          by: ['statusKegiatan'],
+          where: { tanggal: { gte: currentYearStart } },
+          _count: true,
+        }),
         prisma.kegiatan.findMany({
           where: { tanggal: { gte: today } },
           orderBy: { tanggal: 'asc' },
@@ -73,18 +79,15 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
           orderBy: { _count: { leadingSectorId: 'desc' } },
           take: 10,
         }),
-        prisma.kegiatan.findMany({
-          where: { tanggal: { gte: currentYearStart } },
-          select: { id: true, namaKegiatan: true, dokumen: { select: { status: true } } },
-        }),
       ]);
 
-      const chartMap: Record<string, { bulan: string; jumlah: number }> = {};
+      const chartMap: Record<string, { bulan: string; fullBulan: string; jumlah: number }> = {};
       for (let i = 0; i < rangeConfig.monthCount; i++) {
         const d = new Date(today.getFullYear(), today.getMonth() + rangeConfig.startOffset + i, 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const label = d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
-        chartMap[key] = { bulan: label, jumlah:0 };
+        const label = d.toLocaleDateString('id-ID', { month: 'short' });
+        const fullLabel = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        chartMap[key] = { bulan: label, fullBulan: fullLabel, jumlah: 0 };
       }
 
       chartDataRaw.forEach((k) => {
@@ -94,19 +97,19 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
       });
       const chartData = Object.values(chartMap);
 
-      // --- Progress dokumen per kegiatan (tahun berjalan) ---
-      let progressLengkap = 0;
-      let progressBelum = 0;
-      const perluPerhatianList: string[] = [];
-      kegiatanWithDokumen.forEach((k) => {
-        const pct = hitungProgressDokumen(k.dokumen);
-        if (pct === 100) {
-          progressLengkap++;
-        } else {
-          progressBelum++;
-          perluPerhatianList.push(k.namaKegiatan);
+      // --- Status Pelaksanaan Kegiatan (tahun berjalan) ---
+      const statusCounts: Record<string, number> = {
+        ACARA_MASUK: 0,
+        MENUNGGU_PENUGASAN: 0,
+        KEGIATAN_SELESAI: 0,
+        SPJ_SELESAI: 0,
+      };
+      statusKegiatanRaw.forEach((s) => {
+        if (s.statusKegiatan in statusCounts) {
+          statusCounts[s.statusKegiatan] = s._count;
         }
       });
+      const selesaiCount = statusCounts.KEGIATAN_SELESAI + statusCounts.SPJ_SELESAI;
 
       // --- Top 5 leading sector
       const topSektorIds = topSektorRaw.map((t) => t.leadingSectorId).filter((id): id is string => Boolean(id));
@@ -137,8 +140,7 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
         };
 
       const stats: Stat[] = [
-        { label: 'Kegiatan bulan ini', value: bulanIniCount, icon: <CalendarDays size={18} />, tone: 'default' as const
-  },
+        { label: 'Kegiatan bulan ini', value: bulanIniCount, icon: <CalendarDays size={18} />, tone: 'default' as const },
         { label: 'Kegiatan hari ini', value: hariIniCount, icon: <CalendarDays size={18} />, tone: 'default' as const },
         { 
           label: 'Total Sambutan', 
@@ -152,8 +154,21 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
               <span>
                 <span className='text-amber-600 font-semibold'>{belumCount}</span> belum </span>
             </div>
-           ), },
-        { label: 'Dokumen belum upload', value: dokumenBelumUploadCount, icon: <FileWarning size={18} />, tone: 'warning'},
+           ), 
+        },
+        { 
+          label: `Kegiatan ${today.getFullYear()}`, 
+          value: tahunIniCount, 
+          icon: <CalendarCheck2 size={18} />, 
+          tone: 'default',
+          sub: (
+            <div className='flex gap-2 mt-1 text-xs'>
+              <span className='text-muted'>
+                <span className='text-navy font-semibold'>{selesaiCount}</span> telah terlaksana
+              </span>
+            </div>
+          ),
+        },
       ];
 
       const toneClass = { default: 'bg-app text-navy', success: 'badge-sudah', warning: 'badge-belum' };
@@ -182,7 +197,7 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
                 Selamat datang, {user?.nama ?? 'Pengguna'}
               </h1>
               <p className='text-white/80 text-sm mt-2'>
-              Pantau agenda kegiatan, status sambutan, dan kelengkapan dokumen SPJ.
+                Pantau agenda kegiatan, status sambutan, dan jadwal penugasan protokoler.
               </p>
             </div>
           </div>
@@ -234,12 +249,12 @@ const DashboardStats = dynamic(() => import('./dashboard-stats'), {
             </div>
           </div>
 
-          {/* --- Row 3: Charts baru (distribusi + progress + top petugas + top sektor) --- */}
+          {/* --- Row 3: Ringkasan Status & Top Sektor --- */}
           <DashboardStats
-            progressLengkap={progressLengkap}
-            progressBelum={progressBelum}
+            statusCounts={statusCounts}
+            totalTahunIni={tahunIniCount}
+            tahun={today.getFullYear()}
             topSektor={topSektorData}
-            perluPerhatian={perluPerhatianList}
           />
         </div>
       );

@@ -80,9 +80,18 @@ type Props = {
   total: number;
   page: number;
   pageSize: number;
-  filters: { entity?: string; action?: string; userId?: string; search?: string };
+  filters: {
+    entity?: string;
+    action?: string;
+    userId?: string;
+    search?: string;
+    date?: string;
+    bulan?: string;
+    tahun?: string;
+  };
   users: { id: string; nama: string }[];
   leadingSectors: { id: string; nama: string }[];
+  tahunOptions?: number[];
 };
 
 // ── Helpers ──
@@ -230,9 +239,14 @@ function DetailModal({ log, onClose, sectorMap }: { log: LogItem; onClose: () =>
   );
 }
 
+const BULAN_NAMA = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
 // ── Main Component ──
 
-export default function ActivityLogClient({ logs, total, page, pageSize, filters, users, leadingSectors }: Props) {
+export default function ActivityLogClient({ logs, total, page, pageSize, filters, users, leadingSectors, tahunOptions }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [detail, setDetail] = useState<LogItem | null>(null);
@@ -248,14 +262,24 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
   const pageStart =  total === 0 ? 0 : (page - 1) * pageSize + 1;
   const pageEnd = Math.min(page * pageSize, total);
 
-  const setFilter = useCallback((key: string, value: string | undefined) => {
+  const setFiltersMulti = useCallback((updates: Record<string, string | undefined>) => {
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value) { params.set(key, value); } else { params.delete(key); }
+      Object.entries(updates).forEach(([key, val]) => {
+        if (val) {
+          params.set(key, val);
+        } else {
+          params.delete(key);
+        }
+      });
       params.set('page', '1');
       router.push(`/activity-log?${params.toString()}`);
     });
   }, [router, searchParams]);
+
+  const setFilter = useCallback((key: string, value: string | undefined) => {
+    setFiltersMulti({ [key]: value });
+  }, [setFiltersMulti]);
 
   const resetFilters = useCallback(() => {
     startTransition(() => {
@@ -263,14 +287,24 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
     });
   }, [router]);
 
+  const hasActiveFilters = Boolean(
+    filters.entity ||
+    filters.action ||
+    filters.userId ||
+    filters.search ||
+    filters.date ||
+    filters.bulan ||
+    filters.tahun
+  );
+
   return (
     <div className="space-y-4">
       <h1 className="font-display text-xl font-semibold text-navy">Riwayat Aktivitas</h1>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <select 
-          className="px-3 py-2 rounded-lg border border-app text-sm"
+          className="px-3 py-2 rounded-lg border border-app text-sm bg-white w-full sm:w-auto"
           value={filters.entity || ''}
           onChange={(e) => setFilter('entity', e.target.value || undefined)}
         >
@@ -279,7 +313,8 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <select className="px-3 py-2 rounded-lg border border-app text-sm"
+        <select 
+          className="px-3 py-2 rounded-lg border border-app text-sm bg-white w-full sm:w-auto"
           value={filters.action || ''}
           onChange={(e) => setFilter('action', e.target.value || undefined)}
         >
@@ -288,7 +323,8 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <select className="px-3 py-2 rounded-lg border border-app text-sm"
+        <select 
+          className="px-3 py-2 rounded-lg border border-app text-sm bg-white w-full sm:w-auto"
           value={filters.userId || ''}
           onChange={(e) => setFilter('userId', e.target.value || undefined)}
         >
@@ -297,14 +333,52 @@ export default function ActivityLogClient({ logs, total, page, pageSize, filters
             <option key={u.id} value={u.id}>{u.nama}</option>
           ))}
         </select>
-        <input className="px-3 py-2 rounded-lg border border-app text-sm w-full sm:w-56"
+
+        {/* Filter Tanggal Spesifik (Tanggal-Bulan-Tahun) */}
+        <input 
+          type="date"
+          value={filters.date || ''}
+          onChange={(e) => setFiltersMulti({ date: e.target.value || undefined, bulan: undefined, tahun: undefined })}
+          aria-label="Filter Tanggal"
+          title="Filter Tanggal Spesifik"
+          className="px-3 py-2 rounded-lg border border-app text-sm bg-white w-full sm:w-auto"
+        />
+
+        {/* Filter Bulan */}
+        <select
+          value={filters.bulan || ''}
+          onChange={(e) => setFiltersMulti({ bulan: e.target.value || undefined, date: undefined })}
+          aria-label="Filter Bulan"
+          className="px-3 py-2 rounded-lg border border-app text-sm bg-white w-full sm:w-auto"
+        >
+          <option value="">Semua Bulan</option>
+          {BULAN_NAMA.map((nama, i) => (
+            <option key={i + 1} value={String(i + 1)}>{nama}</option>
+          ))}
+        </select>
+
+        {/* Filter Tahun */}
+        <select
+          value={filters.tahun || ''}
+          onChange={(e) => setFiltersMulti({ tahun: e.target.value || undefined, date: undefined })}
+          aria-label="Filter Tahun"
+          className="px-3 py-2 rounded-lg border border-app text-sm bg-white w-full sm:w-auto"
+        >
+          <option value="">Semua Tahun</option>
+          {(tahunOptions && tahunOptions.length > 0 ? tahunOptions : [new Date().getFullYear()]).map((y) => (
+            <option key={y} value={String(y)}>{y}</option>
+          ))}
+        </select>
+
+        <input 
+          className="px-3 py-2 rounded-lg border border-app text-sm w-full sm:w-48 bg-white"
           placeholder="Cari dalam data..."
           defaultValue={filters.search || ''}
           onBlur={(e) => setFilter('search', e.target.value || undefined)}
           onKeyDown={(e) => e.key === 'Enter' && setFilter('search', (e.target as HTMLInputElement).value || undefined)}
         />
-        {(filters.entity || filters.action || filters.userId || filters.search) && (
-          <button onClick={resetFilters} className="px-3 py-2 rounded-lg border border-app text-sm hover:bg-app">
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="px-3 py-2 rounded-lg border border-app text-sm hover:bg-app text-muted hover:text-navy whitespace-nowrap">
             Reset Filter
           </button>
         )}

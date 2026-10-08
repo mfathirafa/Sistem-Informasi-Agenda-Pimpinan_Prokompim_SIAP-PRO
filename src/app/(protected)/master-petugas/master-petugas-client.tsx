@@ -6,6 +6,7 @@ import { createPetugas, updatePetugas, deletePetugas, type PetugasInput } from '
 import { KategoriPetugas } from '@prisma/client';
 import { KATEGORI_PETUGAS_OPTIONS, KATEGORI_PETUGAS_LABEL } from '@/lib/constants/kategori-petugas';
 import ConfirmDialog from '@/components/confirm-dialog';
+import Pagination from '@/components/pagination';
 import { useModalScrollLock } from '@/hooks/use-modal-scroll-lock';
 
 export type PetugasRow = {
@@ -35,9 +36,16 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
   const [filterStatus, setFilterStatus] = useState<'AKTIF' | 'NONAKTIF' | 'ALL'>('AKTIF');
   const [sortKey, setSortKey] = useState<'nama' | 'jabatan' | 'nip' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   // Lock scroll background saat modal buka
   useModalScrollLock(modalOpen);
+
+  // Reset halaman saat filter berubah
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterKategori, filterStatus, sortKey, sortDir]);
 
   const toggleSort = (key: 'nama' | 'jabatan' | 'nip') => {
     if (sortKey !== key) {
@@ -103,6 +111,9 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
       return sortDir === 'asc' ? cmp : -cmp;
     })
     : filtered;
+
+  const totalPages = Math.max(1, Math.ceil(displayData.length / pageSize));
+  const paginatedData = displayData.slice((page - 1) * pageSize, page * pageSize);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,9 +228,9 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
               <tr><td colSpan={canEdit ? 8 : 7} className="px-4 py-10 text-center text-muted">
                 {items.length === 0 ? 'Belum ada data petugas.' : 'Tidak ada petugas yang cocok.'}
               </td></tr>
-            ) : displayData.map((p, index) => (
+            ) : paginatedData.map((p, index) => (
               <tr key={p.id} className="border-t border-app hover:bg-slate-50">
-                <td className="px-4 py-3 text-center text-muted">{index + 1}</td>
+                <td className="px-4 py-3 text-center text-muted">{(page - 1) * pageSize + index + 1}</td>
                 <td className="px-4 py-3 font-medium">{p.nama}</td>
                 <td className="px-4 py-3 text-muted font-mono text-xs">{p.nip || '-'}</td>
                 <td className="px-4 py-3 text-muted">{p.jabatan || '-'}</td>
@@ -248,6 +259,15 @@ export default function MasterPetugasClient({ initialData, canEdit }: { initialD
         </table>
         </div>
       </div>
+
+      {displayData.length > 0 && (
+        <div className="flex flex-col items-center gap-2 text-sm sm:flex-row sm:justify-between py-1">
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <span className="text-muted text-center sm:text-right">
+            Menampilkan {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, displayData.length)} dari {displayData.length} petugas
+          </span>
+        </div>
+      )}
 
       {deleteError && (
         <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{deleteError}</p>
