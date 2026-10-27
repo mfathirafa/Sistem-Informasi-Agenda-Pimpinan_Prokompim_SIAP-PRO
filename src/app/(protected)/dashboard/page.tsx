@@ -7,6 +7,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { hitungProgressDokumen } from '@/lib/constants/status-dokumen';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,7 @@ const DashboardStats = nextDynamic(() => import('./dashboard-stats'), {
         upcoming,
         chartDataRaw,
         topSektorRaw,
+        kegiatanWithDokumen,
       ] = await Promise.all([
         prisma.kegiatan.count({ where: { tanggal: { gte: startOfMonth, lte: endOfMonth } } }),
         prisma.kegiatan.count({ where: { tanggal: { gte: today, lt: tomorrow } } }),
@@ -79,6 +81,10 @@ const DashboardStats = nextDynamic(() => import('./dashboard-stats'), {
           orderBy: { _count: { leadingSectorId: 'desc' } },
           take: 10,
         }),
+        prisma.kegiatan.findMany({
+          where: { tanggal: { gte: currentYearStart } },
+          select: { id: true, namaKegiatan: true, dokumen: { select: { status: true } } },
+        }),
       ]);
 
       const chartMap: Record<string, { bulan: string; fullBulan: string; jumlah: number }> = {};
@@ -96,6 +102,20 @@ const DashboardStats = nextDynamic(() => import('./dashboard-stats'), {
         if (chartMap[key]) chartMap[key].jumlah += 1;
       });
       const chartData = Object.values(chartMap);
+
+      // --- Progress dokumen per kegiatan (tahun berjalan) ---
+      let progressLengkap = 0;
+      let progressBelum = 0;
+      const perluPerhatianList: string[] = [];
+      kegiatanWithDokumen.forEach((k) => {
+        const pct = hitungProgressDokumen(k.dokumen);
+        if (pct === 100) {
+          progressLengkap++;
+        } else {
+          progressBelum++;
+          perluPerhatianList.push(k.namaKegiatan);
+        }
+      });
 
       // --- Status Pelaksanaan Kegiatan (tahun berjalan) ---
       const statusCounts: Record<string, number> = {
@@ -197,7 +217,7 @@ const DashboardStats = nextDynamic(() => import('./dashboard-stats'), {
                 Selamat datang, {user?.nama ?? 'Pengguna'}
               </h1>
               <p className='text-white/80 text-sm mt-2'>
-                Pantau agenda kegiatan, status sambutan, dan jadwal penugasan protokoler.
+                Pantau agenda kegiatan, status sambutan, dan kelengkapan dokumen SPJ.
               </p>
             </div>
           </div>
@@ -249,12 +269,12 @@ const DashboardStats = nextDynamic(() => import('./dashboard-stats'), {
             </div>
           </div>
 
-          {/* --- Row 3: Ringkasan Status & Top Sektor --- */}
+          {/* --- Row 3: Progress Dokumen & Top Sektor --- */}
           <DashboardStats
-            statusCounts={statusCounts}
-            totalTahunIni={tahunIniCount}
-            tahun={today.getFullYear()}
+            progressLengkap={progressLengkap}
+            progressBelum={progressBelum}
             topSektor={topSektorData}
+            perluPerhatian={perluPerhatianList}
           />
         </div>
       );
