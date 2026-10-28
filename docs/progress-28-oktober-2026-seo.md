@@ -26,6 +26,7 @@ Karena SIAP-PRO merupakan sistem internal pemerintahan dengan data sensitif (age
   - Twitter Card `summary_large_image`.
   - Icons config (favicon & Apple touch icon).
   - Viewport & Theme Color `#0f172a` (Navy).
+  - Google Site Verification: `7JDJCwm4tTGmXT8I5oVcc22OOsW7TNb7kKSPGxG8HrM`.
 
 ---
 

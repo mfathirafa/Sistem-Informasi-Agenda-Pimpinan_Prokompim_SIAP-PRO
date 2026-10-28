@@ -90,6 +90,9 @@ export const metadata: Metadata = {
         ],
         apple: [{ url: '/logo-pemkab.png' }],
     },
+    verification: {
+        google: '7JDJCwm4tTGmXT8I5oVcc22OOsW7TNb7kKSPGxG8HrM',
+    },
     robots: {
         index: true,
         follow: true,
