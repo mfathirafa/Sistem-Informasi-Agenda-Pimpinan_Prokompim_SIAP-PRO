@@ -42,14 +42,14 @@ export default function LoginForm() {
             name="password"
             type={showPw ? 'text' : 'password'}
             required
-            className="w-full px-3 py-2.5 rounded-lg border border-app text-sm pr-10"
+            className="w-full px-3 py-2.5 rounded-lg border border-app text-sm pr-12"
             placeholder="Masukkan kata sandi"
           />
           <button
             type="button"
             onClick={() => setShowPw((s) => !s)}
             aria-label="Tampilkan kata sandi"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+            className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-lg text-slate-500 hover:text-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none"
           >
             {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -61,7 +61,11 @@ export default function LoginForm() {
           <span>{state.error}</span>
         </div>
       )}
-      <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium">
+      <button
+        type="submit"
+        disabled={isPending}
+        className="btn-primary w-full py-2.5 min-h-[44px] rounded-lg text-sm font-medium flex items-center justify-center"
+      >
         {isPending ? 'Memuat...' : 'Masuk'}
       </button>
     </form>

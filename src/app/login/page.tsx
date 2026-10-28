@@ -52,7 +52,7 @@ export default async function LoginPage() {
   if (user) redirect('/dashboard');
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-app px-4">
+    <main className="min-h-screen w-full flex items-center justify-center bg-app px-4">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -63,7 +63,7 @@ export default async function LoginPage() {
           <h1 className="font-display text-2xl mt-4 text-navy font-semibold text-center">
             SIAP-PRO
           </h1>
-          <p className="text-muted text-sm mt-1 text-center">
+          <p className="text-slate-600 text-sm mt-1 text-center">
             Sistem Informasi Agenda Pimpinan Prokompim <br />
             Bagian Protokol dan Komunikasi Pimpinan <br />
             Sekretariat Daerah Kabupaten Brebes
@@ -71,6 +71,6 @@ export default async function LoginPage() {
         </div>
         <LoginForm />
       </div>
-    </div>
+    </main>
   );
 }

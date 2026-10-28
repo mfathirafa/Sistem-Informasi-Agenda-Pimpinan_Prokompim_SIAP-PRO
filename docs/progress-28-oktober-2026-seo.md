@@ -27,6 +27,17 @@ Karena SIAP-PRO merupakan sistem internal pemerintahan dengan data sensitif (age
   - Icons config (favicon & Apple touch icon).
   - Viewport & Theme Color `#0f172a` (Navy).
   - Google Site Verification: `7JDJCwm4tTGmXT8I5oVcc22OOsW7TNb7kKSPGxG8HrM`.
+  - Bing Site Verification: `6B479E6A60A7A2C5025EF5A72A136A56`.
+
+---
+
+## 3. Optimasi Aksesibilitas (Lighthouse 100/100 Target)
+- **`src/app/login/page.tsx`**:
+  - Mengubah container root menjadi semantic HTML `<main>` landmark.
+  - Meningkatkan rasio kontras teks subtitle menjadi `text-slate-600` (memenuhi standar WCAG AA > 4.5:1).
+- **`src/app/login/login-form.tsx`**:
+  - Memperbesar touch target tombol toggle password menjadi `min-w-[44px] min-h-[44px]` dengan padding yang pas.
+  - Menetapkan `min-h-[44px]` pada tombol submit login.
 
 ---
 
