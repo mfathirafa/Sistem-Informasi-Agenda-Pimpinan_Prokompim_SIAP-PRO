@@ -66,5 +66,5 @@ export async function getCurrentUser(): Promise<SessionPayload | null> {
 }
 
 export function canEditRole(role: string | undefined): boolean {
-  return role === 'ADMIN' || role === 'STAFF';
+  return role === 'ADMIN' || role === 'STAFF' || role === 'KEPALA_BAGIAN';
 }

@@ -38,7 +38,7 @@ export default function AppShell({
   if (user.role === 'ADMIN') {
     navItems.push({ href: '/users', label: 'Kelola Pengguna', icon: <UserCog size={16} /> });
   }
-  if (user.role === 'ADMIN' || user.role === 'STAFF') {
+  if (user.role === 'ADMIN' || user.role === 'STAFF' || user.role === 'KEPALA_BAGIAN') {
     navItems.push({ href: '/activity-log', label: 'Riwayat Aktivitas', icon: <History size={16} /> });
   }
 

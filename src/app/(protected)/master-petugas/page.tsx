@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, canEditRole } from '@/lib/auth';
 import MasterPetugasClient from './master-petugas-client';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
     try {
       const user = await getCurrentUser();
       const petugas = await prisma.petugas.findMany({ orderBy: { nama: 'asc' } });
-      const canEdit = user?.role === 'ADMIN' || user?.role === 'STAFF';
+      const canEdit = canEditRole(user?.role);
       return <MasterPetugasClient initialData={petugas} canEdit={canEdit} />;
     } catch (error) {
       console.error('[MASTER_PETUGAS_PAGE_ERROR]', error);

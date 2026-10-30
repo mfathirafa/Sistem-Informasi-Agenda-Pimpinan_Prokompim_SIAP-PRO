@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, canEditRole } from '@/lib/auth';
 import {
   buildKegiatanWhere,
   buildKegiatanOrderBy,
@@ -19,7 +19,7 @@ type Props = {
 
 export default async function WorksheetPage({ searchParams }: Props) {
   const user = await getCurrentUser();
-  const canEdit = user?.role === 'ADMIN' || user?.role === 'STAFF';
+  const canEdit = canEditRole(user?.role);
 
   try {
     const params = await searchParams;

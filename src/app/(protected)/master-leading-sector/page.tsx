@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, canEditRole } from '@/lib/auth';
 import MasterLeadingSectorClient from './master-leading-sector-client';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +8,7 @@ export default async function MasterLeadingSectorPage() {
   try {
     const user = await getCurrentUser();
     const items = await prisma.leadingSector.findMany({ orderBy: { nama: 'asc' } });
-    const canEdit = user?.role === 'ADMIN' || user?.role === 'STAFF';
+    const canEdit = canEditRole(user?.role);
     return <MasterLeadingSectorClient initialData={items} canEdit={canEdit} />;
   } catch (error) {
     console.error('[MASTER_LEADING_SECTOR_PAGE_ERROR]', error);

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, canEditRole } from "@/lib/auth";
 import { Entity, ActionLog, Prisma } from '@prisma/client';
 import ActivityLogClient from './activity-log-client';
 
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export default async function ActivityLogPage({ searchParams }: Props) {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) redirect('/dashboard');
+        if (!user || !canEditRole(user.role)) redirect('/dashboard');
 
         const params = await searchParams;
         const rawPage = Number(params.page);
